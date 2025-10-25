@@ -1,0 +1,42 @@
+# 应用基础配置
+spring:
+  application:
+    name: cropseed-trace-system
+  profiles:
+    active: dev
+  jackson:
+    serialization:
+      write-enums-using-to-string: true
+      write-dates-as-timestamps: false
+    deserialization:
+      read-enums-using-to-string: true
+      fail-on-unknown-properties: false
+    default-property-inclusion: non_null
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 200MB
+      enabled: true
+
+# 服务器配置
+server:
+  port: 8085
+  servlet:
+    context-path: /api
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+# MyBatis-Plus配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-field: deleted_flag
+      logic-delete-value: 1
+      logic-not-delete-value: 0
