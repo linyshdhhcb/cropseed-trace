@@ -3,12 +3,15 @@ package com.linyi.cropseed.trace.security;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 /**
  * JWT Token提供者
@@ -25,6 +28,11 @@ public class JwtTokenProvider {
 
     @Value("${jwt.expiration}")
     private Long expiration;
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
+    private static final String BLACKLIST_PREFIX = "jwt:blacklist:";
 
     /**
      * 生成Token
@@ -63,6 +71,12 @@ public class JwtTokenProvider {
      */
     public boolean validateToken(String token) {
         try {
+            // 检查token是否在黑名单中
+            if (isTokenBlacklisted(token)) {
+                log.warn("Token已被加入黑名单");
+                return false;
+            }
+
             getClaimsFromToken(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
@@ -92,6 +106,44 @@ public class JwtTokenProvider {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    /**
+     * 将Token加入黑名单
+     */
+    public void addTokenToBlacklist(String token) {
+        try {
+            // 获取token的剩余过期时间
+            Claims claims = getClaimsFromToken(token);
+            Date expiration = claims.getExpiration();
+            long remainingTime = expiration.getTime() - System.currentTimeMillis();
+
+            if (remainingTime > 0) {
+                // 将token加入Redis黑名单，过期时间设置为token的剩余时间
+                String blacklistKey = BLACKLIST_PREFIX + token;
+                redisTemplate.opsForValue().set(blacklistKey, "1", remainingTime, TimeUnit.MILLISECONDS);
+                log.info("Token已加入黑名单，剩余时间: {}ms", remainingTime);
+            }
+        } catch (JwtException | IllegalArgumentException e) {
+            log.error("将Token加入黑名单失败: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 检查Token是否在黑名单中
+     */
+    public boolean isTokenBlacklisted(String token) {
+        String blacklistKey = BLACKLIST_PREFIX + token;
+        return Boolean.TRUE.equals(redisTemplate.hasKey(blacklistKey));
+    }
+
+    /**
+     * 从黑名单中移除Token
+     */
+    public void removeTokenFromBlacklist(String token) {
+        String blacklistKey = BLACKLIST_PREFIX + token;
+        redisTemplate.delete(blacklistKey);
+        log.info("Token已从黑名单中移除");
     }
 
     /**

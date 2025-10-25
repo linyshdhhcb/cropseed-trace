@@ -8,8 +8,10 @@ import com.linyi.cropseed.trace.service.SysUserService;
 import com.linyi.cropseed.trace.vo.LoginVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -23,7 +25,8 @@ import org.springframework.web.bind.annotation.*;
  * @author LinYi
  * @since 2025-10-25
  */
-@Tag(name = "认证管理",description = "用户登录、登出、获取用户信息等接口")
+@Slf4j
+@Tag(name = "认证管理", description = "用户登录、登出、获取用户信息等接口")
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
@@ -60,9 +63,31 @@ public class AuthController {
 
     @Operation(summary = "用户登出")
     @PostMapping("/logout")
-    public Result<Void> logout() {
-        // TODO: 实现登出逻辑（如将Token加入黑名单）
-        return Result.success("登出成功");
+    public Result<Void> logout(HttpServletRequest request) {
+        try {
+            // 从请求头中获取Token
+            String token = getTokenFromRequest(request);
+            if (token != null) {
+                // 将Token加入黑名单
+                jwtTokenProvider.addTokenToBlacklist(token);
+                log.info("用户登出成功，Token已加入黑名单");
+            }
+            return Result.success("登出成功");
+        } catch (Exception e) {
+            log.error("用户登出失败: {}", e.getMessage());
+            return Result.fail("登出失败");
+        }
+    }
+
+    /**
+     * 从请求中获取Token
+     */
+    private String getTokenFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
     }
 
     @Operation(summary = "获取当前用户信息")
