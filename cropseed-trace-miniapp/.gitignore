@@ -1,0 +1,38 @@
+# 依赖包
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# UniApp 编译产物
+/dist/
+/unpackage/
+/build/
+
+# 微信小程序开发者工具相关
+.project
+.miniprogramroot
+.sitemap.json
+project.private.config.json  # 私有配置（通常包含本地路径等敏感信息）
+
+# 日志和缓存
+logs/
+*.log
+.DS_Store  # macOS 系统文件
+Thumbs.db  # Windows 系统文件
+
+# 编辑器/IDE 配置（根据使用的工具添加）
+.idea/      # IntelliJ 系列（WebStorm 等）
+.vscode/    # VS Code（如需共享配置可删除此行，仅忽略个人配置）
+*.sublime-* # Sublime Text
+*.swp       # Vim 临时文件
+*.swo       # Vim 临时文件
+
+# 环境变量文件（如需本地配置密钥等）
+.env.local
+.env.*.local
+
+# 自定义构建/临时文件
+temp/
+*.tmp
+*.bak
