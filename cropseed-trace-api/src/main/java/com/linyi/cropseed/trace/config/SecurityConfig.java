@@ -24,7 +24,7 @@ import java.util.Arrays;
 
 /**
  * Spring Security配置
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
@@ -57,10 +57,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 公开接口
                         .requestMatchers(
-                                "/api/auth/**",
-                                "/api/file/upload",
-                                "/api/wechat/**",
-                                "/api/miniapp/**",
+                                "/auth/**",
+                                "/file/upload",
+                                "/wechat/**",
+                                "/miniapp/**",
                                 "/doc.html",
                                 "/webjars/**",
                                 "/swagger-ui/**",
