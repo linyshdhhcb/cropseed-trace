@@ -80,6 +80,23 @@ public enum ResultCode {
     WECHAT_PAY_FAIL(8002, "微信支付失败"),
     WECHAT_REFUND_FAIL(8003, "微信退款失败"),
     OPENID_NOT_EXIST(8004, "OpenID不存在"),
+    WX_LOGIN_FAILED(8005, "微信登录失败"),
+    WX_USER_NOT_EXIST(8006, "微信用户不存在"),
+    WX_PAY_NOTIFY_FAILED(8007, "微信支付回调失败"),
+
+    // 业务相关 - 用户地址
+    ADDRESS_NOT_EXIST(8501, "地址不存在"),
+    ADDRESS_ALREADY_DEFAULT(8502, "地址已是默认地址"),
+
+    // 业务相关 - 支付宝支付
+    ALIPAY_FAILED(8601, "支付宝支付失败"),
+    ALIPAY_REFUND_FAILED(8602, "支付宝退款失败"),
+    ALIPAY_QUERY_FAILED(8603, "支付宝查询失败"),
+
+    // 业务相关 - 推荐系统
+    RECOMMENDATION_FAILED(8701, "推荐系统失败"),
+    USER_PROFILE_NOT_EXIST(8702, "用户画像不存在"),
+    RECOMMENDATION_NOT_EXIST(8703, "推荐结果不存在"),
 
     // 业务相关 - 数据
     DATA_ALREADY_EXIST(9001, "数据已存在"),
