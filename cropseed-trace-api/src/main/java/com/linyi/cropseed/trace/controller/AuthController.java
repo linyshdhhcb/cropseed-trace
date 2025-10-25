@@ -68,14 +68,27 @@ public class AuthController {
     @Operation(summary = "获取当前用户信息")
     @GetMapping("/userinfo")
     public Result<LoginVO> getUserInfo() {
-        // TODO: 从SecurityContext中获取当前用户信息
         SecurityContext securityContext = SecurityContextHolder.getContext();
+        Authentication authentication = securityContext.getAuthentication();
+
         LoginVO loginVO = new LoginVO();
-        loginVO.setUserId((Long) securityContext.getAuthentication().getPrincipal());
-        loginVO.setUsername(securityContext.getAuthentication().getName());
-        loginVO.setRealName(securityContext.getAuthentication().getName());
-        loginVO.setAvatar(securityContext.getAuthentication().getName());
-        loginVO.setToken((String) securityContext.getAuthentication().getCredentials());
-        return Result.success("获取用户信息成功");
+
+        // 从 Authentication 中获取用户信息
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof SysUser) {
+            SysUser user = (SysUser) principal;
+            // 从用户对象中获取ID
+            loginVO.setUserId(user.getId());
+            loginVO.setUsername(user.getUsername());
+            loginVO.setRealName(user.getRealName());
+        } else {
+            loginVO.setUsername(authentication.getName());
+        }
+
+        loginVO.setAvatar(authentication.getName());
+        loginVO.setToken((String) authentication.getCredentials());
+
+        return Result.success(loginVO);
     }
+
 }
