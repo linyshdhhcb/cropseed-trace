@@ -1,13 +1,14 @@
 package com.linyi.cropseed.trace.common.util;
 
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 
 import java.util.Date;
 
 /**
  * ID生成器
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
@@ -61,5 +62,13 @@ public class IdGenerator {
         String dateStr = DateUtil.format(new Date(), "yyyyMMddHHmmss");
         String random = RandomUtil.randomNumbers(4);
         return "AS" + dateStr + random;
+    }
+
+    /**
+     * 生成雪花ID
+     * 格式：雪花ID
+     */
+    public static Long generateId() {
+        return IdUtil.getSnowflakeNextId();
     }
 }
