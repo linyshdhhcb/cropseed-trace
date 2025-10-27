@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * Knife4j API文档配置
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
@@ -39,7 +39,7 @@ public class Knife4jConfig {
     public GroupedOpenApi systemApi() {
         return GroupedOpenApi.builder()
                 .group("01-系统管理")
-                .pathsToMatch("/system/**")
+                .pathsToMatch("/sys/**")
                 .build();
     }
 
