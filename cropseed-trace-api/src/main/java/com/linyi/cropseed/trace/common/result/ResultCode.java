@@ -38,6 +38,11 @@ public enum ResultCode {
     USER_NO_PERMISSION(2007, "用户无权限"),
     USER_ACCOUNT_FORBIDDEN(2008, "账号已被禁用"),
 
+    // 角色相关
+    ROLE_NOT_EXIST(2010, "角色不存在"),
+    ROLE_ALREADY_EXIST(2011, "角色已存在"),
+    ROLE_CANNOT_DELETE(2012, "角色不允许删除"),
+
     // 业务相关 - 种子
     SEED_NOT_EXIST(3001, "种子信息不存在"),
     SEED_CODE_DUPLICATE(3002, "种子编码重复"),
@@ -49,6 +54,7 @@ public enum ResultCode {
     // 业务相关 - 库存
     WAREHOUSE_NOT_EXIST(4001, "仓库不存在"),
     WAREHOUSE_CODE_DUPLICATE(4002, "仓库编码重复"),
+    WAREHOUSE_HAS_INVENTORY(4007, "仓库存在库存记录，无法删除"),
     INVENTORY_NOT_EXIST(4003, "库存不存在"),
     INVENTORY_NOT_ENOUGH(4004, "库存不足"),
     INVENTORY_LOCKED(4005, "库存已锁定"),
