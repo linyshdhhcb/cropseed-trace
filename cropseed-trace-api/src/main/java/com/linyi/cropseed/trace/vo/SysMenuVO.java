@@ -1,5 +1,6 @@
 package com.linyi.cropseed.trace.vo;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,7 +24,11 @@ public class SysMenuVO {
     private Integer status;
     private Integer visible;
     private String perms;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime updateTime;
     private List<SysMenuVO> children;
 }

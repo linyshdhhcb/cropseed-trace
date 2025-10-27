@@ -1,12 +1,13 @@
 package com.linyi.cropseed.trace.vo;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 /**
  * 微信用户VO
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
@@ -71,10 +72,12 @@ public class WxUserVO {
     /**
      * 最后登录时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime lastLoginTime;
 
     /**
      * 创建时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
 }
