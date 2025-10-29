@@ -86,7 +86,7 @@
 
             <!-- 分页 -->
             <div class="pagination-container">
-                <el-pagination v-model:current-page="pagination.current" v-model:page-size="pagination.size"
+                <el-pagination :current-page="pagination.current" :page-size="pagination.size"
                     :page-sizes="[10, 20, 50, 100]" :total="pagination.total"
                     layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange"
                     @current-change="handleCurrentChange" />
@@ -149,8 +149,9 @@
                 </el-row>
                 <el-row :gutter="20">
                     <el-col :span="12">
-                        <el-form-item label="图片URL" prop="imageUrl">
-                            <el-input v-model="formData.imageUrl" placeholder="请输入图片URL" />
+                        <el-form-item label="种子图片" prop="imageUrl">
+                            <MultiImageUpload v-model="formData.imageList" :max-count="1" folder="seed-images"
+                                :max-size="5" size="120px" @upload-success="onImageUploadSuccess" />
                         </el-form-item>
                     </el-col>
                     <el-col :span="12">
@@ -217,6 +218,7 @@ import {
     getSeedInfoDetail,
     getCategoryTree,
 } from "@/api/seed";
+import MultiImageUpload from "@/components/MultiImageUpload.vue";
 
 // 搜索表单
 const searchFormRef = ref();
@@ -254,7 +256,7 @@ const formData = reactive({
     originPlace: "",
     characteristics: "",
     specifications: "",
-    imageUrl: "",
+    imageList: [],
     unitPrice: 0,
     status: 1,
 });
@@ -278,6 +280,11 @@ const categoryList = ref([]);
 // 查看详情对话框
 const viewDialogVisible = ref(false);
 const seedDetail = ref(null);
+
+// 图片上传成功回调
+const onImageUploadSuccess = (file) => {
+    ElMessage.success("种子图片上传成功");
+};
 
 // 获取种子列表
 const loadSeedList = async () => {
@@ -343,7 +350,21 @@ const handleAdd = () => {
 const handleEdit = (row) => {
     dialogTitle.value = "编辑种子";
     dialogVisible.value = true;
+
+    // 复制数据到表单
     Object.assign(formData, row);
+
+    // 处理图片数据：将imageUrl转换为imageList
+    if (row.imageUrl) {
+        formData.imageList = [{
+            url: row.imageUrl,
+            name: "种子图片",
+            size: 0,
+            uploadTime: new Date().toISOString()
+        }];
+    } else {
+        formData.imageList = [];
+    }
 };
 
 // 查看详情
@@ -410,11 +431,17 @@ const handleSubmit = async () => {
         await formRef.value.validate();
         submitLoading.value = true;
 
+        // 处理图片数据：将imageList转换为imageUrl
+        const submitData = {
+            ...formData,
+            imageUrl: formData.imageList.length > 0 ? formData.imageList[0].url : ""
+        };
+
         if (formData.id) {
-            await updateSeedInfo(formData);
+            await updateSeedInfo(submitData);
             ElMessage.success("更新成功");
         } else {
-            await addSeedInfo(formData);
+            await addSeedInfo(submitData);
             ElMessage.success("新增成功");
         }
 
@@ -438,7 +465,7 @@ const resetForm = () => {
         originPlace: "",
         characteristics: "",
         specifications: "",
-        imageUrl: "",
+        imageList: [],
         unitPrice: 0,
         status: 1,
     });
