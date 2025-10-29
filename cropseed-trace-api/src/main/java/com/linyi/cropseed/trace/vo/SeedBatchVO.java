@@ -2,6 +2,7 @@ package com.linyi.cropseed.trace.vo;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -14,15 +15,15 @@ import java.time.LocalDateTime;
 public class SeedBatchVO {
     private Long id;
     private String batchNo;
-    private Long seedInfoId;
+    private Long seedId;
     private String seedName;
-    private Integer quantity;
-    private LocalDateTime productionDate;
-    private LocalDateTime expiryDate;
-    private String supplier;
-    private String qualityGrade;
-    private String storageCondition;
-    private Integer status;
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    private LocalDate productionDate;
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    private LocalDate expiryDate;
+    private String qualityReport;
+    private Integer qualityStatus;
+    private String remarks;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
