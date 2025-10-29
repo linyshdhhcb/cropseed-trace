@@ -13,12 +13,13 @@ import java.time.LocalDateTime;
 @Data
 public class SeedInfoVO {
     private Long id;
+    private String seedCode;
     private String seedName;
     private String variety;
     private Long categoryId;
     private String categoryName;
     private String description;
-    private String origin;
+    private String originPlace;
     private String plantingSeason;
     private Integer maturityDays;
     private String yield;
@@ -27,6 +28,8 @@ public class SeedInfoVO {
     private String droughtResistance;
     private String coldResistance;
     private Integer status;
+    private String imageUrl;
+    private String unitPrice;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
