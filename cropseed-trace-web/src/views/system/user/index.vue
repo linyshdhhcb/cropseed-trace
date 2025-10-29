@@ -186,7 +186,7 @@ import {
     batchDeleteUser,
     changePassword,
 } from "@/api/user";
-import { getRoleList } from "@/api/role";
+import { getAllRoles } from "@/api/role";
 
 // 搜索表单
 const searchFormRef = ref();
@@ -322,7 +322,7 @@ const loadUserList = async () => {
 // 获取角色列表
 const loadRoleList = async () => {
     try {
-        const response = await getRoleList();
+        const response = await getAllRoles();
         roleList.value = response.data;
     } catch (error) {
         console.error("获取角色列表失败:", error);

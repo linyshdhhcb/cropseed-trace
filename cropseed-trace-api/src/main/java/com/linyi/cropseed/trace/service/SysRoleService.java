@@ -54,4 +54,9 @@ public interface SysRoleService {
      * 获取角色菜单
      */
     List<Long> getRoleMenus(Long roleId);
+
+    /**
+     * 获取所有角色列表
+     */
+    List<SysRoleVO> getAllRoles();
 }

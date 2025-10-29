@@ -9,6 +9,14 @@ export function getRoleList(params) {
   });
 }
 
+// 获取所有角色列表（用于下拉框）
+export function getAllRoles() {
+  return request({
+    url: "/sys/role/list",
+    method: "get",
+  });
+}
+
 // 获取角色详情
 export function getRoleDetail(id) {
   return request({

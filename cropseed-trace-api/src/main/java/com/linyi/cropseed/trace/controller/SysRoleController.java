@@ -112,4 +112,12 @@ public class SysRoleController {
         List<Long> menuIds = sysRoleService.getRoleMenus(roleId);
         return Result.success(menuIds);
     }
+
+    @Operation(summary = "获取所有角色列表")
+    @GetMapping("/list")
+    @PreAuthorize("hasAuthority('system:role:list')")
+    public Result<List<SysRoleVO>> getAllRoles() {
+        List<SysRoleVO> roles = sysRoleService.getAllRoles();
+        return Result.success(roles);
+    }
 }

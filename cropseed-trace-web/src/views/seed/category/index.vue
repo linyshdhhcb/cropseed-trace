@@ -38,7 +38,6 @@
                 style="width: 100%" row-key="id" :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
                 :default-expand-all="false" border stripe>
                 <el-table-column type="selection" width="55" />
-                <el-table-column prop="id" label="ID" width="80" />
                 <el-table-column prop="categoryName" label="品类名称" width="200" />
                 <el-table-column prop="categoryCode" label="品类编码" width="150" />
                 <el-table-column prop="level" label="级别" width="80" />
@@ -51,7 +50,7 @@
                     </template>
                 </el-table-column>
                 <el-table-column prop="sort" label="排序" width="80" />
-                <el-table-column label="操作" width="200" fixed="right">
+                <el-table-column label="操作" width="240" fixed="right">
                     <template #default="{ row }">
                         <el-button type="primary" size="small" @click="handleEdit(row)">
                             编辑

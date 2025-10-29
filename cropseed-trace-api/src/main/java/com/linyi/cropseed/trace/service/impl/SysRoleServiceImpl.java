@@ -157,6 +157,18 @@ public class SysRoleServiceImpl implements SysRoleService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<SysRoleVO> getAllRoles() {
+        LambdaQueryWrapper<SysRole> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysRole::getStatus, 1) // 只查询启用状态的角色
+                .orderByAsc(SysRole::getId);
+
+        List<SysRole> roles = sysRoleMapper.selectList(queryWrapper);
+        return roles.stream()
+                .map(this::convertToVO)
+                .collect(Collectors.toList());
+    }
+
     private SysRoleVO convertToVO(SysRole role) {
         SysRoleVO vo = new SysRoleVO();
         BeanUtils.copyProperties(role, vo);
