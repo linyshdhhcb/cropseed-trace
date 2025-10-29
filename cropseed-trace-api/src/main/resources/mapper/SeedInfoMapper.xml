@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.linyi.cropseed.trace.mapper.SeedInfoMapper">
+
+    <resultMap id="SeedInfoVoMap" type="com.linyi.cropseed.trace.vo.SeedInfoVO">
+        <id property="id" column="id"/>
+        <result property="seedName" column="seed_name"/>
+        <result property="seedCode" column="seed_code"/>
+        <result property="variety" column="variety"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="categoryName" column="category_name"/>
+        <result property="origin" column="origin_place"/>
+        <result property="plantingSeason" column="planting_season"/>
+        <result property="maturityDays" column="maturity_days"/>
+        <result property="yield" column="yield"/>
+        <result property="diseaseResistance" column="disease_resistance"/>
+        <result property="pestResistance" column="pest_resistance"/>
+        <result property="droughtResistance" column="drought_resistance"/>
+        <result property="coldResistance" column="cold_resistance"/>
+        <result property="status" column="status"/>
+        <result property="description" column="description"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <!-- 下列字段来自实体 SeedInfo；若 VO 不需要也可忽略映射。
+             因现有 VO 定义为扩展字段结构，我们仅映射 VO 所需字段。
+        -->
+        <result property="imageUrl" column="image_url"/>
+        <result property="unitPrice" column="unit_price"/>
+    </resultMap>
+
+    <sql id="BaseFrom">
+        FROM seed_info si
+        LEFT JOIN seed_category sc ON sc.id = si.category_id
+        WHERE si.deleted_flag = 0
+    </sql>
+
+    <select id="selectPageVo" resultMap="SeedInfoVoMap">
+        SELECT si.id, si.seed_name, si.seed_code, si.variety, si.category_id, sc.category_name,
+               si.origin_place, si.image_url, si.unit_price,
+               si.status, si.create_time, si.update_time
+        <include refid="BaseFrom"/>
+        <if test="seedName != null and seedName != ''">
+            AND si.seed_name LIKE CONCAT('%', #{seedName}, '%')
+        </if>
+        <if test="variety != null and variety != ''">
+            AND si.variety LIKE CONCAT('%', #{variety}, '%')
+        </if>
+        <if test="categoryId != null">
+            AND si.category_id = #{categoryId}
+        </if>
+        <if test="status != null">
+            AND si.status = #{status}
+        </if>
+        ORDER BY si.create_time DESC
+    </select>
+
+    <select id="selectDetailById" resultMap="SeedInfoVoMap">
+        SELECT si.id, si.seed_name, si.seed_code, si.variety, si.category_id, sc.category_name,
+               si.origin_place, si.characteristics AS description, si.specifications,
+               si.image_url, si.unit_price,
+               si.status, si.create_time, si.update_time
+        <include refid="BaseFrom"/>
+        AND si.id = #{id}
+        LIMIT 1
+    </select>
+
+    <!-- 供导入等场景使用的简单查询 -->
+    <select id="selectByCategoryId" resultType="com.linyi.cropseed.trace.entity.SeedInfo">
+        SELECT * FROM seed_info
+        WHERE category_id = #{categoryId}
+          AND deleted_flag = 0
+          AND status = 1
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectBySeedCode" resultType="com.linyi.cropseed.trace.entity.SeedInfo">
+        SELECT * FROM seed_info WHERE seed_code = #{seedCode} AND deleted_flag = 0 LIMIT 1
+    </select>
+
+    <select id="selectBySeedNameAndCategoryId" resultType="com.linyi.cropseed.trace.entity.SeedInfo">
+        SELECT * FROM seed_info
+        WHERE seed_name = #{seedName}
+          AND category_id = #{categoryId}
+          AND deleted_flag = 0
+        LIMIT 1
+    </select>
+
+</mapper>
+
+
