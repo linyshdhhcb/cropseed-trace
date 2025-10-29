@@ -9,7 +9,7 @@
         <result property="variety" column="variety"/>
         <result property="categoryId" column="category_id"/>
         <result property="categoryName" column="category_name"/>
-        <result property="origin" column="origin_place"/>
+        <result property="originPlace" column="origin_place"/>
         <result property="plantingSeason" column="planting_season"/>
         <result property="maturityDays" column="maturity_days"/>
         <result property="yield" column="yield"/>
@@ -21,9 +21,6 @@
         <result property="description" column="description"/>
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
-        <!-- 下列字段来自实体 SeedInfo；若 VO 不需要也可忽略映射。
-             因现有 VO 定义为扩展字段结构，我们仅映射 VO 所需字段。
-        -->
         <result property="imageUrl" column="image_url"/>
         <result property="unitPrice" column="unit_price"/>
     </resultMap>
