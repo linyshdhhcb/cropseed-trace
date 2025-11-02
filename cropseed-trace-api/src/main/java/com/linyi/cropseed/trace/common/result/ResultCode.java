@@ -5,7 +5,7 @@ import lombok.Getter;
 
 /**
  * 结果码枚举
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
@@ -27,6 +27,7 @@ public enum ResultCode {
     PARAM_IS_BLANK(1002, "参数为空"),
     PARAM_TYPE_ERROR(1003, "参数类型错误"),
     PARAM_NOT_COMPLETE(1004, "参数缺失"),
+    PARAM_ERROR(1005,"参数错误" ),
 
     // 用户相关
     USER_NOT_EXIST(2001, "用户不存在"),
@@ -108,7 +109,8 @@ public enum ResultCode {
     DATA_ALREADY_EXIST(9001, "数据已存在"),
     DATA_NOT_EXIST(9002, "数据不存在"),
     DATA_IS_USING(9003, "数据使用中，无法删除"),
-    DATA_OPERATION_FAIL(9004, "数据操作失败");
+    DATA_OPERATION_FAIL(9004, "数据操作失败")
+    ;
 
     /**
      * 状态码

@@ -44,4 +44,13 @@ public class WarehouseVO {
 
     @Schema(description = "状态：0-停用，1-启用")
     private Integer status;
+
+    @Schema(description = "仓库类型（如：普通仓、冷藏仓、保税仓等）")
+    private String warehouseType;
+
+    @Schema(description = "温度范围（如：-18℃~-10℃、常温）")
+    private String temperatureRange;
+
+    @Schema(description = "备注")
+    private String remark;
 }
