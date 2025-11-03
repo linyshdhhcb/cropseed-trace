@@ -34,8 +34,12 @@ public class InventoryOutboundDTO {
     @Positive(message = "出库数量必须大于0")
     private Integer quantity;
 
+    @Schema(description = "接收方")
+    @Size(max = 255, message = "接收方长度不能超过255个字符")
+    private String recipient;
+
     @Schema(description = "出库用途")
-    @Size(max = 200, message = "出库用途长度不能超过200个字符")
+    @Size(max = 255, message = "出库用途长度不能超过255个字符")
     private String purpose;
 
     @Schema(description = "关联订单ID")

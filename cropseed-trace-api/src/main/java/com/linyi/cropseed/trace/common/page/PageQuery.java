@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 /**
  * 分页查询参数
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
@@ -47,8 +47,8 @@ public class PageQuery implements Serializable {
      */
     public <T> Page<T> toMpPage() {
         // 限制每页最大记录数
-        if (pageSize > 50) {
-            pageSize = 50;
+        if (pageSize > 200) {
+            pageSize = 200;
         }
         return new Page<>(pageNum, pageSize);
     }
