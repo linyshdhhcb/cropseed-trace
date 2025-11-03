@@ -2,6 +2,26 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.linyi.cropseed.trace.mapper.InventoryInboundMapper">
 
+    <select id="queryPage" resultType="com.linyi.cropseed.trace.entity.InventoryInbound">
+        SELECT
+            inventory_inbound.*,
+            warehouse.warehouse_name as warehouse_name
+        FROM inventory_inbound
+        left join warehouse on  warehouse.id = inventory_inbound.warehouse_id
+        <where>
+            <if test="batchNo != null and batchNo != ''">
+                AND inventory_inbound.batch_no = #{batchNo}
+            </if>
+            <if test="warehouseId != null">
+                AND inventory_inbound.warehouse_id = #{warehouseId}
+            </if>
+            <if test="status != null">
+                AND inventory_inbound.status = #{status}
+            </if>
+        </where>
+        ORDER BY inventory_inbound.id DESC
+    </select>
+
 </mapper>
 
 

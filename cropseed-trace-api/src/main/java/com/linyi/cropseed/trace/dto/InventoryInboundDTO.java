@@ -9,7 +9,7 @@ import jakarta.validation.constraints.Size;
 
 /**
  * 入库DTO
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
@@ -17,13 +17,13 @@ import jakarta.validation.constraints.Size;
 @Schema(description = "入库DTO")
 public class InventoryInboundDTO {
 
-    @Schema(description = "种子ID", required = true)
-    @NotNull(message = "种子ID不能为空")
-    private Long seedId;
+    @Schema(description = "批次号", required = true)
+    @NotNull(message = "批次号不能为空")
+    private String batchNo;
 
-    @Schema(description = "批次ID", required = true)
-    @NotNull(message = "批次ID不能为空")
-    private Long batchId;
+    @Schema(description = "种子批次ID", required = true)
+    @NotNull(message = "种子批次ID不能为空")
+    private Long seedBatchId;
 
     @Schema(description = "仓库ID", required = true)
     @NotNull(message = "仓库ID不能为空")
@@ -34,7 +34,19 @@ public class InventoryInboundDTO {
     @Positive(message = "入库数量必须大于0")
     private Integer quantity;
 
+    @Schema(description = "供应商")
+    @Size(max = 255, message = "供应商长度不能超过255个字符")
+    private String supplier;
+
+    @Schema(description = "质量等级")
+    @Size(max = 255, message = "质量等级长度不能超过255个字符")
+    private String qualityGrade;
+
+    @Schema(description = "存储条件")
+    @Size(max = 255, message = "存储条件长度不能超过255个字符")
+    private String storageCondition;
+
     @Schema(description = "备注")
     @Size(max = 500, message = "备注长度不能超过500个字符")
-    private String remarks;
+    private String remark;
 }
