@@ -76,7 +76,7 @@ const routes = [
         path: "inventory/stock",
         name: "Inventory",
         component: () => import("@/views/inventory/stock/index.vue"),
-        meta: { title: "库存台账", requiresAuth: true },
+        meta: { title: "库存管理", requiresAuth: true },
       },
       {
         path: "inventory/inbound",

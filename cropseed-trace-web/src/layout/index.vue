@@ -113,7 +113,7 @@ const routes = [
     meta: { title: '库存管理', icon: 'Box' },
     children: [
       { path: 'warehouse', name: 'Warehouse', meta: { title: '仓库管理' } },
-      { path: 'stock', name: 'Inventory', meta: { title: '库存台账' } },
+      { path: 'stock', name: 'Inventory', meta: { title: '库存管理' } },
       { path: 'inbound', name: 'Inbound', meta: { title: '入库管理' } },
       { path: 'outbound', name: 'Outbound', meta: { title: '出库管理' } }
     ]
