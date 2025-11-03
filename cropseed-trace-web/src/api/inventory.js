@@ -9,6 +9,13 @@ export function getWarehouseList(params) {
   });
 }
 
+export function getActiveWarehouseList() {
+  return request({
+    url: "/inventory/warehouse/active",
+    method: "get",
+  });
+}
+
 export function getWarehouseDetail(id) {
   return request({
     url: `/inventory/warehouse/${id}`,
@@ -43,7 +50,7 @@ export function batchDeleteWarehouse(ids) {
   return request({
     url: "/inventory/warehouse/batch",
     method: "delete",
-    data: { ids },
+    data: ids,
   });
 }
 
@@ -56,10 +63,11 @@ export function getInventoryList(params) {
   });
 }
 
-export function getInventoryDetail(id) {
+export function getInventoryDetail(seedId, batchId, warehouseId) {
   return request({
-    url: `/inventory/stock/${id}`,
+    url: "/inventory/stock/detail",
     method: "get",
+    params: { seedId, batchId, warehouseId },
   });
 }
 
@@ -91,6 +99,25 @@ export function batchDeleteInventory(ids) {
     url: "/inventory/stock/batch",
     method: "delete",
     data: { ids },
+  });
+}
+
+// 库存调整
+export function adjustInventory(params) {
+  // 期望的数据结构：{ id, adjustType: 'increase' | 'decrease', adjustQuantity, reason }
+  return request({
+    url: "/inventory/stock/adjust",
+    method: "post",
+    params,
+  });
+}
+
+// 更新库存预警阈值
+export function updateStockThreshold(id, minStock, maxStock) {
+  return request({
+    url: "/inventory/stock/threshold",
+    method: "put",
+    params: { id, minStock, maxStock },
   });
 }
 
@@ -141,6 +168,34 @@ export function batchDeleteInbound(ids) {
   });
 }
 
+// 入库审批/确认/取消
+export function approveInbound(data) {
+  // data: { id, remark }
+  return request({
+    url: "/inventory/inbound/approve",
+    method: "post",
+    params: data,
+  });
+}
+
+export function confirmInbound(data) {
+  // data: { id, remark }
+  return request({
+    url: "/inventory/inbound/confirm",
+    method: "post",
+    params: data,
+  });
+}
+
+export function cancelInbound(data) {
+  // data: { id, reason }
+  return request({
+    url: "/inventory/inbound/cancel",
+    method: "post",
+    params: data,
+  });
+}
+
 // 出库管理
 export function getOutboundList(params) {
   return request({
@@ -185,5 +240,33 @@ export function batchDeleteOutbound(ids) {
     url: "/inventory/outbound/batch",
     method: "delete",
     data: { ids },
+  });
+}
+
+// 出库审批/确认/取消
+export function approveOutbound(data) {
+  // data: { id, remark }
+  return request({
+    url: "/inventory/outbound/approve",
+    method: "post",
+    params: data,
+  });
+}
+
+export function confirmOutbound(data) {
+  // data: { id, remark }
+  return request({
+    url: "/inventory/outbound/confirm",
+    method: "post",
+    params: data,
+  });
+}
+
+export function cancelOutbound(data) {
+  // data: { id, reason }
+  return request({
+    url: "/inventory/outbound/cancel",
+    method: "post",
+    params: data,
   });
 }
