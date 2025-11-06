@@ -48,8 +48,12 @@ public interface InventoryOutboundService {
 
     /**
      * 审批出库单
+     * 
+     * @param id            出库记录ID
+     * @param approved      true-审批通过，false-审批不通过
+     * @param approveRemark 审批备注
      */
-    void approve(Long id, String approveRemark);
+    void approve(Long id, Boolean approved, String approveRemark);
 
     /**
      * 确认出库单

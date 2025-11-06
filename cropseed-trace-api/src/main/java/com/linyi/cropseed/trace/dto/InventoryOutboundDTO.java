@@ -17,6 +17,9 @@ import jakarta.validation.constraints.Size;
 @Schema(description = "出库DTO")
 public class InventoryOutboundDTO {
 
+    @Schema(description = "出库记录ID（更新时必填）")
+    private Long id;
+
     @Schema(description = "种子ID", required = true)
     @NotNull(message = "种子ID不能为空")
     private Long seedId;

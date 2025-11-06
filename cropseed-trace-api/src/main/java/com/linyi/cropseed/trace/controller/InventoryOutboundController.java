@@ -87,9 +87,10 @@ public class InventoryOutboundController {
     @PostMapping("/approve")
     @PreAuthorize("hasAuthority('inventory:outbound:edit')")
     public Result<Void> approve(@RequestParam Long id,
-            @RequestParam(required = false) String remark) {
-        inventoryOutboundService.approve(id, remark);
-        return Result.success("审批成功");
+            @Parameter(description = "是否通过，true-通过，false-不通过") @RequestParam Boolean approved,
+            @Parameter(description = "审批备注") @RequestParam(required = false) String remark) {
+        inventoryOutboundService.approve(id, approved, remark);
+        return Result.success(approved ? "审批通过" : "审批不通过");
     }
 
     @Operation(summary = "确认出库单")

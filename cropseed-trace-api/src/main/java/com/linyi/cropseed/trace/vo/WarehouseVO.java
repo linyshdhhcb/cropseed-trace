@@ -1,5 +1,6 @@
 package com.linyi.cropseed.trace.vo;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -7,7 +8,7 @@ import java.math.BigDecimal;
 
 /**
  * 仓库VO
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
@@ -53,4 +54,8 @@ public class WarehouseVO {
 
     @Schema(description = "备注")
     private String remark;
+
+    @Schema(description = "创建时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private String createTime;
 }
