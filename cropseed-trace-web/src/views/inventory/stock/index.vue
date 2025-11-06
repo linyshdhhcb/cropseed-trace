@@ -61,7 +61,7 @@
                         <span class="max-stock">{{ row.maxStock || 0 }}</span>
                     </template>
                 </el-table-column>
-                <el-table-column label="操作" width="240" fixed="right">
+                <el-table-column label="操作" width="160" fixed="right">
                     <template #default="{ row }">
                         <el-button type="primary" size="small" @click="handleView(row)">
                             详情
