@@ -2,7 +2,7 @@ package com.linyi.cropseed.trace.common.constant;
 
 /**
  * 通用常量
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
@@ -51,7 +51,7 @@ public interface CommonConstant {
     /**
      * 最大每页记录数
      */
-    Integer MAX_PAGE_SIZE = 50;
+    Integer MAX_PAGE_SIZE = 500;
 
     /**
      * 超级管理员角色编码
