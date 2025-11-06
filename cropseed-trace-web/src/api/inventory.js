@@ -245,7 +245,7 @@ export function batchDeleteOutbound(ids) {
 
 // 出库审批/确认/取消
 export function approveOutbound(data) {
-  // data: { id, remark }
+  // data: { id, approved, remark }
   return request({
     url: "/inventory/outbound/approve",
     method: "post",
