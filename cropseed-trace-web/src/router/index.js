@@ -22,7 +22,7 @@ const routes = [
         path: "dashboard",
         name: "Dashboard",
         component: () => import("@/views/dashboard/index.vue"),
-        meta: { title: "仪表盘", icon: "Odometer", requiresAuth: true },
+        meta: { title: "首页", icon: "Odometer", requiresAuth: true },
       },
       {
         path: "statistics",

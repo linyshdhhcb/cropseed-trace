@@ -80,7 +80,7 @@ const routes = [
   {
     path: '/dashboard',
     name: 'Dashboard',
-    meta: { title: '仪表盘', icon: 'Odometer' }
+    meta: { title: '首页', icon: 'Odometer' }
   },
   {
     path: '/statistics',

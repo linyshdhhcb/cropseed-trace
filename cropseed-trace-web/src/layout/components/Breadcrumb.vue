@@ -19,13 +19,13 @@ const breadcrumbList = computed(() => {
     const first = matched[0]
 
     if (!isDashboard(first)) {
-        matched.unshift({ path: '/dashboard', meta: { title: '仪表盘' } })
+        matched.unshift({ path: '/dashboard', meta: { title: '首页' } })
     }
 
     return matched
 })
 
-// 判断是否为仪表盘
+// 判断是否为首页
 const isDashboard = (route) => {
     const name = route && route.name
     if (!name) {
