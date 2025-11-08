@@ -38,7 +38,8 @@
                 </view>
                 <view class="product-list">
                     <view v-for="item in recommendList" :key="item.id" class="product-item" @tap="goDetail(item.id)">
-                        <image class="product-image" :src="item.imageUrl" mode="aspectFill"></image>
+                        <image class="product-image" :src="item.imageUrl || '/static/no-image-available.png'"
+                            mode="aspectFill"></image>
                         <view class="product-info">
                             <view class="product-name">{{ item.seedName }}</view>
                             <view class="product-price">￥{{ item.unitPrice }}</view>
@@ -88,15 +89,31 @@ async function loadRecommend() {
     if (loading.value) return
     loading.value = true
     try {
-        const data = await getRecommendProducts()
-        if (Array.isArray(data) && data.length) {
-            recommendList.value = data
+        // 先尝试获取推荐商品
+        const recommendData = await getRecommendProducts()
+        if (Array.isArray(recommendData) && recommendData.length > 0) {
+            // 将推荐数据转换为商品列表格式
+            recommendList.value = recommendData.map(item => ({
+                id: item.targetId,
+                seedName: item.targetName || '商品名称',
+                imageUrl: item.targetImage || '/static/no-image-available.png',
+                unitPrice: item.targetPrice || '0.00',
+                characteristics: item.recommendationReason || '推荐商品'
+            }))
         } else {
+            // 如果没有推荐数据，则获取商品列表作为后备
             const fallback = await getProductList({ page: 1, size: 6 })
-            recommendList.value = fallback?.records || []
+            recommendList.value = fallback?.list || []
         }
     } catch (error) {
         console.error('获取推荐失败', error)
+        // 如果推荐接口失败，也尝试获取商品列表作为后备
+        try {
+            const fallback = await getProductList({ page: 1, size: 6 })
+            recommendList.value = fallback?.list || []
+        } catch (fallbackError) {
+            console.error('获取商品列表失败', fallbackError)
+        }
     } finally {
         loading.value = false
     }
