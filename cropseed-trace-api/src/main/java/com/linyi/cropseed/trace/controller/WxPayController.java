@@ -21,7 +21,7 @@ import java.util.Map;
  */
 @Tag(name = "微信支付管理", description = "微信支付相关接口")
 @RestController
-@RequestMapping("/api/wechat/pay")
+@RequestMapping("/wechat/pay")
 @RequiredArgsConstructor
 public class WxPayController {
 
