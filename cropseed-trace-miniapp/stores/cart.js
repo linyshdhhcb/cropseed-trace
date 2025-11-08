@@ -40,7 +40,31 @@ export const useCartStore = defineStore("cart", {
   },
   actions: {
     setList(list = []) {
-      this.list = Array.isArray(list) ? list : [];
+      // 统一处理数据，确保有id字段（兼容cartId和id）和selected字段类型
+      this.list = (Array.isArray(list) ? list : []).map((item) => {
+        const processed = { ...item };
+
+        // 如果只有cartId，添加id字段以便兼容
+        if (item.cartId && !item.id) {
+          processed.id = item.cartId;
+        }
+        // 如果只有id，添加cartId字段以便兼容
+        if (item.id && !item.cartId) {
+          processed.cartId = item.id;
+        }
+
+        // 统一selected字段类型为Boolean
+        if (typeof processed.selected === "number") {
+          processed.selected = processed.selected === 1;
+        } else if (
+          processed.selected === undefined ||
+          processed.selected === null
+        ) {
+          processed.selected = false;
+        }
+
+        return processed;
+      });
       this.loaded = true;
       uni.setStorageSync(config.cartKey, this.list);
     },
@@ -72,20 +96,24 @@ export const useCartStore = defineStore("cart", {
     },
     async changeQuantity(id, quantity) {
       await updateCartQuantity(id, quantity);
-      this.list = this.list.map((item) =>
-        item.id === id ? { ...item, quantity } : item
-      );
+      this.list = this.list.map((item) => {
+        const itemId = item.cartId || item.id;
+        return itemId === id ? { ...item, quantity } : item;
+      });
       uni.setStorageSync(config.cartKey, this.list);
     },
     async toggleSelected(id, selected) {
       await updateCartSelected(id, selected);
-      this.list = this.list.map((item) =>
-        item.id === id ? { ...item, selected } : item
-      );
+      this.list = this.list.map((item) => {
+        const itemId = item.cartId || item.id;
+        return itemId === id ? { ...item, selected } : item;
+      });
       uni.setStorageSync(config.cartKey, this.list);
     },
     async toggleSelectAll(selected) {
-      const ids = this.list.map((item) => item.id);
+      const ids = this.list
+        .map((item) => item.cartId || item.id)
+        .filter(Boolean);
       if (ids.length === 0) return;
       await batchUpdateCartSelected(ids, selected);
       this.list = this.list.map((item) => ({ ...item, selected }));
@@ -93,13 +121,19 @@ export const useCartStore = defineStore("cart", {
     },
     async removeItem(id) {
       await deleteCart(id);
-      this.list = this.list.filter((item) => item.id !== id);
+      this.list = this.list.filter((item) => {
+        const itemId = item.cartId || item.id;
+        return itemId !== id;
+      });
       uni.setStorageSync(config.cartKey, this.list);
     },
     async removeItems(ids = []) {
       if (ids.length === 0) return;
       await batchDeleteCart(ids);
-      this.list = this.list.filter((item) => !ids.includes(item.id));
+      this.list = this.list.filter((item) => {
+        const itemId = item.cartId || item.id;
+        return !ids.includes(itemId);
+      });
       uni.setStorageSync(config.cartKey, this.list);
     },
     async clearCart() {

@@ -13,7 +13,7 @@
             </view>
 
             <view v-else class="cart-list">
-                <view v-for="item in cartStore.list" :key="item.id" class="cart-item">
+                <view v-for="item in cartStore.list" :key="item.cartId || item.id" class="cart-item">
                     <label class="checkbox" @tap="toggleItem(item)">
                         <view class="check" :class="{ checked: item.selected }"></view>
                     </label>
@@ -79,7 +79,12 @@ function goHome() {
 }
 
 async function toggleItem(item) {
-    await cartStore.toggleSelected(item.id, !item.selected)
+    const cartId = item.cartId || item.id
+    if (!cartId) {
+        uni.showToast({ title: '购物车ID不存在', icon: 'none' })
+        return
+    }
+    await cartStore.toggleSelected(cartId, !item.selected)
 }
 
 async function toggleAll() {
@@ -88,21 +93,41 @@ async function toggleAll() {
 
 async function decrease(item) {
     if (item.quantity <= 1) return
+    const cartId = item.cartId || item.id
+    if (!cartId) {
+        uni.showToast({ title: '购物车ID不存在', icon: 'none' })
+        return
+    }
     const newQty = item.quantity - 1
-    await cartStore.changeQuantity(item.id, newQty)
+    await cartStore.changeQuantity(cartId, newQty)
 }
 
 async function increase(item) {
+    const cartId = item.cartId || item.id
+    if (!cartId) {
+        uni.showToast({ title: '购物车ID不存在', icon: 'none' })
+        return
+    }
     const newQty = item.quantity + 1
-    await cartStore.changeQuantity(item.id, newQty)
+    await cartStore.changeQuantity(cartId, newQty)
 }
 
 async function changeQuantity(item) {
+    const cartId = item.cartId || item.id
+    if (!cartId) {
+        uni.showToast({ title: '购物车ID不存在', icon: 'none' })
+        return
+    }
     const qty = Math.max(1, Number(item.quantity) || 1)
-    await cartStore.changeQuantity(item.id, qty)
+    await cartStore.changeQuantity(cartId, qty)
 }
 
 async function removeItem(item) {
+    const cartId = item.cartId || item.id
+    if (!cartId) {
+        uni.showToast({ title: '购物车ID不存在', icon: 'none' })
+        return
+    }
     const confirmed = await new Promise((resolve) => {
         uni.showModal({
             title: '提示',
@@ -111,7 +136,7 @@ async function removeItem(item) {
         })
     })
     if (confirmed) {
-        await cartStore.removeItem(item.id)
+        await cartStore.removeItem(cartId)
     }
 }
 
