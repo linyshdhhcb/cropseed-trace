@@ -54,9 +54,12 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // 请求授权
                 .authorizeHttpRequests(auth -> auth
-                        // 公开接口
+                        // 公开接口（不需要登录）
                         .requestMatchers(
                                 "/auth/**",
+                                "/wx/auth/login",
+                                "/wx/product/**", // 商品相关（分类、详情、列表等，公开访问）
+                                "/wx/recommend/list", // 推荐列表（已支持未登录）
                                 "/file/upload",
                                 "/wechat/**",
                                 "/miniapp/**",
@@ -67,7 +70,18 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/favicon.ico")
                         .permitAll()
-                        // 其他请求需要认证
+                        // 小程序接口（需要登录，通过JWT过滤器验证，控制器中会检查登录状态）
+                        // 注意：这些接口允许访问，但如果没有有效token，控制器会返回业务错误
+                        .requestMatchers(
+                                "/wx/order/**", // 订单相关
+                                "/wx/cart/**", // 购物车相关
+                                "/wx/address/**", // 地址相关
+                                "/wx/after-sales/**", // 售后相关
+                                "/wx/user/**", // 用户信息相关
+                                "/wx/recommend/behavior", // 行为上报
+                                "/wx/auth/logout") // 登出
+                        .permitAll() // 改为 permitAll，让 JWT 过滤器处理认证，控制器检查登录状态
+                        // 其他请求需要认证（管理后台接口）
                         .anyRequest().authenticated())
                 // 添加JWT过滤器
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
