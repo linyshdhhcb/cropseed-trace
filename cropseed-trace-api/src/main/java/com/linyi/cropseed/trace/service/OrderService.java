@@ -3,6 +3,7 @@ package com.linyi.cropseed.trace.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.linyi.cropseed.trace.common.page.PageQuery;
 import com.linyi.cropseed.trace.common.page.PageResult;
+import com.linyi.cropseed.trace.dto.OrderSubmitGoodsDTO;
 import com.linyi.cropseed.trace.entity.OrderInfo;
 import com.linyi.cropseed.trace.vo.OrderDetailVO;
 import com.linyi.cropseed.trace.vo.OrderVO;
@@ -32,6 +33,11 @@ public interface OrderService extends IService<OrderInfo> {
      * 创建订单
      */
     Long createOrder(Long userId, List<Long> cartIds, String consignee, String phone, String address, String remarks);
+
+    /**
+     * 直接根据商品明细创建订单（立即购买场景）
+     */
+    Long createOrderFromGoods(Long userId, List<OrderSubmitGoodsDTO> goodsItems, String consignee, String phone,String address, String remarks);
 
     /**
      * 取消订单
