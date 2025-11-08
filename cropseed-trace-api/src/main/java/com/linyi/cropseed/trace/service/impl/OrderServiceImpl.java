@@ -12,6 +12,7 @@ import com.linyi.cropseed.trace.common.exception.BusinessException;
 import com.linyi.cropseed.trace.common.result.ResultCode;
 import com.linyi.cropseed.trace.common.util.IdGenerator;
 import com.linyi.cropseed.trace.common.util.SecurityUtils;
+import com.linyi.cropseed.trace.dto.OrderSubmitGoodsDTO;
 import com.linyi.cropseed.trace.entity.*;
 import com.linyi.cropseed.trace.mapper.*;
 import com.linyi.cropseed.trace.service.InventoryService;
@@ -146,6 +147,61 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo> im
         logOrderOperation(order.getId(), "创建订单", null, OrderConstant.ORDER_STATUS_UNPAID, "用户创建订单");
 
         log.info("订单创建成功：订单ID={}, 订单号={}", order.getId(), order.getOrderNo());
+        return order.getId();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Long createOrderFromGoods(Long userId, List<OrderSubmitGoodsDTO> goodsItems, String consignee,
+            String phone, String address, String remarks) {
+        if (CollUtil.isEmpty(goodsItems)) {
+            throw new BusinessException("下单商品不能为空");
+        }
+
+        OrderInfo order = new OrderInfo();
+        order.setOrderNo(IdGenerator.generateOrderNo());
+        order.setUserId(userId);
+        order.setOrderType(OrderConstant.ORDER_TYPE_C);
+        order.setOrderStatus(OrderConstant.ORDER_STATUS_UNPAID);
+        order.setConsignee(consignee);
+        order.setPhone(phone);
+        order.setAddress(address);
+        order.setRemarks(remarks);
+        order.setDiscountAmount(BigDecimal.ZERO);
+        order.setFreightAmount(BigDecimal.ZERO);
+        order.setPaidAmount(BigDecimal.ZERO);
+
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        for (OrderSubmitGoodsDTO goodsItem : goodsItems) {
+            SeedInfo seedInfo = seedInfoMapper.selectById(goodsItem.getSeedId());
+            if (seedInfo == null) {
+                throw new BusinessException("商品不存在");
+            }
+            BigDecimal itemAmount = seedInfo.getUnitPrice().multiply(new BigDecimal(goodsItem.getQuantity()));
+            totalAmount = totalAmount.add(itemAmount);
+        }
+
+        order.setTotalAmount(totalAmount);
+        order.setPayableAmount(totalAmount);
+        this.save(order);
+
+        for (OrderSubmitGoodsDTO goodsItem : goodsItems) {
+            SeedInfo seedInfo = seedInfoMapper.selectById(goodsItem.getSeedId());
+
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrderId(order.getId());
+            orderItem.setSeedId(seedInfo.getId());
+            orderItem.setSeedName(seedInfo.getSeedName());
+            orderItem.setSeedImage(seedInfo.getImageUrl());
+            orderItem.setUnitPrice(seedInfo.getUnitPrice());
+            orderItem.setQuantity(goodsItem.getQuantity());
+            orderItem.setTotalAmount(seedInfo.getUnitPrice().multiply(new BigDecimal(goodsItem.getQuantity())));
+            orderItemMapper.insert(orderItem);
+        }
+
+        logOrderOperation(order.getId(), "创建订单", null, OrderConstant.ORDER_STATUS_UNPAID, "用户立即购买创建订单");
+        log.info("立即购买订单创建成功：订单ID={}, 订单号={}", order.getId(), order.getOrderNo());
         return order.getId();
     }
 
