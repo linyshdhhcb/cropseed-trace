@@ -1,8 +1,11 @@
 package com.linyi.cropseed.trace.security;
 
+import com.linyi.cropseed.trace.common.constant.CommonConstant;
 import com.linyi.cropseed.trace.common.result.ResultCode;
 import com.linyi.cropseed.trace.entity.SysUser;
+import com.linyi.cropseed.trace.entity.WxUser;
 import com.linyi.cropseed.trace.service.SysUserService;
+import com.linyi.cropseed.trace.service.WxUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -13,7 +16,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 用户详情服务实现
@@ -25,27 +30,50 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
 
+    private static final String WX_USERNAME_PREFIX = "WX:";
+
     private final SysUserService sysUserService;
+    private final WxUserService wxUserService;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         SysUser user = sysUserService.getUserByUsername(username);
-        if (user == null) {
-            throw new UsernameNotFoundException(ResultCode.USER_NOT_EXIST.getMessage());
+        if (user != null) {
+            List<GrantedAuthority> authorities = getUserAuthorities(user.getId());
+            return User.builder()
+                    .username(user.getUsername())
+                    .password(user.getPassword())
+                    .authorities(authorities)
+                    .accountExpired(false)
+                    .accountLocked(Objects.equals(user.getStatus(), CommonConstant.STATUS_DISABLE))
+                    .credentialsExpired(false)
+                    .disabled(Objects.equals(user.getStatus(), CommonConstant.STATUS_DISABLE))
+                    .build();
         }
 
-        // 获取用户权限
-        List<GrantedAuthority> authorities = getUserAuthorities(user.getId());
+        // 微信小程序用户以 WX:{openid} 形式存储用户名
+        if (username != null && username.startsWith(WX_USERNAME_PREFIX)) {
+            String openid = username.substring(WX_USERNAME_PREFIX.length());
+            WxUser wxUser = wxUserService.lambdaQuery()
+                    .eq(WxUser::getOpenid, openid)
+                    .one();
+            if (wxUser == null) {
+                throw new UsernameNotFoundException(ResultCode.USER_NOT_EXIST.getMessage());
+            }
 
-        return User.builder()
-                .username(user.getUsername())
-                .password(user.getPassword())
-                .authorities(authorities)
-                .accountExpired(false)
-                .accountLocked(!ResultCode.USER_LOCKED.getCode().equals(user.getStatus()))
-                .credentialsExpired(false)
-                .disabled(!ResultCode.USER_ACCOUNT_FORBIDDEN.getCode().equals(user.getStatus()))
-                .build();
+            boolean disabled = !Objects.equals(wxUser.getStatus(), CommonConstant.STATUS_ENABLE);
+            return User.builder()
+                    .username(username)
+                    .password("")
+                    .authorities(Collections.singletonList(new SimpleGrantedAuthority("ROLE_WX_USER")))
+                    .accountExpired(false)
+                    .accountLocked(disabled)
+                    .credentialsExpired(false)
+                    .disabled(disabled)
+                    .build();
+        }
+
+        throw new UsernameNotFoundException(ResultCode.USER_NOT_EXIST.getMessage());
     }
 
     /**
