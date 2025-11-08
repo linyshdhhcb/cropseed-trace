@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  */
 @Tag(name = "微信用户管理", description = "微信小程序用户相关接口")
 @RestController
-@RequestMapping("/api/wechat/user")
+@RequestMapping("/wechat/user")
 @RequiredArgsConstructor
 public class WxUserController {
 
