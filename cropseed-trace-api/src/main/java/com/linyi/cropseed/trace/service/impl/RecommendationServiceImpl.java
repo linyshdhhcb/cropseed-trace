@@ -86,6 +86,8 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
                         vo.setRecommendationType(1);
                         vo.setRecommendationTypeName("协同过滤");
                         vo.setRecommendationReason("基于相似用户的购买行为推荐");
+                        // 填充商品信息
+                        fillProductInfo(vo, entry.getKey());
                         return vo;
                     })
                     .collect(Collectors.toList());
@@ -131,6 +133,8 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
                         vo.setRecommendationType(2);
                         vo.setRecommendationTypeName("内容推荐");
                         vo.setRecommendationReason("基于商品特征相似性推荐");
+                        // 填充商品信息
+                        fillProductInfo(vo, similar.getSeedId());
                         recommendations.add(vo);
                     }
                 }
@@ -163,7 +167,7 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
             // 1. 获取热门商品特征
             List<SeedFeatures> popularFeatures = seedFeaturesMapper.selectPopularFeatures(0.5, limit * 2);
 
-            // 2. 转换为推荐结果
+            // 2. 转换为推荐结果并填充商品信息
             return popularFeatures.stream()
                     .map(features -> {
                         RecommendationVO vo = new RecommendationVO();
@@ -171,7 +175,10 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
                         vo.setRecommendationScore(features.getMarketHeat());
                         vo.setRecommendationType(3);
                         vo.setRecommendationTypeName("热门推荐");
-                        vo.setRecommendationReason("基于市场热度的热门商品推荐");
+                        vo.setRecommendationReason("基于市场热度商品推荐");
+                        vo.setRecommendationWeight(BigDecimal.valueOf(0.2));
+                        // 填充商品信息
+                        fillProductInfo(vo, features.getSeedId());
                         return vo;
                     })
                     .limit(limit)
@@ -529,6 +536,8 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
                     vo.setRecommendationReason(reason);
                     // 默认权重，避免空值引发持久化异常
                     vo.setRecommendationWeight(new BigDecimal("1.0"));
+                    // 填充商品信息
+                    fillProductInfo(vo, f.getSeedId());
                     return vo;
                 })
                 .collect(Collectors.toList());
@@ -625,5 +634,21 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
                 features.getUserRating().doubleValue() * 0.4 +
                 features.getQualityFeature().doubleValue() * 0.3;
         return new BigDecimal(Math.min(weight, 1.0));
+    }
+
+    /**
+     * 填充商品信息到推荐VO
+     */
+    private void fillProductInfo(RecommendationVO vo, Long seedId) {
+        try {
+            SeedInfo seedInfo = seedInfoMapper.selectById(seedId);
+            if (seedInfo != null) {
+                vo.setTargetName(seedInfo.getSeedName());
+                vo.setTargetImage(seedInfo.getImageUrl());
+                vo.setTargetPrice(seedInfo.getUnitPrice());
+            }
+        } catch (Exception e) {
+            log.warn("填充商品信息失败，seedId: {}", seedId, e);
+        }
     }
 }

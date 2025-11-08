@@ -1,25 +1,24 @@
 package com.linyi.cropseed.trace.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.*;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.linyi.cropseed.trace.entity.base.BaseEntity;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * 商品特征实体
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
 @Data
-@EqualsAndHashCode(callSuper = true)
 @TableName("seed_features")
-public class SeedFeatures extends BaseEntity {
+public class SeedFeatures {
 
     /**
      * 主键ID
@@ -116,4 +115,28 @@ public class SeedFeatures extends BaseEntity {
      */
     @TableField("feature_vector")
     private String featureVector;
+
+
+    @Schema(description = "创建时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @TableField(fill = FieldFill.INSERT)
+    private LocalDateTime createTime;
+
+    @Schema(description = "创建用户")
+    @TableField(fill = FieldFill.INSERT)
+    private String createBy;
+
+    @Schema(description = "修改时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updateTime;
+
+    @Schema(description = "修改用户")
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private String updateBy;
+
+    @Schema(description = "删除标记：0-未删除，1-已删除")
+    @TableLogic
+    @TableField(fill = FieldFill.INSERT)
+    private Integer deletedFlag;
 }

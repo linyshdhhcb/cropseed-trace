@@ -1,11 +1,11 @@
 package com.linyi.cropseed.trace.controller;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.linyi.cropseed.trace.common.page.PageQuery;
 import com.linyi.cropseed.trace.common.page.PageResult;
 import com.linyi.cropseed.trace.common.result.Result;
 import com.linyi.cropseed.trace.common.result.ResultCode;
 import com.linyi.cropseed.trace.mapper.SeedFeaturesMapper;
+import com.linyi.cropseed.trace.mapper.SeedInfoMapper;
 import com.linyi.cropseed.trace.service.SeedCategoryService;
 import com.linyi.cropseed.trace.service.SeedInfoService;
 import com.linyi.cropseed.trace.vo.SeedCategoryTreeVO;
@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class WxProductController {
 
+    private final SeedInfoMapper seedInfoMapper;
     private final SeedInfoService seedInfoService;
     private final SeedFeaturesMapper seedFeaturesMapper;
     private final SeedCategoryService seedCategoryService;
@@ -40,15 +41,14 @@ public class WxProductController {
     @Operation(summary = "商品详情")
     @GetMapping("/{id}")
     public Result<WxProductDetailVO> detail(@PathVariable Long id) {
-        SeedInfoVO seedInfoVO = seedInfoService.getSeedInfoById(id);
-        if (seedInfoVO == null) {
+        WxProductDetailVO detailVO = seedInfoMapper.selectDetailById(id);
+        if (detailVO == null) {
             return Result.<WxProductDetailVO>fail(ResultCode.SEED_NOT_EXIST);
         }
 
-        WxProductDetailVO detailVO = BeanUtil.copyProperties(seedInfoVO, WxProductDetailVO.class);
         detailVO.setFeatures(seedFeaturesMapper.selectBySeedId(id));
-        if (seedInfoVO.getImageUrl() != null) {
-            List<String> images = Arrays.stream(seedInfoVO.getImageUrl().split(","))
+        if (detailVO.getImageUrl() != null) {
+            List<String> images = Arrays.stream(detailVO.getImageUrl().split(","))
                     .map(String::trim)
                     .filter(str -> !str.isEmpty())
                     .collect(Collectors.toList());

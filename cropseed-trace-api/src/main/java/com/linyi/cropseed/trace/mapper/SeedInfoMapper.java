@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.linyi.cropseed.trace.entity.SeedInfo;
 import com.linyi.cropseed.trace.vo.SeedInfoVO;
+import com.linyi.cropseed.trace.vo.WxProductDetailVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -45,5 +46,5 @@ public interface SeedInfoMapper extends BaseMapper<SeedInfo> {
     /**
      * 联表查询详情
      */
-    SeedInfoVO selectDetailById(@Param("id") Long id);
+    WxProductDetailVO selectDetailById(@Param("id") Long id);
 }
