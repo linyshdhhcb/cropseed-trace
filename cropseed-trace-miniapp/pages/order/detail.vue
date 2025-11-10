@@ -1,0 +1,740 @@
+<template>
+    <view class="detail-page" v-if="order">
+        <!-- 订单状态卡片 -->
+        <view class="status-section" :class="'status-bg-' + order.orderStatus">
+            <view class="status-icon-wrapper">
+                <text class="status-icon-emoji">{{ statusIcon(order.orderStatus) }}</text>
+            </view>
+            <view class="status-info">
+                <text class="status-text">{{ statusText(order.orderStatus) }}</text>
+                <text class="status-desc">{{ statusDesc(order.orderStatus) }}</text>
+            </view>
+        </view>
+
+        <!-- 订单信息卡片 -->
+        <view class="info-card">
+            <view class="info-row">
+                <text class="info-label">订单号</text>
+                <text class="info-value">{{ order.orderNo }}</text>
+            </view>
+            <view class="info-row">
+                <text class="info-label">下单时间</text>
+                <text class="info-value">{{ formatTime(order.createTime) }}</text>
+            </view>
+            <view class="info-row" v-if="order.paymentTime">
+                <text class="info-label">支付时间</text>
+                <text class="info-value">{{ formatTime(order.paymentTime) }}</text>
+            </view>
+        </view>
+
+        <!-- 收货地址卡片 -->
+        <view class="address-card">
+            <view class="card-header">
+                <text class="card-title">收货信息</text>
+            </view>
+            <view class="address-content">
+                <view class="address-row">
+                    <text class="consignee">{{ order.consignee }}</text>
+                    <text class="phone">{{ order.phone }}</text>
+                </view>
+                <view class="address-detail">{{ order.address }}</view>
+            </view>
+        </view>
+
+        <!-- 商品明细卡片 -->
+        <view class="goods-card">
+            <view class="card-header">
+                <text class="card-title">商品明细</text>
+                <text class="goods-count" v-if="order.items || order.orderItems">
+                    共{{ (order.items || order.orderItems || []).length }}件商品</text>
+            </view>
+            <view class="goods-list">
+                <view v-for="(item, idx) in (order.items || order.orderItems || [])"
+                    :key="item.id || item.orderItemId || idx" class="goods-item">
+                    <image class="goods-image"
+                        :src="item.seedImage || item.imageUrl || '/static/no-image-available.png'" mode="aspectFill"
+                        @tap="previewImage(item.seedImage || item.imageUrl)"></image>
+                    <view class="goods-info">
+                        <view class="goods-name">{{ item.seedName }}</view>
+                        <view class="goods-specs">
+                            <text class="spec-item">数量：{{ item.quantity }}</text>
+                            <text class="spec-item">单价：￥{{ formatAmount(item.unitPrice) }}</text>
+                        </view>
+                    </view>
+                    <view class="goods-price">
+                        <text class="price-amount">￥{{ formatAmount(item.totalAmount || (item.unitPrice *
+                            item.quantity)) }}</text>
+                    </view>
+                </view>
+            </view>
+        </view>
+
+        <!-- 费用明细卡片 -->
+        <view class="summary-card">
+            <view class="card-header">
+                <text class="card-title">费用明细</text>
+            </view>
+            <view class="summary-list">
+                <view class="summary-row">
+                    <text class="summary-label">商品金额</text>
+                    <text class="summary-value">￥{{ formatAmount(order.totalAmount) }}</text>
+                </view>
+                <view class="summary-row" v-if="order.discountAmount && order.discountAmount > 0">
+                    <text class="summary-label">优惠金额</text>
+                    <text class="summary-value discount">-￥{{ formatAmount(order.discountAmount) }}</text>
+                </view>
+                <view class="summary-row">
+                    <text class="summary-label">运费</text>
+                    <text class="summary-value">￥{{ formatAmount(order.freightAmount) }}</text>
+                </view>
+                <view class="summary-divider"></view>
+                <view class="summary-row total-row">
+                    <text class="summary-label">应付金额</text>
+                    <text class="summary-value total-amount">￥{{ formatAmount(order.payableAmount) }}</text>
+                </view>
+                <view class="summary-row" v-if="order.paidAmount && order.paidAmount > 0">
+                    <text class="summary-label">实付金额</text>
+                    <text class="summary-value paid-amount">￥{{ formatAmount(order.paidAmount) }}</text>
+                </view>
+            </view>
+        </view>
+
+        <!-- 操作记录卡片 -->
+        <view class="operation-card" v-if="operationLogs && operationLogs.length > 0">
+            <view class="card-header">
+                <text class="card-title">操作记录</text>
+            </view>
+            <view class="log-list">
+                <view v-for="(log, idx) in operationLogs" :key="log.id || idx" class="log-item">
+                    <view class="log-dot"></view>
+                    <view class="log-content">
+                        <view class="log-header">
+                            <text class="log-operation">{{ log.operation }}</text>
+                            <text class="log-time">{{ formatTime(log.createTime) }}</text>
+                        </view>
+                        <view class="log-remark" v-if="log.remark">{{ log.remark }}</view>
+                    </view>
+                </view>
+            </view>
+        </view>
+
+        <!-- 底部安全距离 -->
+        <view class="safe-area-bottom"></view>
+
+        <!-- 底部操作栏 -->
+        <view class="footer" v-if="showActions">
+            <button v-if="order.orderStatus === 0" class="footer-btn secondary" @tap="cancel">取消订单</button>
+            <button v-if="order.orderStatus === 0" class="footer-btn primary" type="primary" @tap="pay">立即支付</button>
+            <button v-if="order.orderStatus === 3" class="footer-btn primary" type="primary"
+                @tap="confirmReceipt">确认收货</button>
+            <button v-if="order.orderStatus === 4 || order.orderStatus === 5" class="footer-btn secondary"
+                @tap="deleteOrder">删除订单</button>
+        </view>
+    </view>
+    <view v-else class="loading-state">
+        <text class="loading-text">加载中...</text>
+    </view>
+</template>
+
+<script setup>
+import { ref, computed } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
+import { useOrderStore } from '@/stores/order.js'
+import { cancelOrder, payOrder, confirmReceipt as confirmReceiptApi, deleteOrder as deleteOrderApi } from '@/api/order.js'
+
+const orderStore = useOrderStore()
+const order = ref(null)
+const operationLogs = ref([])
+let orderId = null
+
+onLoad(async (options) => {
+    orderId = Number(options?.id)
+    if (!orderId) {
+        uni.showToast({ title: '订单不存在', icon: 'none' })
+        setTimeout(() => uni.navigateBack(), 1200)
+        return
+    }
+    await loadDetail()
+})
+
+async function loadDetail() {
+    try {
+        const data = await orderStore.fetchOrderDetail(orderId)
+        if (!data) {
+            uni.showToast({ title: '订单不存在', icon: 'none' })
+            setTimeout(() => uni.navigateBack(), 1200)
+            return
+        }
+        order.value = {
+            ...data,
+            items: data?.items || data?.orderItems || []
+        }
+        operationLogs.value = data?.logs || data?.operationLogs || []
+    } catch (error) {
+        console.error('获取订单详情失败', error)
+        uni.showToast({ title: '获取订单详情失败', icon: 'none' })
+    }
+}
+
+function formatTime(time) {
+    if (!time) return ''
+    if (typeof time === 'string') {
+        const date = new Date(time)
+        if (isNaN(date.getTime())) return time
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        const hours = String(date.getHours()).padStart(2, '0')
+        const minutes = String(date.getMinutes()).padStart(2, '0')
+        return `${year}-${month}-${day} ${hours}:${minutes}`
+    }
+    return time
+}
+
+function formatAmount(amount) {
+    if (amount == null || amount === undefined) return '0.00'
+    if (typeof amount === 'number') return amount.toFixed(2)
+    if (typeof amount === 'string') return parseFloat(amount || '0').toFixed(2)
+    return '0.00'
+}
+
+function statusText(status) {
+    const map = {
+        0: '待付款',
+        1: '待审核',
+        2: '待发货',
+        3: '已发货',
+        4: '已完成',
+        5: '已取消',
+        6: '退款中'
+    }
+    return map[status] || '未知状态'
+}
+
+function statusDesc(status) {
+    const map = {
+        0: '请在30分钟内完成支付',
+        1: '订单审核中，请耐心等待',
+        2: '商品准备中，请耐心等待',
+        3: '商品已发出，请注意查收',
+        4: '订单已完成，感谢您的购买',
+        5: '订单已取消',
+        6: '退款申请处理中'
+    }
+    return map[status] || ''
+}
+
+function statusIcon(status) {
+    const map = {
+        0: '💰',
+        1: '⏳',
+        2: '📦',
+        3: '🚚',
+        4: '✅',
+        5: '❌',
+        6: '🔄'
+    }
+    return map[status] || '📋'
+}
+
+const showActions = computed(() => {
+    if (!order.value) return false
+    const status = order.value.orderStatus
+    return status === 0 || status === 3 || status === 4 || status === 5
+})
+
+function previewImage(url) {
+    if (!url) return
+    const images = (order.value.items || order.value.orderItems || [])
+        .map(item => item.seedImage || item.imageUrl)
+        .filter(Boolean)
+    if (images.length > 0) {
+        uni.previewImage({
+            urls: images,
+            current: url
+        })
+    }
+}
+
+async function cancel() {
+    const confirmed = await new Promise((resolve) => {
+        uni.showModal({ title: '提示', content: '确定取消该订单？', success: (res) => resolve(res.confirm) })
+    })
+    if (!confirmed) return
+    try {
+        await cancelOrder(orderId, '用户取消')
+        uni.showToast({ title: '已取消', icon: 'success' })
+        await loadDetail()
+    } catch (error) {
+        uni.showToast({ title: '取消失败', icon: 'none' })
+    }
+}
+
+async function pay() {
+    try {
+        await payOrder(orderId, 1)
+        uni.showToast({ title: '支付成功', icon: 'success' })
+        setTimeout(() => {
+            loadDetail()
+        }, 1000)
+    } catch (error) {
+        uni.showToast({ title: error.message || '支付失败', icon: 'none' })
+    }
+}
+
+async function confirmReceipt() {
+    const confirmed = await new Promise((resolve) => {
+        uni.showModal({
+            title: '确认收货',
+            content: '确认已收到商品？',
+            success: (res) => resolve(res.confirm)
+        })
+    })
+    if (!confirmed) return
+
+    try {
+        await confirmReceiptApi(orderId)
+        uni.showToast({ title: '确认收货成功', icon: 'success' })
+        setTimeout(() => {
+            loadDetail()
+        }, 1000)
+    } catch (error) {
+        uni.showToast({ title: error.message || '操作失败', icon: 'none' })
+    }
+}
+
+async function deleteOrder() {
+    const confirmed = await new Promise((resolve) => {
+        uni.showModal({
+            title: '删除订单',
+            content: '确定删除该订单？',
+            success: (res) => resolve(res.confirm)
+        })
+    })
+    if (!confirmed) return
+
+    try {
+        await deleteOrderApi(orderId)
+        uni.showToast({ title: '删除成功', icon: 'success' })
+        setTimeout(() => {
+            uni.navigateBack()
+        }, 1000)
+    } catch (error) {
+        uni.showToast({ title: error.message || '删除失败', icon: 'none' })
+    }
+}
+</script>
+
+<style scoped>
+.detail-page {
+    padding-bottom: 180rpx;
+    background: #f5f5f5;
+    min-height: 100vh;
+}
+
+/* 订单状态区域 */
+.status-section {
+    padding: 60rpx 32rpx 40rpx;
+    display: flex;
+    align-items: center;
+    gap: 24rpx;
+}
+
+.status-bg-0 {
+    background: linear-gradient(135deg, #ff9800 0%, #ffb74d 100%);
+}
+
+.status-bg-1 {
+    background: linear-gradient(135deg, #2196f3 0%, #64b5f6 100%);
+}
+
+.status-bg-2 {
+    background: linear-gradient(135deg, #ffc107 0%, #ffd54f 100%);
+}
+
+.status-bg-3 {
+    background: linear-gradient(135deg, #03a9f4 0%, #4fc3f7 100%);
+}
+
+.status-bg-4 {
+    background: linear-gradient(135deg, #2b9939 0%, #53bf68 100%);
+}
+
+.status-bg-5 {
+    background: linear-gradient(135deg, #9e9e9e 0%, #bdbdbd 100%);
+}
+
+.status-bg-6 {
+    background: linear-gradient(135deg, #e91e63 0%, #f06292 100%);
+}
+
+.status-icon-wrapper {
+    width: 120rpx;
+    height: 120rpx;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.status-icon-emoji {
+    font-size: 60rpx;
+    line-height: 1;
+}
+
+.status-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12rpx;
+}
+
+.status-text {
+    font-size: 40rpx;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.status-desc {
+    font-size: 26rpx;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* 通用卡片样式 */
+.info-card,
+.address-card,
+.goods-card,
+.summary-card,
+.operation-card {
+    margin: 24rpx;
+    background: #ffffff;
+    border-radius: 20rpx;
+    padding: 0;
+    overflow: hidden;
+    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24rpx;
+    border-bottom: 1rpx solid #f0f0f0;
+}
+
+.card-title {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #1a1a1a;
+    position: relative;
+    padding-left: 16rpx;
+}
+
+.card-title::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6rpx;
+    height: 28rpx;
+    background: linear-gradient(180deg, #2b9939, #53bf68);
+    border-radius: 3rpx;
+}
+
+/* 订单信息卡片 */
+.info-card {
+    padding: 24rpx;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16rpx 0;
+    border-bottom: 1rpx solid #f5f5f5;
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-size: 28rpx;
+    color: #666;
+}
+
+.info-value {
+    font-size: 28rpx;
+    color: #1a1a1a;
+    font-weight: 500;
+}
+
+/* 地址卡片 */
+.address-content {
+    padding: 24rpx;
+}
+
+.address-row {
+    display: flex;
+    align-items: center;
+    gap: 24rpx;
+    margin-bottom: 16rpx;
+}
+
+.consignee {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.phone {
+    font-size: 28rpx;
+    color: #666;
+}
+
+.address-detail {
+    font-size: 28rpx;
+    color: #555;
+    line-height: 1.8;
+}
+
+/* 商品卡片 */
+.goods-count {
+    font-size: 24rpx;
+    color: #999;
+}
+
+.goods-list {
+    padding: 0 24rpx 24rpx;
+}
+
+.goods-item {
+    display: flex;
+    align-items: center;
+    padding: 24rpx 0;
+    border-bottom: 1rpx solid #f5f5f5;
+}
+
+.goods-item:last-child {
+    border-bottom: none;
+}
+
+.goods-image {
+    width: 160rpx;
+    height: 160rpx;
+    border-radius: 12rpx;
+    background: #f5f5f5;
+    flex-shrink: 0;
+}
+
+.goods-info {
+    flex: 1;
+    margin-left: 24rpx;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 160rpx;
+}
+
+.goods-name {
+    font-size: 30rpx;
+    color: #1a1a1a;
+    font-weight: 500;
+    line-height: 1.5;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+}
+
+.goods-specs {
+    display: flex;
+    flex-direction: column;
+    gap: 8rpx;
+    margin-top: 16rpx;
+}
+
+.spec-item {
+    font-size: 24rpx;
+    color: #999;
+}
+
+.goods-price {
+    margin-left: 24rpx;
+    text-align: right;
+}
+
+.price-amount {
+    font-size: 32rpx;
+    color: #e73a32;
+    font-weight: 700;
+}
+
+/* 费用明细卡片 */
+.summary-list {
+    padding: 0 24rpx 24rpx;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16rpx 0;
+    font-size: 28rpx;
+}
+
+.summary-label {
+    color: #666;
+}
+
+.summary-value {
+    color: #1a1a1a;
+    font-weight: 500;
+}
+
+.summary-value.discount {
+    color: #2b9939;
+}
+
+.summary-divider {
+    height: 1rpx;
+    background: #f0f0f0;
+    margin: 16rpx 0;
+}
+
+.total-row {
+    padding-top: 24rpx;
+    border-top: 1rpx solid #f0f0f0;
+}
+
+.total-amount {
+    font-size: 36rpx;
+    color: #e73a32;
+    font-weight: 700;
+}
+
+.paid-amount {
+    color: #2b9939;
+    font-weight: 600;
+}
+
+/* 操作记录卡片 */
+.log-list {
+    padding: 0 24rpx 24rpx;
+}
+
+.log-item {
+    display: flex;
+    padding: 20rpx 0;
+    border-left: 2rpx solid #f0f0f0;
+    margin-left: 16rpx;
+    padding-left: 32rpx;
+    position: relative;
+}
+
+.log-item:last-child {
+    border-left: none;
+}
+
+.log-dot {
+    position: absolute;
+    left: -8rpx;
+    top: 28rpx;
+    width: 16rpx;
+    height: 16rpx;
+    border-radius: 50%;
+    background: #2b9939;
+    border: 3rpx solid #fff;
+    box-shadow: 0 0 0 2rpx #2b9939;
+}
+
+.log-content {
+    flex: 1;
+}
+
+.log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8rpx;
+}
+
+.log-operation {
+    font-size: 28rpx;
+    color: #1a1a1a;
+    font-weight: 500;
+}
+
+.log-time {
+    font-size: 24rpx;
+    color: #999;
+}
+
+.log-remark {
+    font-size: 26rpx;
+    color: #666;
+    line-height: 1.6;
+    margin-top: 8rpx;
+}
+
+/* 底部安全距离 */
+.safe-area-bottom {
+    height: 140rpx;
+}
+
+/* 底部操作栏 */
+.footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 20rpx 24rpx;
+    padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+    background: #ffffff;
+    box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.08);
+    z-index: 100;
+    gap: 16rpx;
+}
+
+.footer-btn {
+    min-width: 160rpx;
+    height: 80rpx;
+    line-height: 80rpx;
+    border-radius: 40rpx;
+    font-size: 28rpx;
+    font-weight: 600;
+    border: none;
+    padding: 0 32rpx;
+}
+
+.footer-btn.secondary {
+    background: #f5f5f5;
+    color: #666;
+}
+
+.footer-btn.primary {
+    background: linear-gradient(90deg, #2b9939, #53bf68);
+    color: #fff;
+}
+
+/* 加载状态 */
+.loading-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 200rpx 0;
+}
+
+.loading-text {
+    font-size: 28rpx;
+    color: #999;
+}
+</style>
