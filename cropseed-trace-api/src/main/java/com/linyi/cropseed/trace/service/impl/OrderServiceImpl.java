@@ -97,6 +97,13 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo> im
             throw new BusinessException("购物车商品不存在");
         }
 
+        // 验证购物车商品是否属于当前用户
+        for (Cart cartItem : cartItems) {
+            if (!cartItem.getUserId().equals(userId)) {
+                throw new BusinessException("购物车商品不属于当前用户");
+            }
+        }
+
         // 创建订单
         OrderInfo order = new OrderInfo();
         order.setOrderNo(IdGenerator.generateOrderNo());
@@ -140,8 +147,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo> im
             orderItemMapper.insert(orderItem);
         }
 
-        // 删除购物车商品
-        cartMapper.deleteBatchIds(cartIds);
+        // 删除购物车商品（逻辑删除）
+        for (Long cartId : cartIds) {
+            Cart cartItem = cartMapper.selectById(cartId);
+            if (cartItem != null && cartItem.getUserId().equals(userId)) {
+                cartItem.setDeletedFlag(1);
+                cartMapper.updateById(cartItem);
+            }
+        }
 
         // 记录操作日志
         logOrderOperation(order.getId(), "创建订单", null, OrderConstant.ORDER_STATUS_UNPAID, "用户创建订单");
@@ -178,7 +191,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo> im
             if (seedInfo == null) {
                 throw new BusinessException("商品不存在");
             }
-            BigDecimal itemAmount = seedInfo.getUnitPrice().multiply(new BigDecimal(goodsItem.getQuantity()));
+            // 使用传入的价格，如果没有则使用商品表中的价格
+            BigDecimal unitPrice = goodsItem.getUnitPrice() != null
+                    && goodsItem.getUnitPrice().compareTo(BigDecimal.ZERO) > 0
+                            ? goodsItem.getUnitPrice()
+                            : seedInfo.getUnitPrice();
+            BigDecimal itemAmount = unitPrice.multiply(new BigDecimal(goodsItem.getQuantity()));
             totalAmount = totalAmount.add(itemAmount);
         }
 
@@ -188,15 +206,24 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo> im
 
         for (OrderSubmitGoodsDTO goodsItem : goodsItems) {
             SeedInfo seedInfo = seedInfoMapper.selectById(goodsItem.getSeedId());
+            if (seedInfo == null) {
+                throw new BusinessException("商品不存在");
+            }
+
+            // 使用传入的价格，如果没有则使用商品表中的价格
+            BigDecimal unitPrice = goodsItem.getUnitPrice() != null
+                    && goodsItem.getUnitPrice().compareTo(BigDecimal.ZERO) > 0
+                            ? goodsItem.getUnitPrice()
+                            : seedInfo.getUnitPrice();
 
             OrderItem orderItem = new OrderItem();
             orderItem.setOrderId(order.getId());
             orderItem.setSeedId(seedInfo.getId());
             orderItem.setSeedName(seedInfo.getSeedName());
             orderItem.setSeedImage(seedInfo.getImageUrl());
-            orderItem.setUnitPrice(seedInfo.getUnitPrice());
+            orderItem.setUnitPrice(unitPrice);
             orderItem.setQuantity(goodsItem.getQuantity());
-            orderItem.setTotalAmount(seedInfo.getUnitPrice().multiply(new BigDecimal(goodsItem.getQuantity())));
+            orderItem.setTotalAmount(unitPrice.multiply(new BigDecimal(goodsItem.getQuantity())));
             orderItemMapper.insert(orderItem);
         }
 
@@ -329,22 +356,29 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo> im
     @Override
     public OrderDetailVO getOrderDetail(Long orderId) {
         OrderInfo order = this.getById(orderId);
-        if (order == null) {
+        if (order == null || order.getDeletedFlag() == 1) {
             throw new BusinessException(ResultCode.ORDER_NOT_EXIST);
         }
 
         OrderDetailVO orderDetail = BeanUtil.copyProperties(order, OrderDetailVO.class);
 
         // 查询订单商品明细
-        LambdaQueryWrapper<OrderItem> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(OrderItem::getOrderId, orderId);
-        List<OrderItem> orderItems = orderItemMapper.selectList(wrapper);
+        LambdaQueryWrapper<OrderItem> itemWrapper = new LambdaQueryWrapper<>();
+        itemWrapper.eq(OrderItem::getOrderId, orderId);
+        List<OrderItem> orderItems = orderItemMapper.selectList(itemWrapper);
 
         List<OrderItemVO> orderItemVOs = orderItems.stream()
                 .map(item -> BeanUtil.copyProperties(item, OrderItemVO.class))
                 .collect(Collectors.toList());
 
         orderDetail.setOrderItems(orderItemVOs);
+
+        // 查询订单操作日志
+        LambdaQueryWrapper<OrderOperationLog> logWrapper = new LambdaQueryWrapper<>();
+        logWrapper.eq(OrderOperationLog::getOrderId, orderId)
+                .orderByDesc(OrderOperationLog::getCreateTime);
+        List<OrderOperationLog> operationLogs = orderOperationLogMapper.selectList(logWrapper);
+        orderDetail.setOperationLogs(operationLogs);
 
         return orderDetail;
     }

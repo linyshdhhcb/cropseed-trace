@@ -177,7 +177,9 @@ public class WxOrderController {
         Page<OrderInfo> page = pageQuery.toMpPageWithOrder();
         LambdaQueryWrapper<OrderInfo> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(OrderInfo::getUserId, userId)
-                .eq(orderStatus != null, OrderInfo::getOrderStatus, orderStatus);
+                .eq(OrderInfo::getDeletedFlag, 0)
+                .eq(orderStatus != null, OrderInfo::getOrderStatus, orderStatus)
+                .orderByDesc(OrderInfo::getCreateTime);
         return orderInfoMapper.selectPage(page, wrapper);
     }
 

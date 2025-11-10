@@ -73,4 +73,7 @@ public class OrderDetailVO {
 
     @Schema(description = "订单商品明细")
     private List<OrderItemVO> orderItems;
+
+    @Schema(description = "订单操作日志")
+    private List<com.linyi.cropseed.trace.entity.OrderOperationLog> operationLogs;
 }

@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * 小程序下单商品明细 DTO
@@ -25,4 +26,7 @@ public class OrderSubmitGoodsDTO implements Serializable {
     @NotNull(message = "购买数量不能为空")
     @Min(value = 1, message = "购买数量至少为1")
     private Integer quantity;
+
+    @Schema(description = "单价（可选，如果不传则使用商品表中的价格）")
+    private BigDecimal unitPrice;
 }
