@@ -44,4 +44,7 @@ public class SeedCategoryTreeVO {
 
     @Schema(description = "子品类列表")
     private List<SeedCategoryTreeVO> children;
+
+    @Schema(description = "该分类下的商品数量")
+    private Integer productCount;
 }

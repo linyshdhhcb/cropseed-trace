@@ -7,6 +7,7 @@ import com.linyi.cropseed.trace.common.exception.BusinessException;
 import com.linyi.cropseed.trace.common.result.ResultCode;
 import com.linyi.cropseed.trace.entity.SeedCategory;
 import com.linyi.cropseed.trace.mapper.SeedCategoryMapper;
+import com.linyi.cropseed.trace.mapper.SeedInfoMapper;
 import com.linyi.cropseed.trace.service.SeedCategoryService;
 import com.linyi.cropseed.trace.vo.SeedCategoryTreeVO;
 import com.linyi.cropseed.trace.vo.SeedCategoryVO;
@@ -32,6 +33,8 @@ import org.springframework.beans.BeanUtils;
 @RequiredArgsConstructor
 public class SeedCategoryServiceImpl extends ServiceImpl<SeedCategoryMapper, SeedCategory>
         implements SeedCategoryService {
+
+    private final SeedInfoMapper seedInfoMapper;
 
     @Override
     public List<SeedCategoryTreeVO> getCategoryTree() {
@@ -174,6 +177,14 @@ public class SeedCategoryServiceImpl extends ServiceImpl<SeedCategoryMapper, See
         treeVO.setDescription(category.getDescription());
         treeVO.setSort(category.getSort());
         treeVO.setStatus(category.getStatus());
+        
+        // 统计该分类下的商品数量（只统计上架的商品）
+        int productCount = seedInfoMapper.selectByCategoryId(category.getId())
+                .stream()
+                .mapToInt(seedInfo -> seedInfo.getStatus() == 1 ? 1 : 0)
+                .sum();
+        treeVO.setProductCount(productCount);
+        
         return treeVO;
     }
 
