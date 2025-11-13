@@ -18,7 +18,7 @@
                 <view class="sub-list">
                     <view v-for="item in subCategories" :key="item.id" class="sub-item" @tap="goProductList(item)">
                         <view class="sub-name">{{ item.categoryName }}</view>
-                        <view class="sub-count">包含 {{ item.children?.length || 0 }} 个品种</view>
+                        <view class="sub-count">包含 {{ item.productCount || 0 }} 个品种</view>
                     </view>
                 </view>
 
@@ -45,9 +45,15 @@ onMounted(() => {
 async function loadCategory() {
     try {
         const data = await getCategoryTree()
+        console.log('分类页面获取的数据:', data)
         categories.value = data || []
         if (categories.value.length) {
             activeId.value = categories.value[0].id
+            console.log('第一个分类的子分类:', categories.value[0].children)
+            console.log('第一个分类的商品数量:', categories.value[0].productCount)
+            if (categories.value[0].children && categories.value[0].children.length > 0) {
+                console.log('第一个子分类的商品数量:', categories.value[0].children[0].productCount)
+            }
         }
     } catch (error) {
         console.error('获取分类失败', error)
