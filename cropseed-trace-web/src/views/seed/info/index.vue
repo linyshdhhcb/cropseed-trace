@@ -136,14 +136,28 @@
                     </el-col>
                 </el-row>
                 <el-row :gutter="20">
-                    <el-col :span="12">
+                    <el-col :span="24">
                         <el-form-item label="特性描述" prop="characteristics">
-                            <el-input v-model="formData.characteristics" placeholder="请输入特性描述" />
+                            <el-input 
+                                v-model="formData.characteristics" 
+                                type="textarea" 
+                                :rows="4"
+                                :maxlength="2000"
+                                show-word-limit
+                                placeholder="请输入特性描述，最多2000字符" />
                         </el-form-item>
                     </el-col>
-                    <el-col :span="12">
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="24">
                         <el-form-item label="规格参数" prop="specifications">
-                            <el-input v-model="formData.specifications" placeholder="请输入规格参数" />
+                            <el-input 
+                                v-model="formData.specifications" 
+                                type="textarea" 
+                                :rows="4"
+                                :maxlength="2000"
+                                show-word-limit
+                                placeholder="请输入规格参数，最多2000字符" />
                         </el-form-item>
                     </el-col>
                 </el-row>
@@ -173,22 +187,40 @@
         </el-dialog>
 
         <!-- 查看详情对话框 -->
-        <el-dialog v-model="viewDialogVisible" title="种子详情" width="800px">
+        <el-dialog v-model="viewDialogVisible" title="种子详情" width="900px">
             <div v-if="seedDetail" class="seed-detail">
                 <el-descriptions :column="2" border>
                     <el-descriptions-item label="种子名称">{{ seedDetail.seedName }}</el-descriptions-item>
                     <el-descriptions-item label="种子编码">{{ seedDetail.seedCode }}</el-descriptions-item>
                     <el-descriptions-item label="品类">{{ seedDetail.categoryName }}</el-descriptions-item>
-                    <el-descriptions-item label="品种">{{ seedDetail.variety }}</el-descriptions-item>
-                    <el-descriptions-item label="产地">{{ seedDetail.originPlace }}</el-descriptions-item>
-                    <el-descriptions-item label="单价">{{ seedDetail.unitPrice }}</el-descriptions-item>
-                    <el-descriptions-item label="特性描述">{{ seedDetail.characteristics }}</el-descriptions-item>
-                    <el-descriptions-item label="规格参数">{{ seedDetail.specifications }}</el-descriptions-item>
-                    <el-descriptions-item label="图片URL">{{ seedDetail.imageUrl }}</el-descriptions-item>
+                    <el-descriptions-item label="品种">{{ seedDetail.variety || '-' }}</el-descriptions-item>
+                    <el-descriptions-item label="产地">{{ seedDetail.originPlace || '-' }}</el-descriptions-item>
+                    <el-descriptions-item label="单价">{{ seedDetail.unitPrice ? `￥${seedDetail.unitPrice}` : '-' }}</el-descriptions-item>
                     <el-descriptions-item label="状态">
                         <el-tag :type="seedDetail.status === 1 ? 'success' : 'danger'">
                             {{ seedDetail.status === 1 ? '上架' : '下架' }}
                         </el-tag>
+                    </el-descriptions-item>
+                    <el-descriptions-item label="种子图片">
+                        <div v-if="seedDetail.imageUrl" class="image-preview">
+                            <el-image 
+                                :src="seedDetail.imageUrl" 
+                                style="width: 120px; height: 120px; border-radius: 8px;"
+                                fit="cover"
+                                :preview-src-list="[seedDetail.imageUrl]"
+                                preview-teleported />
+                        </div>
+                        <span v-else class="text-gray-400">暂无图片</span>
+                    </el-descriptions-item>
+                    <el-descriptions-item label="特性描述" :span="2">
+                        <div class="text-content">
+                            {{ seedDetail.characteristics || '暂无描述' }}
+                        </div>
+                    </el-descriptions-item>
+                    <el-descriptions-item label="规格参数" :span="2">
+                        <div class="text-content">
+                            {{ seedDetail.specifications || '暂无参数' }}
+                        </div>
                     </el-descriptions-item>
                     <el-descriptions-item label="创建时间">{{ seedDetail.createTime }}</el-descriptions-item>
                     <el-descriptions-item label="更新时间">{{ seedDetail.updateTime }}</el-descriptions-item>
@@ -526,6 +558,54 @@ onMounted(() => {
 .seed-detail {
     .el-descriptions {
         margin-bottom: 20px;
+    }
+
+    .image-preview {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        
+        .el-image {
+            border: 1px solid #dcdfe6;
+            cursor: pointer;
+            transition: all 0.3s;
+            
+            &:hover {
+                border-color: #409eff;
+                transform: scale(1.05);
+            }
+        }
+    }
+
+    .text-content {
+        max-height: 120px;
+        overflow-y: auto;
+        padding: 8px 12px;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 14px;
+        color: #606266;
+        
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        &::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        
+        &::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+            
+            &:hover {
+                background: #a8a8a8;
+            }
+        }
     }
 }
 
