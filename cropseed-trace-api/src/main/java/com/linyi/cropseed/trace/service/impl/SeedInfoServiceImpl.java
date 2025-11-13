@@ -34,7 +34,8 @@ public class SeedInfoServiceImpl implements SeedInfoService {
     @Override
     public PageResult<SeedInfoVO> pageSeedInfos(PageQuery pageQuery, String seedName, String variety, Long categoryId,
             Integer status) {
-        Page<SeedInfoVO> voPage = new Page<>(pageQuery.getPageNum(), pageQuery.getPageSize());
+        // 使用PageQuery的排序功能
+        Page<SeedInfoVO> voPage = pageQuery.toMpPageWithOrder();
         voPage = seedInfoMapper.selectPageVo(voPage, seedName, variety, categoryId, status);
         return PageResult.of(voPage, voPage.getRecords());
     }
