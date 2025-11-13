@@ -26,7 +26,7 @@
                 <view class="category-grid">
                     <view v-for="item in topCategories" :key="item.id" class="category-item" @tap="goCategory(item)">
                         <view class="category-name">{{ item.categoryName }}</view>
-                        <text class="category-count">{{ item.children?.length || 0 }} 个品类</text>
+                        <text class="category-count">{{ item.productCount || 0 }} 个品种</text>
                     </view>
                 </view>
             </view>
@@ -79,7 +79,11 @@ onMounted(() => {
 async function loadCategories() {
     try {
         const data = await getCategoryTree()
+        console.log('首页获取的分类数据:', data)
         categoryTree.value = data || []
+        if (categoryTree.value.length) {
+            console.log('首页第一个分类的子分类:', categoryTree.value[0].children)
+        }
     } catch (error) {
         console.error('获取分类失败', error)
     }
