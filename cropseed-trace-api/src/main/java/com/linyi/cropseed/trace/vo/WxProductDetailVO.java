@@ -16,6 +16,8 @@ public class WxProductDetailVO extends SeedInfoVO {
     private SeedFeatures features;
 
     private List<String> imageList;
-
-    private String specifications;
+    
+    private Integer totalStock;
+    
+    private Integer availableStock;
 }

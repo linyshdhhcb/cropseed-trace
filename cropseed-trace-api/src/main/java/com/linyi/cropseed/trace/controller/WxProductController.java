@@ -6,6 +6,7 @@ import com.linyi.cropseed.trace.common.result.Result;
 import com.linyi.cropseed.trace.common.result.ResultCode;
 import com.linyi.cropseed.trace.mapper.SeedFeaturesMapper;
 import com.linyi.cropseed.trace.mapper.SeedInfoMapper;
+import com.linyi.cropseed.trace.service.InventoryService;
 import com.linyi.cropseed.trace.service.SeedCategoryService;
 import com.linyi.cropseed.trace.service.SeedInfoService;
 import com.linyi.cropseed.trace.vo.SeedCategoryTreeVO;
@@ -37,6 +38,7 @@ public class WxProductController {
     private final SeedInfoService seedInfoService;
     private final SeedFeaturesMapper seedFeaturesMapper;
     private final SeedCategoryService seedCategoryService;
+    private final InventoryService inventoryService;
 
     @Operation(summary = "商品详情")
     @GetMapping("/{id}")
@@ -47,6 +49,12 @@ public class WxProductController {
         }
 
         detailVO.setFeatures(seedFeaturesMapper.selectBySeedId(id));
+        
+        // 设置库存信息
+        Integer totalStock = inventoryService.getTotalInventoryBySeedId(id);
+        detailVO.setTotalStock(totalStock != null ? totalStock : 0);
+        detailVO.setAvailableStock(totalStock != null ? totalStock : 0);
+        
         if (detailVO.getImageUrl() != null) {
             List<String> images = Arrays.stream(detailVO.getImageUrl().split(","))
                     .map(String::trim)
@@ -71,8 +79,24 @@ public class WxProductController {
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String sortField,
             @RequestParam(required = false) String sortOrder) {
+        
+        // 设置排序参数
+        if (sortField != null && !sortField.isEmpty()) {
+            pageQuery.setOrderBy(sortField);
+        }
+        if (sortOrder != null && !sortOrder.isEmpty()) {
+            pageQuery.setSortOrder(sortOrder);
+        }
+        
         // 小程序只查询上架的商品
         PageResult<SeedInfoVO> result = seedInfoService.pageSeedInfos(pageQuery, seedName, null, categoryId, 1);
+        
+        // 为每个商品添加库存信息
+        for (SeedInfoVO seedInfo : result.getList()) {
+            Integer totalStock = inventoryService.getTotalInventoryBySeedId(seedInfo.getId());
+            seedInfo.setTotalStock(totalStock != null ? totalStock : 0);
+        }
+        
         return Result.success(result);
     }
 }
