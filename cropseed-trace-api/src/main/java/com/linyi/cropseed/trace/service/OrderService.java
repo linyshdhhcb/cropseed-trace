@@ -88,4 +88,9 @@ public interface OrderService extends IService<OrderInfo> {
      * 记录订单操作日志
      */
     void logOrderOperation(Long orderId, String operation, Integer fromStatus, Integer toStatus, String remark);
+
+    /**
+     * 只查询订单状态相关字段（用于支付状态轮询，减少数据库查询负担）
+     */
+    OrderInfo getOrderStatusById(Long orderId);
 }

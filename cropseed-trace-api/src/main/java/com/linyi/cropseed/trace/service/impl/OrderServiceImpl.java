@@ -22,8 +22,12 @@ import com.linyi.cropseed.trace.vo.OrderItemVO;
 import com.linyi.cropseed.trace.vo.OrderVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.concurrent.TimeUnit;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -46,6 +50,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo> im
     private final CartMapper cartMapper;
     private final SeedInfoMapper seedInfoMapper;
     private final InventoryService inventoryService;
+    private final RedissonClient redissonClient;
 
     @Override
     public PageResult<OrderVO> pageOrders(PageQuery pageQuery, Long userId, Integer orderType, Integer orderStatus,
@@ -118,13 +123,21 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo> im
         order.setFreightAmount(BigDecimal.ZERO);
         order.setPaidAmount(BigDecimal.ZERO);
 
-        // 计算订单金额
+        // 检查库存并计算订单金额
         BigDecimal totalAmount = BigDecimal.ZERO;
         for (Cart cartItem : cartItems) {
             SeedInfo seedInfo = seedInfoMapper.selectById(cartItem.getSeedId());
             if (seedInfo == null) {
                 throw new BusinessException("商品不存在");
             }
+            
+            // 检查库存是否充足
+            Integer availableStock = inventoryService.getTotalInventoryBySeedId(cartItem.getSeedId());
+            if (availableStock == null || availableStock < cartItem.getQuantity()) {
+                throw new BusinessException("商品【" + seedInfo.getSeedName() + "】库存不足，当前库存：" + 
+                    (availableStock != null ? availableStock : 0) + "件，需要：" + cartItem.getQuantity() + "件");
+            }
+            
             totalAmount = totalAmount.add(seedInfo.getUnitPrice().multiply(new BigDecimal(cartItem.getQuantity())));
         }
 
@@ -184,6 +197,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo> im
         order.setFreightAmount(BigDecimal.ZERO);
         order.setPaidAmount(BigDecimal.ZERO);
 
+        // 检查库存并计算订单金额
         BigDecimal totalAmount = BigDecimal.ZERO;
 
         for (OrderSubmitGoodsDTO goodsItem : goodsItems) {
@@ -191,6 +205,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo> im
             if (seedInfo == null) {
                 throw new BusinessException("商品不存在");
             }
+            
+            // 检查库存是否充足
+            Integer availableStock = inventoryService.getTotalInventoryBySeedId(goodsItem.getSeedId());
+            if (availableStock == null || availableStock < goodsItem.getQuantity()) {
+                throw new BusinessException("商品【" + seedInfo.getSeedName() + "】库存不足，当前库存：" + 
+                    (availableStock != null ? availableStock : 0) + "件，需要：" + goodsItem.getQuantity() + "件");
+            }
+            
             // 使用传入的价格，如果没有则使用商品表中的价格
             BigDecimal unitPrice = goodsItem.getUnitPrice() != null
                     && goodsItem.getUnitPrice().compareTo(BigDecimal.ZERO) > 0
@@ -240,8 +262,46 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo> im
             throw new BusinessException(ResultCode.ORDER_NOT_EXIST);
         }
 
-        if (!OrderConstant.ORDER_STATUS_UNPAID.equals(order.getOrderStatus())) {
+        // 只有未支付、已支付待审核、待发货状态的订单可以取消
+        if (!OrderConstant.ORDER_STATUS_UNPAID.equals(order.getOrderStatus()) &&
+            !OrderConstant.ORDER_STATUS_PENDING.equals(order.getOrderStatus()) &&
+            !OrderConstant.ORDER_STATUS_TO_SHIP.equals(order.getOrderStatus())) {
             throw new BusinessException(ResultCode.ORDER_STATUS_ERROR);
+        }
+
+        // 如果订单已支付，需要回滚库存
+        if (OrderConstant.ORDER_STATUS_PENDING.equals(order.getOrderStatus()) ||
+            OrderConstant.ORDER_STATUS_TO_SHIP.equals(order.getOrderStatus())) {
+            
+            // 获取订单商品明细
+            LambdaQueryWrapper<OrderItem> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(OrderItem::getOrderId, orderId);
+            List<OrderItem> orderItems = orderItemMapper.selectList(wrapper);
+
+            // 回滚库存
+            for (OrderItem item : orderItems) {
+                if (item.getBatchId() != null) {
+                    try {
+                        // 找到对应的仓库（默认使用第一个仓库，实际应该记录出库时的仓库）
+                        List<Inventory> inventories = inventoryService.getAvailableInventoryBySeedId(item.getSeedId());
+                        if (!inventories.isEmpty()) {
+                            Inventory inventory = inventories.get(0); // 简化处理，使用第一个仓库
+                            
+                            // 回滚库存
+                            inventoryService.inbound(
+                                item.getSeedId(),
+                                item.getBatchId(),
+                                inventory.getWarehouseId(),
+                                item.getQuantity(),
+                                "订单取消回滚库存"
+                            );
+                        }
+                    } catch (Exception e) {
+                        log.error("回滚库存失败：订单ID={}, 商品ID={}, 错误信息={}", orderId, item.getSeedId(), e.getMessage());
+                        // 库存回滚失败不影响订单取消，只记录日志
+                    }
+                }
+            }
         }
 
         updateOrderStatus(orderId, OrderConstant.ORDER_STATUS_CANCELLED, "取消订单", reason);
@@ -250,25 +310,114 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo> im
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void payOrder(Long orderId, Integer paymentMethod) {
-        OrderInfo order = this.getById(orderId);
-        if (order == null) {
-            throw new BusinessException(ResultCode.ORDER_NOT_EXIST);
+        // 使用分布式锁防止重复支付和超卖
+        String lockKey = "order:pay:" + orderId;
+        RLock lock = redissonClient.getLock(lockKey);
+        
+        try {
+            // 尝试获取锁，最多等待5秒，锁定30秒后自动释放
+            boolean acquired = lock.tryLock(5, 30, TimeUnit.SECONDS);
+            if (!acquired) {
+                throw new BusinessException("订单正在处理中，请稍后重试");
+            }
+            
+            OrderInfo order = this.getById(orderId);
+            if (order == null) {
+                throw new BusinessException(ResultCode.ORDER_NOT_EXIST);
+            }
+
+            if (!OrderConstant.ORDER_STATUS_UNPAID.equals(order.getOrderStatus())) {
+                throw new BusinessException(ResultCode.ORDER_STATUS_ERROR);
+            }
+
+            // 获取订单商品明细
+            LambdaQueryWrapper<OrderItem> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(OrderItem::getOrderId, orderId);
+            List<OrderItem> orderItems = orderItemMapper.selectList(wrapper);
+
+            // 扣减库存 - 使用先进先出原则选择批次
+            for (OrderItem item : orderItems) {
+                // 为每个商品使用独立的库存锁，防止并发扣减
+                String inventoryLockKey = "inventory:deduct:" + item.getSeedId();
+                RLock inventoryLock = redissonClient.getLock(inventoryLockKey);
+                
+                try {
+                    // 获取库存锁，最多等待3秒
+                    boolean inventoryLockAcquired = inventoryLock.tryLock(3, 10, TimeUnit.SECONDS);
+                    if (!inventoryLockAcquired) {
+                        throw new BusinessException("商品 " + item.getSeedName() + " 库存处理中，请稍后重试");
+                    }
+                    
+                    // 查找该种子的可用库存（按生产日期排序，先进先出）
+                    List<Inventory> availableInventories = inventoryService.getAvailableInventoryBySeedId(item.getSeedId());
+
+                    int remainingQuantity = item.getQuantity();
+                    for (Inventory inventory : availableInventories) {
+                        if (remainingQuantity <= 0) break;
+
+                        int deductQuantity = Math.min(remainingQuantity, inventory.getAvailableQuantity());
+                        if (deductQuantity > 0) {
+                            // 扣减库存
+                            inventoryService.outbound(
+                                inventory.getSeedId(),
+                                inventory.getBatchId(),
+                                inventory.getWarehouseId(),
+                                deductQuantity,
+                                "订单出库",
+                                orderId,
+                                "订单支付自动出库"
+                            );
+
+                            // 更新订单商品的批次信息
+                            item.setBatchId(inventory.getBatchId());
+                            orderItemMapper.updateById(item);
+
+                            remainingQuantity -= deductQuantity;
+                        }
+                    }
+
+                    // 如果库存不足，抛出异常
+                    if (remainingQuantity > 0) {
+                        throw new BusinessException("商品 " + item.getSeedName() + " 库存不足，缺少 " + remainingQuantity + " 件");
+                    }
+                    
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new BusinessException("库存扣减处理被中断");
+                } catch (Exception e) {
+                    log.error("扣减库存失败：订单ID={}, 商品ID={}, 错误信息={}", orderId, item.getSeedId(), e.getMessage());
+                    throw new BusinessException("库存扣减失败：" + e.getMessage());
+                } finally {
+                    // 释放库存锁
+                    if (inventoryLock.isHeldByCurrentThread()) {
+                        inventoryLock.unlock();
+                    }
+                }
+            }
+
+            // 更新订单状态
+            order.setOrderStatus(OrderConstant.ORDER_STATUS_PENDING);
+            order.setPaymentMethod(paymentMethod);
+            order.setPaymentTime(LocalDateTime.now());
+            order.setPaidAmount(order.getPayableAmount());
+            this.updateById(order);
+
+            // 记录操作日志
+            logOrderOperation(orderId, "支付订单", OrderConstant.ORDER_STATUS_UNPAID, OrderConstant.ORDER_STATUS_PENDING,
+                    "订单支付成功，库存已扣减");
+                    
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new BusinessException("支付处理被中断");
+        } catch (Exception e) {
+            log.error("支付订单失败：订单ID={}, 错误信息={}", orderId, e.getMessage());
+            throw e;
+        } finally {
+            // 释放分布式锁
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
         }
-
-        if (!OrderConstant.ORDER_STATUS_UNPAID.equals(order.getOrderStatus())) {
-            throw new BusinessException(ResultCode.ORDER_STATUS_ERROR);
-        }
-
-        // 更新订单状态
-        order.setOrderStatus(OrderConstant.ORDER_STATUS_PENDING);
-        order.setPaymentMethod(paymentMethod);
-        order.setPaymentTime(LocalDateTime.now());
-        order.setPaidAmount(order.getPayableAmount());
-        this.updateById(order);
-
-        // 记录操作日志
-        logOrderOperation(orderId, "支付订单", OrderConstant.ORDER_STATUS_UNPAID, OrderConstant.ORDER_STATUS_PENDING,
-                "订单支付成功");
     }
 
     @Override
@@ -410,6 +559,16 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo> im
         log.setToStatus(toStatus);
         log.setRemark(remark);
         orderOperationLogMapper.insert(log);
+    }
+
+    @Override
+    public OrderInfo getOrderStatusById(Long orderId) {
+        // 只查询必要的字段，减少数据库查询负担
+        LambdaQueryWrapper<OrderInfo> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(OrderInfo::getId, orderId)
+               .select(OrderInfo::getId, OrderInfo::getOrderNo, OrderInfo::getOrderStatus, 
+                      OrderInfo::getPaymentMethod, OrderInfo::getPaymentTime);
+        return this.getOne(wrapper);
     }
 
     /**
