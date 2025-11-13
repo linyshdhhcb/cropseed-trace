@@ -10,11 +10,13 @@
             </el-form-item>
             <el-form-item label="订单状态" prop="orderStatus">
                 <el-select v-model="searchForm.orderStatus" placeholder="请选择订单状态" clearable style="width: 150px">
-                    <el-option label="待支付" :value="1" />
-                    <el-option label="已支付" :value="2" />
+                    <el-option label="待付款" :value="0" />
+                    <el-option label="待审核" :value="1" />
+                    <el-option label="待发货" :value="2" />
                     <el-option label="已发货" :value="3" />
                     <el-option label="已完成" :value="4" />
                     <el-option label="已取消" :value="5" />
+                    <el-option label="退款中" :value="6" />
                 </el-select>
             </el-form-item>
             <el-form-item label="订单类型" prop="orderType">
@@ -86,8 +88,11 @@
                         <el-button type="primary" size="small" @click="handleView(row)">
                             查看详情
                         </el-button>
-                        <el-button v-if="row.orderStatus === 1" type="success" size="small" @click="handlePay(row)">
+                        <el-button v-if="row.orderStatus === 0" type="success" size="small" @click="handlePay(row)">
                             确认支付
+                        </el-button>
+                        <el-button v-if="row.orderStatus === 1" type="warning" size="small" @click="handleAudit(row)">
+                            审核订单
                         </el-button>
                         <el-button v-if="row.orderStatus === 2" type="warning" size="small" @click="handleShip(row)">
                             发货
@@ -95,7 +100,7 @@
                         <el-button v-if="row.orderStatus === 3" type="info" size="small" @click="handleComplete(row)">
                             完成
                         </el-button>
-                        <el-button v-if="[1, 2].includes(row.orderStatus)" type="danger" size="small"
+                        <el-button v-if="[0, 1, 2].includes(row.orderStatus)" type="danger" size="small"
                             @click="handleCancel(row)">
                             取消
                         </el-button>
@@ -374,6 +379,33 @@ const handleCancel = async (row) => {
     }
 };
 
+// 审核订单
+const handleAudit = async (row) => {
+    try {
+        await ElMessageBox.confirm("确定要审核通过该订单吗？", "审核订单", {
+            confirmButtonText: "审核通过",
+            cancelButtonText: "审核拒绝",
+            distinguishCancelAndClose: true,
+            type: "warning",
+        });
+        // 审核通过，状态变为待发货(2)
+        await updateOrderStatus(row.id, 2);
+        ElMessage.success("订单审核通过");
+        loadOrderList();
+    } catch (action) {
+        if (action === "cancel") {
+            // 审核拒绝，状态变为已取消(5)
+            try {
+                await updateOrderStatus(row.id, 5);
+                ElMessage.success("订单审核拒绝");
+                loadOrderList();
+            } catch (error) {
+                console.error("审核拒绝失败:", error);
+            }
+        }
+    }
+};
+
 // 导出数据
 const handleExport = () => {
     ElMessage.info("导出功能开发中...");
@@ -410,11 +442,13 @@ const handleDetailDialogClose = () => {
 // 获取订单状态标签类型
 const getOrderStatusTagType = (status) => {
     const statusMap = {
-        1: "warning",
-        2: "success",
-        3: "info",
-        4: "success",
-        5: "danger",
+        0: "warning",    // 待付款 - 橙色
+        1: "primary",    // 待审核 - 蓝色
+        2: "info",       // 待发货 - 灰色
+        3: "success",    // 已发货 - 绿色
+        4: "success",    // 已完成 - 绿色
+        5: "danger",     // 已取消 - 红色
+        6: "warning",    // 退款中 - 橙色
     };
     return statusMap[status] || "info";
 };
@@ -422,11 +456,13 @@ const getOrderStatusTagType = (status) => {
 // 获取订单状态文本
 const getOrderStatusText = (status) => {
     const statusMap = {
-        1: "待支付",
-        2: "已支付",
+        0: "待付款",
+        1: "待审核",
+        2: "待发货", 
         3: "已发货",
         4: "已完成",
         5: "已取消",
+        6: "退款中"
     };
     return statusMap[status] || "未知";
 };

@@ -183,11 +183,13 @@ const handleBack = () => {
 // 获取订单状态标签类型
 const getOrderStatusTagType = (status) => {
     const statusMap = {
-        1: "warning",
-        2: "success",
-        3: "info",
-        4: "success",
-        5: "danger",
+        0: "warning",    // 待付款 - 橙色
+        1: "primary",    // 待审核 - 蓝色
+        2: "info",       // 待发货 - 灰色
+        3: "success",    // 已发货 - 绿色
+        4: "success",    // 已完成 - 绿色
+        5: "danger",     // 已取消 - 红色
+        6: "warning",    // 退款中 - 橙色
     };
     return statusMap[status] || "info";
 };
@@ -195,11 +197,13 @@ const getOrderStatusTagType = (status) => {
 // 获取订单状态文本
 const getOrderStatusText = (status) => {
     const statusMap = {
-        1: "待支付",
-        2: "已支付",
+        0: "待付款",
+        1: "待审核",
+        2: "待发货",
         3: "已发货",
         4: "已完成",
         5: "已取消",
+        6: "退款中"
     };
     return statusMap[status] || "未知";
 };
