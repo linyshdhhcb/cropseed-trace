@@ -20,6 +20,7 @@ import com.alipay.api.response.AlipayTradeCloseResponse;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.linyi.cropseed.trace.common.exception.BusinessException;
 import com.linyi.cropseed.trace.common.result.ResultCode;
+import com.linyi.cropseed.trace.common.util.QRCodeUtil;
 import com.linyi.cropseed.trace.config.AlipayConfig;
 import com.linyi.cropseed.trace.dto.AlipayDTO;
 import com.linyi.cropseed.trace.service.AlipayService;
@@ -84,6 +85,15 @@ public class AlipayServiceImpl implements AlipayService {
                 AlipayVO payVO = new AlipayVO();
                 payVO.setOrderNo(payDTO.getOrderNo());
                 payVO.setPayUrl(response.getBody());
+                
+                // 生成支付二维码
+                // 为了演示，这里生成一个包含支付信息的二维码
+                String qrCodeContent = "alipays://platformapi/startapp?saId=10000007&qrcode=" + 
+                    java.util.Base64.getEncoder().encodeToString(payDTO.getOrderNo().getBytes()) + 
+                    "&amount=" + payDTO.getAmount();
+                String qrCodeBase64 = QRCodeUtil.generateQRCodeBase64(qrCodeContent);
+                payVO.setQrCodeUrl(qrCodeBase64);
+                
                 return payVO;
             } else {
                 throw new BusinessException(ResultCode.ALIPAY_FAILED, response.getMsg());
@@ -163,12 +173,13 @@ public class AlipayServiceImpl implements AlipayService {
             if ("TRADE_SUCCESS".equals(tradeStatus) || "TRADE_FINISHED".equals(tradeStatus)) {
                 // 支付成功，更新订单状态
                 log.info("订单支付成功: orderNo={}, tradeNo={}", orderNo, tradeNo);
-                // 更新订单状态为已支付
                 // 先根据订单号查询订单ID
                 OrderInfo orderInfo = orderService.getOne(new LambdaQueryWrapper<OrderInfo>()
                         .eq(OrderInfo::getOrderNo, orderNo));
-                if (orderInfo != null) {
-                    orderService.updateOrderStatus(orderInfo.getId(), 4, "支付宝支付成功", "订单支付完成");
+                if (orderInfo != null && orderInfo.getOrderStatus() == 0) {
+                    // 调用支付方法，触发库存扣减等逻辑
+                    orderService.payOrder(orderInfo.getId(), 2); // 2表示支付宝支付
+                    log.info("支付宝支付成功，订单状态已更新: orderId={}", orderInfo.getId());
                 }
                 return "success";
             } else {

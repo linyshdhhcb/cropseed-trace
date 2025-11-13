@@ -35,4 +35,9 @@ public class AlipayVO {
      * 支付状态
      */
     private String tradeStatus;
+
+    /**
+     * 二维码URL
+     */
+    private String qrCodeUrl;
 }
