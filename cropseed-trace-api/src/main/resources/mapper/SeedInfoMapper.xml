@@ -10,15 +10,9 @@
         <result property="categoryId" column="category_id"/>
         <result property="categoryName" column="category_name"/>
         <result property="originPlace" column="origin_place"/>
-        <result property="plantingSeason" column="planting_season"/>
-        <result property="maturityDays" column="maturity_days"/>
-        <result property="yield" column="yield"/>
-        <result property="diseaseResistance" column="disease_resistance"/>
-        <result property="pestResistance" column="pest_resistance"/>
-        <result property="droughtResistance" column="drought_resistance"/>
-        <result property="coldResistance" column="cold_resistance"/>
+        <result property="characteristics" column="characteristics"/>
+        <result property="specifications" column="specifications"/>
         <result property="status" column="status"/>
-        <result property="description" column="description"/>
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
         <result property="imageUrl" column="image_url"/>
@@ -50,7 +44,7 @@
 
     <select id="selectPageVo" resultMap="SeedInfoVoMap">
         SELECT si.id, si.seed_name, si.seed_code, si.variety, si.category_id, sc.category_name,
-               si.origin_place, si.image_url, si.unit_price,
+               si.origin_place, si.characteristics, si.specifications, si.image_url, si.unit_price,
                si.status, si.create_time, si.update_time
         <include refid="BaseFrom"/>
         <if test="seedName != null and seedName != ''">
@@ -68,7 +62,17 @@
         ORDER BY si.create_time DESC
     </select>
 
-    <select id="selectDetailById" resultMap="WxProductDetailVoMap">
+    <select id="selectDetailById" resultMap="SeedInfoVoMap">
+        SELECT si.id, si.seed_name, si.seed_code, si.variety, si.category_id, sc.category_name,
+               si.origin_place, si.characteristics, si.specifications,
+               si.image_url, si.unit_price,
+               si.status, si.create_time, si.update_time
+        <include refid="BaseFrom"/>
+        AND si.id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="selectWxProductDetailById" resultMap="WxProductDetailVoMap">
         SELECT si.id, si.seed_name, si.seed_code, si.variety, si.category_id, sc.category_name,
                si.origin_place, si.characteristics AS description, si.specifications,
                si.image_url, si.unit_price,

@@ -41,7 +41,7 @@ public class WxProductController {
     @Operation(summary = "商品详情")
     @GetMapping("/{id}")
     public Result<WxProductDetailVO> detail(@PathVariable Long id) {
-        WxProductDetailVO detailVO = seedInfoMapper.selectDetailById(id);
+        WxProductDetailVO detailVO = seedInfoMapper.selectWxProductDetailById(id);
         if (detailVO == null) {
             return Result.<WxProductDetailVO>fail(ResultCode.SEED_NOT_EXIST);
         }

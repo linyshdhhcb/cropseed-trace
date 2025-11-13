@@ -46,5 +46,10 @@ public interface SeedInfoMapper extends BaseMapper<SeedInfo> {
     /**
      * 联表查询详情
      */
-    WxProductDetailVO selectDetailById(@Param("id") Long id);
+    SeedInfoVO selectDetailById(@Param("id") Long id);
+
+    /**
+     * 联表查询微信小程序商品详情
+     */
+    WxProductDetailVO selectWxProductDetailById(@Param("id") Long id);
 }
