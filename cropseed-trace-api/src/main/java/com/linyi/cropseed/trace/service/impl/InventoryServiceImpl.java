@@ -1,13 +1,11 @@
 package com.linyi.cropseed.trace.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.linyi.cropseed.trace.common.page.PageQuery;
 import com.linyi.cropseed.trace.common.page.PageResult;
-import com.linyi.cropseed.trace.common.constant.CommonConstant;
 import com.linyi.cropseed.trace.common.exception.BusinessException;
 import com.linyi.cropseed.trace.common.result.ResultCode;
 import com.linyi.cropseed.trace.common.util.IdGenerator;
@@ -293,5 +291,15 @@ public class InventoryServiceImpl extends ServiceImpl<InventoryMapper, Inventory
         }
 
         return inventoryVO;
+    }
+
+    @Override
+    public List<Inventory> getAvailableInventoryBySeedId(Long seedId) {
+        return baseMapper.selectAvailableInventoryBySeedId(seedId);
+    }
+
+    @Override
+    public Integer getTotalInventoryBySeedId(Long seedId) {
+        return baseMapper.selectTotalInventoryBySeedId(seedId);
     }
 }

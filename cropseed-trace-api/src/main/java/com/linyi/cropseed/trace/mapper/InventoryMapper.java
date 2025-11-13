@@ -64,4 +64,19 @@ public interface InventoryMapper extends BaseMapper<Inventory> {
      */
     @Update("UPDATE inventory SET quantity = quantity - #{quantity}, locked_quantity = locked_quantity - #{quantity} WHERE id = #{id} AND locked_quantity >= #{quantity}")
     int deductInventory(Long id, Integer quantity);
+
+    /**
+     * 根据种子ID获取可用库存（按生产日期排序，先进先出）
+     */
+    @Select("SELECT i.* FROM inventory i " +
+            "LEFT JOIN seed_batch sb ON i.batch_id = sb.id " +
+            "WHERE i.seed_id = #{seedId} AND i.available_quantity > 0 AND i.deleted_flag = 0 " +
+            "ORDER BY sb.production_date ASC")
+    List<Inventory> selectAvailableInventoryBySeedId(Long seedId);
+
+    /**
+     * 获取种子总库存数量
+     */
+    @Select("SELECT COALESCE(SUM(available_quantity), 0) FROM inventory WHERE seed_id = #{seedId} AND deleted_flag = 0")
+    Integer selectTotalInventoryBySeedId(Long seedId);
 }

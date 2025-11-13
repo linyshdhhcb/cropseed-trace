@@ -76,4 +76,14 @@ public interface InventoryService extends IService<Inventory> {
      * 手工调整库存（正负增减可用与总量）
      */
     void adjustInventory(Long inventoryId, String adjustType, Integer adjustQuantity, String reason);
+
+    /**
+     * 根据种子ID获取可用库存（按生产日期排序，先进先出）
+     */
+    List<Inventory> getAvailableInventoryBySeedId(Long seedId);
+
+    /**
+     * 获取种子总库存数量
+     */
+    Integer getTotalInventoryBySeedId(Long seedId);
 }
