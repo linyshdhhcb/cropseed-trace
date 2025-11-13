@@ -28,7 +28,11 @@
                         <view class="desc">{{ item.characteristics || '优质品种' }}</view>
                         <view class="bottom">
                             <view class="price">￥{{ item.unitPrice }}</view>
-                            <view class="tag" v-if="item.popularityScore">热度 {{ item.popularityScore }}</view>
+                            <view class="stock-info">
+                                <text class="stock-text" :class="{ 'low-stock': item.totalStock < 10, 'out-stock': item.totalStock <= 0 }">
+                                    库存{{ item.totalStock > 0 ? item.totalStock + '件' : '缺货' }}
+                                </text>
+                            </view>
                         </view>
                     </view>
                 </view>
@@ -91,7 +95,7 @@ function getSortParams() {
         return { sortField: 'unit_price', sortOrder: 'desc' }
     }
     if (sortField.value === 'popularity') {
-        return { sortField: 'popularity_score', sortOrder: 'desc' }
+        return { sortField: 'create_time', sortOrder: 'desc' }  // 暂时用创建时间代替热度
     }
     return { sortField: '', sortOrder: '' }
 }
@@ -125,10 +129,17 @@ async function loadList(reset = false) {
             params.sortOrder = sortParams.sortOrder
         }
 
+        console.log('商品列表请求参数:', params)
+        console.log('当前排序字段:', sortField.value)
+        console.log('排序参数:', sortParams)
+
         const data = await getProductList(params)
+        console.log('商品列表API响应:', data)
+        
         const records = data?.list || []
         total.value = data?.total || 0
         list.value = reset ? records : list.value.concat(records)
+        console.log('商品列表数据:', list.value)
         finished.value = list.value.length >= total.value
         page.value += 1
     } catch (error) {
@@ -157,7 +168,16 @@ function loadMore() {
 }
 
 function changeSort(option) {
+    console.log('切换排序:', option)
     sortField.value = option.value
+    
+    // 给用户一个视觉反馈
+    uni.showToast({
+        title: `切换到${option.label}`,
+        icon: 'none',
+        duration: 1000
+    })
+    
     loadList(true)
 }
 
@@ -288,6 +308,24 @@ function goDetail(item) {
 .tag {
     font-size: 22rpx;
     color: #2b9939;
+}
+
+.stock-info {
+    display: flex;
+    align-items: center;
+}
+
+.stock-text {
+    font-size: 22rpx;
+    color: #2b9939;
+}
+
+.stock-text.low-stock {
+    color: #ff9500;
+}
+
+.stock-text.out-stock {
+    color: #ff3b30;
 }
 
 .loading,

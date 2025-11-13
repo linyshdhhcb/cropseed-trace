@@ -22,7 +22,9 @@
                 </view>
                 <view class="stock-wrapper">
                     <text class="stock-label">库存：</text>
-                    <text class="stock">{{ product.stock || '充足' }}</text>
+                    <text class="stock" :class="{ 'low-stock': product.availableStock < 10, 'out-stock': product.availableStock <= 0 }">
+                        {{ product.availableStock > 0 ? product.availableStock + '件' : '缺货' }}
+                    </text>
                 </view>
             </view>
         </view>
@@ -75,8 +77,8 @@
                 <text class="quantity-value">{{ quantity }}</text>
                 <text class="quantity-arrow">></text>
             </view>
-            <button class="btn-cart" @tap="addCart">加入购物车</button>
-            <button class="btn-buy" type="primary" @tap="buyNow">立即购买</button>
+            <button class="btn-cart" :loading="addCartLoading" @tap="addCart">加入购物车</button>
+            <button class="btn-buy" type="primary" :loading="buyNowLoading" @tap="buyNow">立即购买</button>
         </view>
 
         <!-- 数量选择弹窗 -->
@@ -113,6 +115,8 @@ const product = ref(null)
 const productImages = ref([])
 const quantity = ref(1)
 const showQuantity = ref(false)
+const addCartLoading = ref(false)
+const buyNowLoading = ref(false)
 let productId = null
 
 const cartStore = useCartStore()
@@ -147,31 +151,71 @@ function decrease() {
 }
 
 function increase() {
+    // 检查库存限制
+    if (product.value && product.value.availableStock > 0 && quantity.value >= product.value.availableStock) {
+        uni.showToast({ title: `库存不足，最多可选${product.value.availableStock}件`, icon: 'none' })
+        return
+    }
     quantity.value += 1
 }
 
 async function addCart() {
-    if (!product.value) return
+    if (!product.value || addCartLoading.value) return
+    
+    // 检查库存
+    if (product.value.availableStock <= 0) {
+        uni.showToast({ title: '商品已缺货', icon: 'none' })
+        return
+    }
+    
+    if (quantity.value > product.value.availableStock) {
+        uni.showToast({ title: `库存不足，仅剩${product.value.availableStock}件`, icon: 'none' })
+        return
+    }
+    
+    addCartLoading.value = true
     try {
         await cartStore.addItem({ seedId: productId, quantity: quantity.value })
         uni.showToast({ title: '已加入购物车', icon: 'success' })
     } catch (error) {
-        console.error('加入购物车失败', error)
+        uni.showToast({ title: '加入购物车失败', icon: 'none' })
+    } finally {
+        addCartLoading.value = false
     }
 }
 
 function buyNow() {
-    if (!product.value) return
-    const tempItem = {
-        seedId: product.value.id,
-        seedName: product.value.seedName,
-        unitPrice: product.value.unitPrice,
-        quantity: quantity.value,
-        imageUrl: product.value.imageUrl,
-        selected: true
+    if (!product.value || buyNowLoading.value) return
+    
+    // 检查库存
+    if (product.value.availableStock <= 0) {
+        uni.showToast({ title: '商品已缺货', icon: 'none' })
+        return
     }
-    orderStore.setConfirmItems([tempItem], 'buyNow')
-    uni.navigateTo({ url: '/pages/order/confirm?from=buyNow' })
+    
+    if (quantity.value > product.value.availableStock) {
+        uni.showToast({ title: `库存不足，仅剩${product.value.availableStock}件`, icon: 'none' })
+        return
+    }
+    
+    buyNowLoading.value = true
+    try {
+        const tempItem = {
+            seedId: product.value.id,
+            seedName: product.value.seedName,
+            unitPrice: product.value.unitPrice,
+            quantity: quantity.value,
+            imageUrl: product.value.imageUrl,
+            selected: true
+        }
+        orderStore.setConfirmItems([tempItem], 'buyNow')
+        uni.navigateTo({ url: '/pages/order/confirm?from=buyNow' })
+    } finally {
+        // 页面跳转后重置loading状态
+        setTimeout(() => {
+            buyNowLoading.value = false
+        }, 500)
+    }
 }
 
 function goCart() {
@@ -291,6 +335,14 @@ function hideQuantityModal() {
     font-size: 26rpx;
     color: #2b9939;
     font-weight: 500;
+}
+
+.stock.low-stock {
+    color: #ff9500;
+}
+
+.stock.out-stock {
+    color: #ff3b30;
 }
 
 /* 详情区块 */
