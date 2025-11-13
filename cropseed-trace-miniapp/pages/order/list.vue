@@ -121,11 +121,17 @@ async function loadOrders(reset = false) {
 
     loading.value = true
     try {
-        const data = await orderStore.fetchOrders({
+        const params = {
             page: page.value,
-            size: size.value,
-            orderStatus: currentStatus.value !== '' ? currentStatus.value : undefined
-        })
+            size: size.value
+        }
+        
+        // 只有当状态不为空字符串时才添加 orderStatus 参数
+        if (currentStatus.value !== '') {
+            params.orderStatus = currentStatus.value
+        }
+        
+        const data = await orderStore.fetchOrders(params)
         const records = data?.records || []
         total.value = data?.total || 0
         orders.value = reset ? records : orders.value.concat(records)
