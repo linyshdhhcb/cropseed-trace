@@ -60,6 +60,7 @@ public class SecurityConfig {
                                 "/wx/auth/login",
                                 "/wx/product/**", // 商品相关（分类、详情、列表等，公开访问）
                                 "/wx/recommend/list", // 推荐列表（已支持未登录）
+                                "/api/payment/*",//支付宝支付回调
                                 "/file/upload",
                                 "/wechat/**",
                                 "/miniapp/**",
