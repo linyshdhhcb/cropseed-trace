@@ -123,12 +123,48 @@
 
         <!-- 底部操作栏 -->
         <view class="footer" v-if="showActions">
-            <button v-if="order.orderStatus === 0" class="footer-btn secondary" @tap="cancel">取消订单</button>
-            <button v-if="order.orderStatus === 0" class="footer-btn primary" type="primary" @tap="pay">立即支付</button>
-            <button v-if="order.orderStatus === 3" class="footer-btn primary" type="primary"
+            <button v-if="order.orderStatus === 0" class="footer-btn secondary" :loading="cancelLoading" @tap="cancel">取消订单</button>
+            <button v-if="order.orderStatus === 0" class="footer-btn primary" type="primary" :loading="payLoading" @tap="showPaymentModal">立即支付</button>
+            <button v-if="order.orderStatus === 3" class="footer-btn primary" type="primary" :loading="confirmLoading"
                 @tap="confirmReceipt">确认收货</button>
-            <button v-if="order.orderStatus === 4 || order.orderStatus === 5" class="footer-btn secondary"
+            <button v-if="order.orderStatus === 4 || order.orderStatus === 5" class="footer-btn secondary" :loading="deleteLoading"
                 @tap="deleteOrder">删除订单</button>
+        </view>
+
+        <!-- 支付方式选择弹窗 -->
+        <view class="payment-modal" v-if="showPayment" @tap="hidePaymentModal">
+            <view class="payment-content" @tap.stop>
+                <view class="payment-header">
+                    <text class="payment-title">选择支付方式</text>
+                    <text class="payment-close" @tap="hidePaymentModal">×</text>
+                </view>
+                <view class="payment-amount">
+                    <text class="amount-label">支付金额</text>
+                    <text class="amount-value">￥{{ order?.payableAmount || 0 }}</text>
+                </view>
+                <view class="payment-methods">
+                    <view class="payment-method" @tap="selectPaymentMethod(1)">
+                        <view class="method-icon wechat-icon">💬</view>
+                        <view class="method-info">
+                            <text class="method-name">微信支付</text>
+                            <text class="method-desc">使用微信快捷支付</text>
+                        </view>
+                        <view class="method-radio" :class="{ active: selectedPaymentMethod === 1 }"></view>
+                    </view>
+                    <view class="payment-method" @tap="selectPaymentMethod(2)">
+                        <view class="method-icon alipay-icon">💰</view>
+                        <view class="method-info">
+                            <text class="method-name">支付宝支付</text>
+                            <text class="method-desc">扫码支付，安全便捷</text>
+                        </view>
+                        <view class="method-radio" :class="{ active: selectedPaymentMethod === 2 }"></view>
+                    </view>
+                </view>
+                <view class="payment-actions">
+                    <button class="payment-cancel" @tap="hidePaymentModal">取消</button>
+                    <button class="payment-confirm" type="primary" :loading="payLoading" @tap="confirmPayment">确认支付</button>
+                </view>
+            </view>
         </view>
     </view>
     <view v-else class="loading-state">
@@ -137,14 +173,20 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import { useOrderStore } from '@/stores/order.js'
 import { cancelOrder, payOrder, confirmReceipt as confirmReceiptApi, deleteOrder as deleteOrderApi } from '@/api/order.js'
 
 const orderStore = useOrderStore()
 const order = ref(null)
+const payLoading = ref(false)
+const cancelLoading = ref(false)
+const confirmLoading = ref(false)
+const deleteLoading = ref(false)
 const operationLogs = ref([])
+const showPayment = ref(false)
+const selectedPaymentMethod = ref(1) // 1: 微信支付, 2: 支付宝支付
 let orderId = null
 
 onLoad(async (options) => {
@@ -157,19 +199,48 @@ onLoad(async (options) => {
     await loadDetail()
 })
 
+// 页面显示时刷新数据（从支付页面返回时会触发）
+onShow(async () => {
+    if (orderId) {
+        await loadDetail()
+    }
+})
+
+// 监听支付状态变化事件
+onMounted(() => {
+    uni.$on('orderStatusChanged', handleOrderStatusChanged)
+})
+
+onUnmounted(() => {
+    uni.$off('orderStatusChanged', handleOrderStatusChanged)
+})
+
+// 处理订单状态变化
+function handleOrderStatusChanged(data) {
+    if (data.orderId === orderId && data.status === 'PAID') {
+        // 延迟刷新，确保后端数据已更新
+        setTimeout(async () => {
+            await loadDetail()
+        }, 500)
+    }
+}
+
 async function loadDetail() {
     try {
+        console.log('正在刷新订单详情，订单ID:', orderId)
         const data = await orderStore.fetchOrderDetail(orderId)
         if (!data) {
             uni.showToast({ title: '订单不存在', icon: 'none' })
             setTimeout(() => uni.navigateBack(), 1200)
             return
         }
+        console.log('订单详情数据:', data)
         order.value = {
             ...data,
             items: data?.items || data?.orderItems || []
         }
         operationLogs.value = data?.logs || data?.operationLogs || []
+        console.log('订单状态已更新为:', order.value.orderStatus)
     } catch (error) {
         console.error('获取订单详情失败', error)
         uni.showToast({ title: '获取订单详情失败', icon: 'none' })
@@ -257,29 +328,71 @@ function previewImage(url) {
 }
 
 async function cancel() {
+    if (cancelLoading.value) return
+    
     const confirmed = await new Promise((resolve) => {
         uni.showModal({ title: '提示', content: '确定取消该订单？', success: (res) => resolve(res.confirm) })
     })
     if (!confirmed) return
+    
+    cancelLoading.value = true
     try {
         await cancelOrder(orderId, '用户取消')
         uni.showToast({ title: '已取消', icon: 'success' })
         await loadDetail()
     } catch (error) {
         uni.showToast({ title: '取消失败', icon: 'none' })
+    } finally {
+        cancelLoading.value = false
     }
 }
 
-async function pay() {
+// 显示支付方式选择弹窗
+function showPaymentModal() {
+    showPayment.value = true
+}
+
+// 隐藏支付方式选择弹窗
+function hidePaymentModal() {
+    showPayment.value = false
+}
+
+// 选择支付方式
+function selectPaymentMethod(method) {
+    selectedPaymentMethod.value = method
+}
+
+// 确认支付
+async function confirmPayment() {
+    if (payLoading.value) return
+    
+    payLoading.value = true
     try {
-        await payOrder(orderId, 1)
-        uni.showToast({ title: '支付成功', icon: 'success' })
-        setTimeout(() => {
-            loadDetail()
-        }, 1000)
+        if (selectedPaymentMethod.value === 1) {
+            // 微信支付 - 模拟支付成功
+            await payOrder(orderId, 1)
+            uni.showToast({ title: '微信支付成功', icon: 'success' })
+            hidePaymentModal()
+            setTimeout(() => {
+                loadDetail()
+            }, 1000)
+        } else if (selectedPaymentMethod.value === 2) {
+            // 支付宝支付 - 跳转到支付宝支付页面
+            hidePaymentModal()
+            uni.navigateTo({ 
+                url: `/pages/payment/alipay?orderId=${orderId}&amount=${order.value.payableAmount}` 
+            })
+        }
     } catch (error) {
         uni.showToast({ title: error.message || '支付失败', icon: 'none' })
+    } finally {
+        payLoading.value = false
     }
+}
+
+// 兼容旧的支付方法（保留向后兼容）
+async function pay() {
+    showPaymentModal()
 }
 
 async function confirmReceipt() {
@@ -391,15 +504,195 @@ async function deleteOrder() {
     gap: 12rpx;
 }
 
-.status-text {
-    font-size: 40rpx;
-    font-weight: 700;
-    color: #ffffff;
+.loading-state {
+    padding: 200rpx 0;
+    text-align: center;
+    color: #888;
 }
 
-.status-desc {
-    font-size: 26rpx;
-    color: rgba(255, 255, 255, 0.9);
+.loading-text {
+    font-size: 28rpx;
+}
+
+/* 支付方式选择弹窗 */
+.payment-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: flex-end;
+    z-index: 1000;
+}
+
+.payment-content {
+    width: 100%;
+    background: #fff;
+    border-radius: 24rpx 24rpx 0 0;
+    padding: 0 0 env(safe-area-inset-bottom);
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+.payment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 32rpx 32rpx 24rpx;
+    border-bottom: 1rpx solid #f0f0f0;
+}
+
+.payment-title {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.payment-close {
+    font-size: 48rpx;
+    color: #999;
+    line-height: 1;
+}
+
+.payment-amount {
+    padding: 32rpx;
+    text-align: center;
+    background: #f8f9fa;
+    margin: 0 32rpx;
+    border-radius: 16rpx;
+    margin-top: 24rpx;
+}
+
+.amount-label {
+    display: block;
+    font-size: 28rpx;
+    color: #666;
+    margin-bottom: 8rpx;
+}
+
+.amount-value {
+    font-size: 48rpx;
+    font-weight: 700;
+    color: #e73a32;
+}
+
+.payment-methods {
+    padding: 32rpx;
+}
+
+.payment-method {
+    display: flex;
+    align-items: center;
+    padding: 24rpx 20rpx;
+    border: 2rpx solid #f0f0f0;
+    border-radius: 16rpx;
+    margin-bottom: 16rpx;
+    transition: all 0.3s;
+}
+
+.payment-method:last-child {
+    margin-bottom: 0;
+}
+
+.method-icon {
+    width: 80rpx;
+    height: 80rpx;
+    border-radius: 16rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32rpx;
+    margin-right: 20rpx;
+}
+
+.wechat-icon {
+    background: linear-gradient(135deg, #09bb07, #00d100);
+}
+
+.alipay-icon {
+    background: linear-gradient(135deg, #1677ff, #69b1ff);
+}
+
+.method-info {
+    flex: 1;
+}
+
+.method-name {
+    display: block;
+    font-size: 30rpx;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 4rpx;
+}
+
+.method-desc {
+    font-size: 24rpx;
+    color: #666;
+}
+
+.method-radio {
+    width: 40rpx;
+    height: 40rpx;
+    border: 2rpx solid #ddd;
+    border-radius: 50%;
+    position: relative;
+    transition: all 0.3s;
+}
+
+.method-radio.active {
+    border-color: #2b9939;
+    background: #2b9939;
+}
+
+.method-radio.active::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 16rpx;
+    height: 16rpx;
+    background: #fff;
+    border-radius: 50%;
+}
+
+.payment-method:has(.method-radio.active) {
+    border-color: #2b9939;
+    background: rgba(43, 153, 57, 0.05);
+}
+
+.payment-actions {
+    display: flex;
+    gap: 20rpx;
+    padding: 0 32rpx 32rpx;
+}
+
+.payment-cancel {
+    flex: 1;
+    height: 88rpx;
+    border: 2rpx solid #ddd;
+    border-radius: 44rpx;
+    background: #fff;
+    color: #666;
+    font-size: 30rpx;
+}
+
+.payment-confirm {
+    flex: 2;
+    height: 88rpx;
+    border-radius: 44rpx;
+    background: linear-gradient(90deg, #2b9939, #52bf68);
+    font-size: 30rpx;
 }
 
 /* 通用卡片样式 */

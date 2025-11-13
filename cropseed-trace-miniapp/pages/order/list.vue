@@ -84,6 +84,7 @@ const orderStore = useOrderStore()
 const statusTabs = [
     { label: '全部', value: '' },
     { label: '待付款', value: 0 },
+    { label: '待审核', value: 1 },
     { label: '待发货', value: 2 },
     { label: '待收货', value: 3 },
     { label: '已完成', value: 4 }
@@ -132,9 +133,16 @@ async function loadOrders(reset = false) {
         }
         
         const data = await orderStore.fetchOrders(params)
-        const records = data?.records || []
-        total.value = data?.total || 0
+        console.log('订单列表API响应:', data)
+        
+        // 兼容不同的数据结构：records 或 list
+        const records = data?.records || data?.list || []
+        total.value = parseInt(data?.total || data?.totalCount || 0)
+        
+        console.log('解析的订单数据:', records)
+        console.log('订单总数:', total.value)
         orders.value = reset ? records : orders.value.concat(records)
+        console.log('最终orders数组:', orders.value)
         finished.value = orders.value.length >= total.value
         page.value += 1
     } catch (error) {
