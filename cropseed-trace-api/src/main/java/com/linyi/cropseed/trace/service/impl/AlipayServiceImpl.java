@@ -1,22 +1,14 @@
 package com.linyi.cropseed.trace.service.impl;
 
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSON;
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.AlipayClient;
 import com.alipay.api.DefaultAlipayClient;
-import com.alipay.api.domain.AlipayTradePagePayModel;
 import com.alipay.api.domain.AlipayTradeWapPayModel;
 import com.alipay.api.internal.util.AlipaySignature;
-import com.alipay.api.request.AlipayTradePagePayRequest;
-import com.alipay.api.request.AlipayTradeQueryRequest;
-import com.alipay.api.request.AlipayTradeRefundRequest;
-import com.alipay.api.request.AlipayTradeWapPayRequest;
-import com.alipay.api.request.AlipayTradeCloseRequest;
-import com.alipay.api.response.AlipayTradePagePayResponse;
-import com.alipay.api.response.AlipayTradeQueryResponse;
-import com.alipay.api.response.AlipayTradeRefundResponse;
-import com.alipay.api.response.AlipayTradeWapPayResponse;
-import com.alipay.api.response.AlipayTradeCloseResponse;
+import com.alipay.api.request.*;
+import com.alipay.api.response.*;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.linyi.cropseed.trace.common.exception.BusinessException;
 import com.linyi.cropseed.trace.common.result.ResultCode;
@@ -32,11 +24,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * 支付宝支付服务实现
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
@@ -51,7 +44,7 @@ public class AlipayServiceImpl implements AlipayService {
     @Override
     public AlipayVO createPayOrder(AlipayDTO payDTO) {
         try {
-            // 创建支付宝客户端
+            // 创建支付宝客户端（沙箱环境）
             AlipayClient alipayClient = new DefaultAlipayClient(
                     alipayConfig.getServerUrl(),
                     alipayConfig.getAppId(),
@@ -61,48 +54,50 @@ public class AlipayServiceImpl implements AlipayService {
                     alipayConfig.getAlipayPublicKey(),
                     alipayConfig.getSignType());
 
-            // 创建网页支付请求
-            AlipayTradePagePayRequest request = new AlipayTradePagePayRequest();
-            request.setReturnUrl(
-                    StrUtil.isNotBlank(payDTO.getReturnUrl()) ? payDTO.getReturnUrl() : alipayConfig.getReturnUrl());
-            request.setNotifyUrl(
-                    StrUtil.isNotBlank(payDTO.getNotifyUrl()) ? payDTO.getNotifyUrl() : alipayConfig.getNotifyUrl());
+            // 使用当面付预下单接口
+            AlipayTradePrecreateRequest request = new AlipayTradePrecreateRequest();
 
-            // 设置业务参数
-            AlipayTradePagePayModel model = new AlipayTradePagePayModel();
-            model.setOutTradeNo(payDTO.getOrderNo());
-            model.setTotalAmount(payDTO.getAmount().toString());
-            model.setSubject(payDTO.getSubject());
-            model.setBody(payDTO.getBody());
-            model.setProductCode("FAST_INSTANT_TRADE_PAY");
+            // 正确设置业务参数
+            Map<String, String> bizContent = new HashMap<>();
+            bizContent.put("out_trade_no", payDTO.getOrderNo());
+            bizContent.put("total_amount", payDTO.getAmount().toString());
+            bizContent.put("subject", payDTO.getSubject());
+            if (StrUtil.isNotBlank(payDTO.getBody())) {
+                bizContent.put("body", payDTO.getBody());
+            }
 
-            request.setBizModel(model);
+            request.setBizContent(JSON.toJSONString(bizContent));
+
+            // 设置回调地址（可选）
+            request.setNotifyUrl(StrUtil.isNotBlank(payDTO.getNotifyUrl()) ?
+                    payDTO.getNotifyUrl() : alipayConfig.getNotifyUrl());
 
             // 调用支付接口
-            AlipayTradePagePayResponse response = alipayClient.pageExecute(request);
+            AlipayTradePrecreateResponse response = alipayClient.execute(request);
 
             if (response.isSuccess()) {
                 AlipayVO payVO = new AlipayVO();
                 payVO.setOrderNo(payDTO.getOrderNo());
-                payVO.setPayUrl(response.getBody());
-                
-                // 生成支付二维码
-                // 为了演示，这里生成一个包含支付信息的二维码
-                String qrCodeContent = "alipays://platformapi/startapp?saId=10000007&qrcode=" + 
-                    java.util.Base64.getEncoder().encodeToString(payDTO.getOrderNo().getBytes()) + 
-                    "&amount=" + payDTO.getAmount();
-                String qrCodeBase64 = QRCodeUtil.generateQRCodeBase64(qrCodeContent);
-                payVO.setQrCodeUrl(qrCodeBase64);
-                
+
+                // 获取二维码内容
+                String qrCodeUrl = response.getQrCode();
+                payVO.setPayUrl(qrCodeUrl);
+
+                // 生成二维码Base64
+                String qrCode = QRCodeUtil.generateQRCodeBase64(qrCodeUrl);
+                payVO.setQrCodeUrl(qrCode);
+
+                log.info("支付宝当面付二维码生成成功: {}", qrCodeUrl);
                 return payVO;
             } else {
-                throw new BusinessException(ResultCode.ALIPAY_FAILED, response.getMsg());
+                throw new BusinessException(ResultCode.ALIPAY_FAILED, response.getMsg() + ":" + response.getSubMsg());
             }
         } catch (AlipayApiException e) {
             log.error("创建支付宝支付订单失败", e);
             throw new BusinessException(ResultCode.ALIPAY_FAILED, "创建支付订单失败: " + e.getErrMsg());
         }
     }
+
 
     @Override
     public AlipayVO createPayOrderMobile(AlipayDTO payDTO) {
@@ -284,4 +279,5 @@ public class AlipayServiceImpl implements AlipayService {
             return false;
         }
     }
+
 }
