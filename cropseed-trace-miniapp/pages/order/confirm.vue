@@ -88,15 +88,20 @@ const payableAmount = computed(() => {
 
 onLoad((options) => {
     source.value = options?.from || ''
+    console.log('订单确认页面onLoad，source:', source.value)
 })
 
 onShow(() => {
+    console.log('订单确认页面onShow')
     initItems()
     restoreSelectedAddress()
     loadAddress()
 })
 
 function initItems() {
+    console.log('initItems - orderStore.confirmItems:', orderStore.confirmItems)
+    console.log('initItems - orderStore.confirmSource:', orderStore.confirmSource)
+    
     if (orderStore.confirmItems && orderStore.confirmItems.length > 0) {
         items.value = orderStore.confirmItems.map(item => ({
             ...item,
@@ -107,8 +112,10 @@ function initItems() {
             seedName: item.seedName || item.name || '',
             imageUrl: item.imageUrl || item.seedImage || item.image || ''
         }))
+        console.log('initItems - 处理后的items:', items.value)
     } else {
         items.value = []
+        console.log('initItems - 没有商品数据')
     }
 }
 

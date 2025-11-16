@@ -242,8 +242,8 @@ function buyNow() {
             imageUrl: product.value.imageUrl
         }]
         
-        orderStore.setConfirmItems(orderItems, 'direct')
-        uni.navigateTo({ url: '/pages/order/confirm' })
+        orderStore.setConfirmItems(orderItems, 'buyNow')
+        uni.navigateTo({ url: '/pages/order/confirm?from=buyNow' })
     } catch (error) {
         uni.showToast({ title: '操作失败', icon: 'none' })
     } finally {

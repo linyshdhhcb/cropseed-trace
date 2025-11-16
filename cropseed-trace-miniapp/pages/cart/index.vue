@@ -238,7 +238,7 @@ function settle() {
     
     // 使用正确的订单store方法
     orderStore.setConfirmItems(selectedItems, 'cart')
-    uni.navigateTo({ url: '/pages/order/confirm' })
+    uni.navigateTo({ url: '/pages/order/confirm?from=cart' })
 }
 </script>
 

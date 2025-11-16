@@ -95,6 +95,18 @@
       "style": {
         "navigationBarTitleText": "售后申请"
       }
+    },
+    {
+      "path": "pages/payment/alipay",
+      "style": {
+        "navigationBarTitleText": "支付宝支付"
+      }
+    },
+    {
+      "path": "pages/payment/test",
+      "style": {
+        "navigationBarTitleText": "支付功能测试"
+      }
     }
   ],
   "tabBar": {
