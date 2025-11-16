@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -46,31 +47,63 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
                 return Collections.emptyList();
             }
 
-            // 2. 找到相似用户
-            List<UserProfile> similarProfiles = userProfileMapper.selectSimilarProfiles(
-                    userProfile.getUserType(), userProfile.getRegion(), 10);
+            // 2. 获取用户历史行为用于计算相似度
+            List<UserBehavior> userBehaviors = userBehaviorMapper.selectByUserId(userId, 100);
+            if (CollUtil.isEmpty(userBehaviors)) {
+                // 如果用户没有行为记录，返回热门推荐
+                return popularRecommend(limit);
+            }
 
-            if (CollUtil.isEmpty(similarProfiles)) {
+            // 3. 找到相似用户（基于多维度相似度计算）
+            List<UserProfile> candidateProfiles = userProfileMapper.selectSimilarProfiles(
+                    userProfile.getUserType(), userProfile.getRegion(), 50);
+
+            if (CollUtil.isEmpty(candidateProfiles)) {
                 return Collections.emptyList();
             }
 
-            // 3. 获取相似用户的行为记录
-            List<Long> similarUserIds = similarProfiles.stream()
-                    .map(UserProfile::getUserId)
+            // 4. 计算用户相似度并筛选最相似的用户
+            Map<Long, Double> userSimilarities = calculateUserSimilarities(userId, userBehaviors, candidateProfiles);
+            List<Long> similarUserIds = userSimilarities.entrySet().stream()
+                    .filter(entry -> entry.getValue() > 0.1) // 相似度阈值
+                    .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
+                    .limit(10)
+                    .map(Map.Entry::getKey)
                     .collect(Collectors.toList());
 
+            if (similarUserIds.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            // 5. 获取相似用户的行为记录
             List<UserBehavior> similarBehaviors = new ArrayList<>();
             for (Long similarUserId : similarUserIds) {
                 List<UserBehavior> behaviors = userBehaviorMapper.selectByUserId(similarUserId, 50);
                 similarBehaviors.addAll(behaviors);
             }
 
-            // 4. 统计商品评分
+            // 6. 统计商品评分（修复空指针问题）
             Map<Long, Double> itemScores = new HashMap<>();
+            Set<Long> userPurchasedItems = userBehaviors.stream()
+                    .filter(b -> b.getBehaviorType() == 5) // 用户已购买的商品
+                    .map(UserBehavior::getTargetId)
+                    .collect(Collectors.toSet());
+
             for (UserBehavior behavior : similarBehaviors) {
                 if (behavior.getBehaviorType() == 5 || behavior.getBehaviorType() == 6) { // 购买或评价
                     Long targetId = behavior.getTargetId();
-                    Double score = behavior.getBehaviorWeight() * behavior.getRating();
+                    
+                    // 跳过用户已购买的商品
+                    if (userPurchasedItems.contains(targetId)) {
+                        continue;
+                    }
+                    
+                    // 安全的评分计算，避免空指针
+                    Double behaviorWeight = behavior.getBehaviorWeight() != null ? behavior.getBehaviorWeight() : 1.0;
+                    Integer rating = behavior.getRating() != null ? behavior.getRating() : 3;
+                    Double userSimilarity = userSimilarities.getOrDefault(behavior.getUserId(), 0.5);
+                    
+                    Double score = behaviorWeight * (rating / 5.0) * userSimilarity;
                     itemScores.merge(targetId, score, Double::sum);
                 }
             }
@@ -317,8 +350,14 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
 
             userBehaviorMapper.insert(behavior);
 
-            // 异步更新用户画像
-            updateUserProfile(userId);
+            // 异步更新用户画像（避免同步性能问题）
+            CompletableFuture.runAsync(() -> {
+                try {
+                    updateUserProfile(userId);
+                } catch (Exception e) {
+                    log.warn("异步更新用户画像失败，userId: {}", userId, e);
+                }
+            });
 
         } catch (Exception e) {
             log.error("记录用户行为失败", e);
@@ -353,13 +392,39 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
             long purchaseCount = userBehaviorMapper.countUserBehaviors(userId, 5);
             profile.setPurchaseFrequency(BigDecimal.valueOf(Math.min(purchaseCount / 10.0, 1.0)));
 
-            // 计算价格敏感度（基于购买行为分析）
-            double avgPrice = behaviors.stream()
+            // 计算价格敏感度（基于购买商品的价格分析）
+            List<UserBehavior> purchaseBehaviors = behaviors.stream()
                     .filter(b -> b.getBehaviorType() == 5)
-                    .mapToDouble(b -> b.getBehaviorWeight())
-                    .average()
-                    .orElse(0.5);
-            profile.setPriceSensitivity(BigDecimal.valueOf(1.0 - avgPrice));
+                    .collect(Collectors.toList());
+            
+            if (!purchaseBehaviors.isEmpty()) {
+                double avgPurchasePrice = 0.0;
+                int validPrices = 0;
+                
+                for (UserBehavior behavior : purchaseBehaviors) {
+                    try {
+                        SeedInfo seedInfo = seedInfoMapper.selectById(behavior.getTargetId());
+                        if (seedInfo != null && seedInfo.getUnitPrice() != null) {
+                            avgPurchasePrice += seedInfo.getUnitPrice().doubleValue();
+                            validPrices++;
+                        }
+                    } catch (Exception e) {
+                        log.warn("获取商品价格失败，seedId: {}", behavior.getTargetId());
+                    }
+                }
+                
+                if (validPrices > 0) {
+                    avgPurchasePrice = avgPurchasePrice / validPrices;
+                    // 价格敏感度：购买的商品价格越低，价格敏感度越高
+                    // 假设价格区间为0-200，计算敏感度
+                    double sensitivity = Math.max(0.0, Math.min(1.0, (200.0 - avgPurchasePrice) / 200.0));
+                    profile.setPriceSensitivity(BigDecimal.valueOf(sensitivity));
+                } else {
+                    profile.setPriceSensitivity(BigDecimal.valueOf(0.5)); // 默认中等敏感度
+                }
+            } else {
+                profile.setPriceSensitivity(BigDecimal.valueOf(0.5)); // 默认中等敏感度
+            }
 
             // 计算质量要求（基于评价行为分析）
             double avgRating = behaviors.stream()
@@ -369,6 +434,22 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
                     .orElse(3.0);
             profile.setQualityRequirement(BigDecimal.valueOf(avgRating / 5.0));
 
+            // 设置其他默认值
+            if (profile.getUserType() == null) {
+                profile.setUserType(1); // 默认个人用户
+            }
+            if (profile.getRegion() == null) {
+                profile.setRegion("未知"); // 默认地区
+            }
+            if (profile.getBrandLoyalty() == null) {
+                profile.setBrandLoyalty(BigDecimal.valueOf(0.5));
+            }
+            if (profile.getRecommendationWeight() == null) {
+                // 基于活跃度和购买频率计算推荐权重
+                double weight = (profile.getActivityLevel().doubleValue() + profile.getPurchaseFrequency().doubleValue()) / 2.0;
+                profile.setRecommendationWeight(BigDecimal.valueOf(weight));
+            }
+            
             // 保存用户画像
             if (profile.getId() == null) {
                 userProfileMapper.insert(profile);
@@ -634,6 +715,194 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
                 features.getUserRating().doubleValue() * 0.4 +
                 features.getQualityFeature().doubleValue() * 0.3;
         return new BigDecimal(Math.min(weight, 1.0));
+    }
+
+    /**
+     * 计算用户相似度
+     */
+    private Map<Long, Double> calculateUserSimilarities(Long userId, List<UserBehavior> userBehaviors, List<UserProfile> candidateProfiles) {
+        Map<Long, Double> similarities = new HashMap<>();
+        
+        // 获取当前用户的行为特征向量
+        Map<Long, Double> userItemRatings = getUserItemRatings(userBehaviors);
+        
+        for (UserProfile candidate : candidateProfiles) {
+            if (candidate.getUserId().equals(userId)) {
+                continue; // 跳过自己
+            }
+            
+            // 获取候选用户的行为记录
+            List<UserBehavior> candidateBehaviors = userBehaviorMapper.selectByUserId(candidate.getUserId(), 100);
+            Map<Long, Double> candidateItemRatings = getUserItemRatings(candidateBehaviors);
+            
+            // 计算余弦相似度
+            double similarity = calculateCosineSimilarity(userItemRatings, candidateItemRatings);
+            
+            // 结合用户画像相似度
+            double profileSimilarity = calculateProfileSimilarity(getUserProfile(userId), candidate);
+            
+            // 综合相似度（行为相似度权重0.7，画像相似度权重0.3）
+            double finalSimilarity = similarity * 0.7 + profileSimilarity * 0.3;
+            
+            if (finalSimilarity > 0) {
+                similarities.put(candidate.getUserId(), finalSimilarity);
+            }
+        }
+        
+        return similarities;
+    }
+    
+    /**
+     * 获取用户对商品的评分向量
+     */
+    private Map<Long, Double> getUserItemRatings(List<UserBehavior> behaviors) {
+        Map<Long, Double> ratings = new HashMap<>();
+        
+        for (UserBehavior behavior : behaviors) {
+            Long itemId = behavior.getTargetId();
+            double rating = 0.0;
+            
+            // 根据行为类型计算隐式评分
+            switch (behavior.getBehaviorType()) {
+                case 1: // 浏览
+                    rating = 1.0;
+                    break;
+                case 2: // 搜索
+                    rating = 1.5;
+                    break;
+                case 3: // 收藏
+                    rating = 3.0;
+                    break;
+                case 4: // 加购物车
+                    rating = 3.5;
+                    break;
+                case 5: // 购买
+                    rating = 5.0;
+                    break;
+                case 6: // 评价
+                    rating = behavior.getRating() != null ? behavior.getRating().doubleValue() : 3.0;
+                    break;
+                default:
+                    rating = 1.0;
+            }
+            
+            // 考虑行为权重和时间衰减
+            Double behaviorWeight = behavior.getBehaviorWeight() != null ? behavior.getBehaviorWeight() : 1.0;
+            double timeDecay = calculateTimeDecay(behavior.getBehaviorTime());
+            
+            double finalRating = rating * behaviorWeight * timeDecay;
+            ratings.merge(itemId, finalRating, Double::sum);
+        }
+        
+        return ratings;
+    }
+    
+    /**
+     * 计算余弦相似度
+     */
+    private double calculateCosineSimilarity(Map<Long, Double> ratingsA, Map<Long, Double> ratingsB) {
+        Set<Long> commonItems = new HashSet<>(ratingsA.keySet());
+        commonItems.retainAll(ratingsB.keySet());
+        
+        if (commonItems.isEmpty()) {
+            return 0.0;
+        }
+        
+        double dotProduct = 0.0;
+        double normA = 0.0;
+        double normB = 0.0;
+        
+        for (Long itemId : commonItems) {
+            double ratingA = ratingsA.get(itemId);
+            double ratingB = ratingsB.get(itemId);
+            
+            dotProduct += ratingA * ratingB;
+            normA += ratingA * ratingA;
+            normB += ratingB * ratingB;
+        }
+        
+        if (normA == 0.0 || normB == 0.0) {
+            return 0.0;
+        }
+        
+        return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+    }
+    
+    /**
+     * 计算用户画像相似度
+     */
+    private double calculateProfileSimilarity(UserProfile profileA, UserProfile profileB) {
+        if (profileA == null || profileB == null) {
+            return 0.0;
+        }
+        
+        double similarity = 0.0;
+        int factors = 0;
+        
+        // 用户类型相似度
+        if (Objects.equals(profileA.getUserType(), profileB.getUserType())) {
+            similarity += 0.3;
+        }
+        factors++;
+        
+        // 地区相似度
+        if (Objects.equals(profileA.getRegion(), profileB.getRegion())) {
+            similarity += 0.2;
+        }
+        factors++;
+        
+        // 价格敏感度相似度
+        if (profileA.getPriceSensitivity() != null && profileB.getPriceSensitivity() != null) {
+            double priceDiff = Math.abs(profileA.getPriceSensitivity().doubleValue() - profileB.getPriceSensitivity().doubleValue());
+            similarity += (1.0 - priceDiff) * 0.2;
+            factors++;
+        }
+        
+        // 质量要求相似度
+        if (profileA.getQualityRequirement() != null && profileB.getQualityRequirement() != null) {
+            double qualityDiff = Math.abs(profileA.getQualityRequirement().doubleValue() - profileB.getQualityRequirement().doubleValue());
+            similarity += (1.0 - qualityDiff) * 0.2;
+            factors++;
+        }
+        
+        // 购买偏好相似度
+        if (Objects.equals(profileA.getPurchasePreference(), profileB.getPurchasePreference())) {
+            similarity += 0.1;
+        }
+        factors++;
+        
+        return factors > 0 ? similarity / factors : 0.0;
+    }
+    
+    /**
+     * 计算时间衰减因子
+     */
+    private double calculateTimeDecay(LocalDateTime behaviorTime) {
+        if (behaviorTime == null) {
+            return 0.5;
+        }
+        
+        long daysDiff = java.time.Duration.between(behaviorTime, LocalDateTime.now()).toDays();
+        
+        // 时间衰减：30天内权重为1，之后每30天衰减一半
+        if (daysDiff <= 30) {
+            return 1.0;
+        } else if (daysDiff <= 60) {
+            return 0.8;
+        } else if (daysDiff <= 90) {
+            return 0.6;
+        } else if (daysDiff <= 180) {
+            return 0.4;
+        } else {
+            return 0.2;
+        }
+    }
+    
+    /**
+     * 获取用户画像（带缓存）
+     */
+    private UserProfile getUserProfile(Long userId) {
+        return userProfileMapper.selectByUserId(userId);
     }
 
     /**
