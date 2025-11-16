@@ -82,28 +82,37 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
                 similarBehaviors.addAll(behaviors);
             }
 
-            // 6. 统计商品评分（修复空指针问题）
+            // 6. 统计商品评分（考虑所有行为类型）
             Map<Long, Double> itemScores = new HashMap<>();
-            Set<Long> userPurchasedItems = userBehaviors.stream()
-                    .filter(b -> b.getBehaviorType() == 5) // 用户已购买的商品
+            
+            // 获取用户最近购买的商品（30天内），用于降权而不是完全过滤
+            Set<Long> recentPurchasedItems = userBehaviors.stream()
+                    .filter(b -> b.getBehaviorType() == 5 && 
+                            b.getBehaviorTime().isAfter(LocalDateTime.now().minusDays(30)))
                     .map(UserBehavior::getTargetId)
                     .collect(Collectors.toSet());
 
             for (UserBehavior behavior : similarBehaviors) {
-                if (behavior.getBehaviorType() == 5 || behavior.getBehaviorType() == 6) { // 购买或评价
+                // 考虑所有重要的行为类型
+                if (behavior.getBehaviorType() >= 1 && behavior.getBehaviorType() <= 6) {
                     Long targetId = behavior.getTargetId();
-                    
-                    // 跳过用户已购买的商品
-                    if (userPurchasedItems.contains(targetId)) {
-                        continue;
-                    }
                     
                     // 安全的评分计算，避免空指针
                     Double behaviorWeight = behavior.getBehaviorWeight() != null ? behavior.getBehaviorWeight() : 1.0;
                     Integer rating = behavior.getRating() != null ? behavior.getRating() : 3;
                     Double userSimilarity = userSimilarities.getOrDefault(behavior.getUserId(), 0.5);
                     
-                    Double score = behaviorWeight * (rating / 5.0) * userSimilarity;
+                    // 根据行为类型计算基础评分
+                    double baseScore = getBaseScoreByBehaviorType(behavior.getBehaviorType());
+                    
+                    // 综合评分计算
+                    Double score = baseScore * behaviorWeight * (rating / 5.0) * userSimilarity;
+                    
+                    // 对最近购买的商品降权（而不是完全过滤）
+                    if (recentPurchasedItems.contains(targetId)) {
+                        score *= 0.3; // 降权到30%
+                    }
+                    
                     itemScores.merge(targetId, score, Double::sum);
                 }
             }
@@ -271,30 +280,35 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
     @Override
     public List<RecommendationVO> hybridRecommend(Long userId, Integer limit) {
         try {
+            log.info("开始混合推荐，userId: {}, limit: {}", userId, limit);
             List<RecommendationVO> allRecommendations = new ArrayList<>();
 
             // 1. 协同过滤推荐 (30%)
             List<RecommendationVO> cfRecommendations = collaborativeFilteringRecommend(userId, limit / 4);
             cfRecommendations.forEach(rec -> rec.setRecommendationWeight(BigDecimal.valueOf(0.3)));
             allRecommendations.addAll(cfRecommendations);
+            log.info("协同过滤推荐数量: {}", cfRecommendations.size());
 
             // 2. 内容推荐 (25%)
             List<RecommendationVO> cbRecommendations = contentBasedRecommend(userId, limit / 4);
             cbRecommendations.forEach(rec -> rec.setRecommendationWeight(BigDecimal.valueOf(0.25)));
             allRecommendations.addAll(cbRecommendations);
+            log.info("内容推荐数量: {}", cbRecommendations.size());
 
             // 3. 个性化推荐 (25%)
             List<RecommendationVO> personalizedRecommendations = personalizedRecommend(userId, limit / 4);
             personalizedRecommendations.forEach(rec -> rec.setRecommendationWeight(BigDecimal.valueOf(0.25)));
             allRecommendations.addAll(personalizedRecommendations);
+            log.info("个性化推荐数量: {}", personalizedRecommendations.size());
 
             // 4. 热门推荐 (20%)
             List<RecommendationVO> popularRecommendations = popularRecommend(limit / 4);
             popularRecommendations.forEach(rec -> rec.setRecommendationWeight(BigDecimal.valueOf(0.2)));
             allRecommendations.addAll(popularRecommendations);
+            log.info("热门推荐数量: {}", popularRecommendations.size());
 
             // 5. 混合排序
-            return allRecommendations.stream()
+            List<RecommendationVO> finalResults = allRecommendations.stream()
                     .collect(Collectors.toMap(
                             RecommendationVO::getTargetId,
                             vo -> vo,
@@ -325,6 +339,16 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
                     })
                     .limit(limit)
                     .collect(Collectors.toList());
+            
+            log.info("混合推荐最终结果数量: {}", finalResults.size());
+            if (!finalResults.isEmpty()) {
+                log.info("推荐结果前3个商品ID和评分: {}", 
+                    finalResults.stream().limit(3)
+                        .map(r -> "ID:" + r.getTargetId() + ",评分:" + r.getRecommendationScore() + ",权重:" + r.getRecommendationWeight())
+                        .collect(Collectors.joining("; ")));
+            }
+            
+            return finalResults;
 
         } catch (Exception e) {
             log.error("混合推荐失败", e);
@@ -353,9 +377,11 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
             // 异步更新用户画像（避免同步性能问题）
             CompletableFuture.runAsync(() -> {
                 try {
+                    log.info("开始异步更新用户画像，userId: {}", userId);
                     updateUserProfile(userId);
+                    log.info("用户画像更新完成，userId: {}", userId);
                 } catch (Exception e) {
-                    log.warn("异步更新用户画像失败，userId: {}", userId, e);
+                    log.error("异步更新用户画像失败，userId: {}", userId, e);
                 }
             });
 
@@ -368,18 +394,28 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
     @Transactional(rollbackFor = Exception.class)
     public void updateUserProfile(Long userId) {
         try {
+            log.info("开始更新用户画像，userId: {}", userId);
+            
             // 1. 获取用户行为统计
             List<UserBehavior> behaviors = userBehaviorMapper.selectByUserId(userId, 1000);
+            log.info("获取到用户行为数据，userId: {}, 行为数量: {}", userId, behaviors.size());
+            
             if (CollUtil.isEmpty(behaviors)) {
+                log.warn("用户没有行为数据，跳过画像更新，userId: {}", userId);
                 return;
             }
 
             // 2. 计算用户画像指标
             UserProfile profile = userProfileMapper.selectByUserId(userId);
+            boolean isNewProfile = false;
             if (profile == null) {
+                log.info("创建新的用户画像，userId: {}", userId);
                 profile = new UserProfile();
                 profile.setId(IdGenerator.generateId());
                 profile.setUserId(userId);
+                isNewProfile = true;
+            } else {
+                log.info("更新已存在的用户画像，userId: {}, profileId: {}", userId, profile.getId());
             }
 
             // 计算活跃度
@@ -451,14 +487,23 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
             }
             
             // 保存用户画像
-            if (profile.getId() == null) {
-                userProfileMapper.insert(profile);
+            log.info("准备保存用户画像，userId: {}, isNewProfile: {}", userId, isNewProfile);
+            log.info("用户画像数据 - 活跃度: {}, 购买频率: {}, 价格敏感度: {}, 质量要求: {}", 
+                    profile.getActivityLevel(), profile.getPurchaseFrequency(), 
+                    profile.getPriceSensitivity(), profile.getQualityRequirement());
+            
+            if (isNewProfile) {
+                int insertResult = userProfileMapper.insert(profile);
+                log.info("插入新用户画像结果，userId: {}, insertResult: {}", userId, insertResult);
             } else {
-                userProfileMapper.updateById(profile);
+                int updateResult = userProfileMapper.updateById(profile);
+                log.info("更新用户画像结果，userId: {}, updateResult: {}", userId, updateResult);
             }
+            
+            log.info("用户画像保存完成，userId: {}", userId);
 
         } catch (Exception e) {
-            log.error("更新用户画像失败", e);
+            log.error("更新用户画像失败，userId: {}", userId, e);
         }
     }
 
@@ -895,6 +940,28 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
             return 0.4;
         } else {
             return 0.2;
+        }
+    }
+    
+    /**
+     * 根据行为类型获取基础评分
+     */
+    private double getBaseScoreByBehaviorType(Integer behaviorType) {
+        switch (behaviorType) {
+            case 1: // 浏览
+                return 1.0;
+            case 2: // 搜索
+                return 1.5;
+            case 3: // 收藏
+                return 3.0;
+            case 4: // 加购物车
+                return 3.5;
+            case 5: // 购买
+                return 5.0;
+            case 6: // 评价
+                return 4.0;
+            default:
+                return 1.0;
         }
     }
     
