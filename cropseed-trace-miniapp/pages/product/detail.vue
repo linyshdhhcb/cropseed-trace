@@ -106,10 +106,11 @@
 
 <script setup>
 import { ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
-import { getProductDetail } from '@/api/product.js'
+import { onLoad, onUnload } from '@dcloudio/uni-app'
+import { getProductDetail, reportBehavior } from '@/api/product.js'
 import { useCartStore } from '@/stores/cart.js'
 import { useOrderStore } from '@/stores/order.js'
+import { useUserStore } from '@/stores/user.js'
 
 const product = ref(null)
 const productImages = ref([])
@@ -121,6 +122,11 @@ let productId = null
 
 const cartStore = useCartStore()
 const orderStore = useOrderStore()
+const userStore = useUserStore()
+
+// 页面浏览时间记录
+let pageStartTime = null
+let reportTimer = null
 
 onLoad(async (options) => {
     productId = Number(options?.id)
@@ -129,7 +135,27 @@ onLoad(async (options) => {
         setTimeout(() => uni.navigateBack(), 1500)
         return
     }
+    
+    pageStartTime = Date.now()
     await loadDetail()
+    
+    // 延迟上报浏览行为
+    setTimeout(() => {
+        reportViewBehavior()
+    }, 2000)
+    
+    // 定时上报浏览时长
+    reportTimer = setInterval(() => {
+        reportViewBehavior()
+    }, 30000) // 每30秒上报一次
+})
+
+// 页面卸载时上报最终浏览时长
+onUnload(() => {
+    if (reportTimer) {
+        clearInterval(reportTimer)
+    }
+    reportViewBehavior(true) // 最终上报
 })
 
 async function loadDetail() {
@@ -176,6 +202,10 @@ async function addCart() {
     addCartLoading.value = true
     try {
         await cartStore.addItem({ seedId: productId, quantity: quantity.value })
+        
+        // 上报加购物车行为
+        reportCartBehavior()
+        
         uni.showToast({ title: '已加入购物车', icon: 'success' })
     } catch (error) {
         uni.showToast({ title: '加入购物车失败', icon: 'none' })
@@ -200,21 +230,24 @@ function buyNow() {
     
     buyNowLoading.value = true
     try {
-        const tempItem = {
-            seedId: product.value.id,
+        // 上报立即购买行为
+        reportBuyNowBehavior()
+        
+        // 直接跳转到订单确认页
+        const orderItems = [{
+            seedId: productId,
+            quantity: quantity.value,
             seedName: product.value.seedName,
             unitPrice: product.value.unitPrice,
-            quantity: quantity.value,
-            imageUrl: product.value.imageUrl,
-            selected: true
-        }
-        orderStore.setConfirmItems([tempItem], 'buyNow')
-        uni.navigateTo({ url: '/pages/order/confirm?from=buyNow' })
+            imageUrl: product.value.imageUrl
+        }]
+        
+        orderStore.setConfirmItems(orderItems, 'direct')
+        uni.navigateTo({ url: '/pages/order/confirm' })
+    } catch (error) {
+        uni.showToast({ title: '操作失败', icon: 'none' })
     } finally {
-        // 页面跳转后重置loading状态
-        setTimeout(() => {
-            buyNowLoading.value = false
-        }, 500)
+        buyNowLoading.value = false
     }
 }
 
@@ -240,6 +273,55 @@ function showQuantityModal() {
 
 function hideQuantityModal() {
     showQuantity.value = false
+}
+
+// 上报浏览行为
+async function reportViewBehavior(isFinal = false) {
+    if (!userStore.isLoggedIn || !productId) return
+    
+    try {
+        const duration = pageStartTime ? Math.floor((Date.now() - pageStartTime) / 1000) : 5
+        await reportBehavior({
+            seedId: productId,
+            behaviorType: 1, // 1-浏览
+            duration: duration,
+            source: isFinal ? '商品详情页-离开' : '商品详情页-浏览'
+        })
+    } catch (error) {
+        console.warn('上报浏览行为失败:', error)
+    }
+}
+
+// 上报加购物车行为
+async function reportCartBehavior() {
+    if (!userStore.isLoggedIn || !productId) return
+    
+    try {
+        await reportBehavior({
+            seedId: productId,
+            behaviorType: 4, // 4-加购物车
+            duration: quantity.value,
+            source: '商品详情页-加购物车'
+        })
+    } catch (error) {
+        console.warn('上报加购物车行为失败:', error)
+    }
+}
+
+// 上报立即购买行为
+async function reportBuyNowBehavior() {
+    if (!userStore.isLoggedIn || !productId) return
+    
+    try {
+        await reportBehavior({
+            seedId: productId,
+            behaviorType: 5, // 5-购买意向
+            duration: quantity.value,
+            source: '商品详情页-立即购买'
+        })
+    } catch (error) {
+        console.warn('上报购买行为失败:', error)
+    }
 }
 </script>
 

@@ -55,7 +55,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { getCategoryTree, getRecommendProducts, getProductList } from '@/api/product.js'
+import { getCategoryTree, getRecommendProducts, getProductList, reportBehavior } from '@/api/product.js'
 import { useUserStore } from '@/stores/user.js'
 
 const userStore = useUserStore()
@@ -74,6 +74,11 @@ onMounted(() => {
     userStore.loadFromStorage()
     loadCategories()
     loadRecommend()
+    
+    // 延迟上报页面浏览行为
+    setTimeout(() => {
+        reportPageView()
+    }, 2000)
 })
 
 async function loadCategories() {
@@ -138,7 +143,42 @@ function goRecommend() {
 }
 
 function goDetail(id) {
+    // 上报点击行为
+    reportClickBehavior(id, '首页推荐')
     uni.navigateTo({ url: `/pages/product/detail?id=${id}` })
+}
+
+// 上报用户行为
+async function reportClickBehavior(seedId, source) {
+    if (!userStore.isLoggedIn) return
+    
+    try {
+        await reportBehavior({
+            seedId: seedId,
+            behaviorType: 1, // 1-浏览
+            duration: 1,
+            source: source
+        })
+    } catch (error) {
+        console.warn('上报行为失败:', error)
+    }
+}
+
+// 上报页面浏览行为
+async function reportPageView() {
+    if (!userStore.isLoggedIn) return
+    
+    try {
+        // 上报首页浏览行为（可以用一个特殊的seedId表示页面）
+        await reportBehavior({
+            seedId: 0, // 0表示页面浏览
+            behaviorType: 1,
+            duration: 5,
+            source: '首页浏览'
+        })
+    } catch (error) {
+        console.warn('上报页面浏览失败:', error)
+    }
 }
 
 function goLogin() {

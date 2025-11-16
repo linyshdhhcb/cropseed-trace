@@ -37,6 +37,9 @@ export const useCartStore = defineStore("cart", {
     isAllSelected(state) {
       return state.list.length > 0 && state.list.every((item) => item.selected);
     },
+    hasSelected(state) {
+      return state.list.some((item) => item.selected);
+    },
   },
   actions: {
     setList(list = []) {

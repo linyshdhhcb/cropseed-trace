@@ -6,12 +6,19 @@
         </view>
 
         <scroll-view class="cart-scroll" scroll-y enable-back-to-top>
-            <view v-if="!cartStore.list.length && !loading" class="empty">
+            <!-- 加载状态 -->
+            <view v-if="loading" class="loading-state">
+                <text>加载中...</text>
+            </view>
+            
+            <!-- 空购物车状态 -->
+            <view v-else-if="!cartStore.list.length" class="empty">
                 <image src="/static/empty-cart.png" mode="widthFix"></image>
                 <view class="text">购物车还是空的，快去选购吧～</view>
                 <button class="go-buy" @tap="goHome">去逛逛</button>
             </view>
 
+            <!-- 购物车列表 -->
             <view v-else class="cart-list">
                 <view v-for="item in cartStore.list" :key="item.cartId || item.id" class="cart-item">
                     <label class="checkbox" @tap="toggleItem(item)">
@@ -51,11 +58,12 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useCartStore } from '@/stores/cart.js'
 import { useUserStore } from '@/stores/user.js'
 import { useOrderStore } from '@/stores/order.js'
+import { reportBehavior } from '@/api/product.js'
 
 const cartStore = useCartStore()
 const userStore = useUserStore()
@@ -63,20 +71,102 @@ const orderStore = useOrderStore()
 const loading = ref(false)
 
 onShow(async () => {
+    console.log('购物车页面onShow触发')
     userStore.loadFromStorage()
-    if (!userStore.isLoggedIn) return
+    console.log('用户登录状态:', userStore.isLoggedIn)
+    
+    if (!userStore.isLoggedIn) {
+        // 未登录时也尝试从本地存储加载购物车
+        cartStore.loadFromStorage()
+        console.log('未登录，从本地加载购物车数据:', cartStore.list.length)
+        return
+    }
+    
     loading.value = true
-    await cartStore.fetchCart(true)
-    loading.value = false
+    try {
+        await cartStore.fetchCart(true)
+        console.log('已登录，从服务器获取购物车数据:', cartStore.list.length)
+    } catch (error) {
+        console.error('获取购物车数据失败:', error)
+        // 如果网络请求失败，尝试从本地存储加载
+        cartStore.loadFromStorage()
+    } finally {
+        loading.value = false
+    }
 })
+
+function goHome() {
+    uni.switchTab({ url: '/pages/home/index' })
+}
 
 function goLogin() {
     uni.navigateTo({ url: '/pages/auth/login' })
 }
 
-function goHome() {
-    uni.switchTab({ url: '/pages/home/index' })
+// 上报页面浏览行为
+async function reportPageView() {
+    if (!userStore.isLoggedIn) return
+    
+    try {
+        await reportBehavior({
+            seedId: 0, // 0表示页面浏览
+            behaviorType: 1,
+            duration: 3,
+            source: '购物车页面'
+        })
+    } catch (error) {
+        console.warn('上报页面浏览失败:', error)
+    }
 }
+
+// 上报删除行为
+async function reportRemoveBehavior(seedId) {
+    if (!userStore.isLoggedIn || !seedId) return
+    
+    try {
+        await reportBehavior({
+            seedId: seedId,
+            behaviorType: 2, // 2-取消关注/删除
+            duration: 1,
+            source: '购物车-删除商品'
+        })
+    } catch (error) {
+        console.warn('上报删除行为失败:', error)
+    }
+}
+
+// 上报结算行为
+async function reportSettleBehavior(selectedItems) {
+    if (!userStore.isLoggedIn || !selectedItems.length) return
+    
+    try {
+        // 为每个选中的商品上报购买意向
+        for (const item of selectedItems) {
+            await reportBehavior({
+                seedId: item.seedId,
+                behaviorType: 5, // 5-购买意向
+                duration: item.quantity,
+                source: '购物车-结算'
+            })
+        }
+    } catch (error) {
+        console.warn('上报结算行为失败:', error)
+    }
+}
+
+// 页面初始化
+onMounted(() => {
+    console.log('购物车页面onMounted触发')
+    // 初始化时先从本地存储加载数据
+    cartStore.loadFromStorage()
+    userStore.loadFromStorage()
+    console.log('初始化加载购物车数据:', cartStore.list.length)
+    
+    // 延迟上报页面浏览
+    setTimeout(() => {
+        reportPageView()
+    }, 1500)
+})
 
 async function toggleItem(item) {
     const cartId = item.cartId || item.id
@@ -123,30 +213,32 @@ async function changeQuantity(item) {
 }
 
 async function removeItem(item) {
-    const cartId = item.cartId || item.id
-    if (!cartId) {
-        uni.showToast({ title: '购物车ID不存在', icon: 'none' })
-        return
-    }
-    const confirmed = await new Promise((resolve) => {
-        uni.showModal({
-            title: '提示',
-            content: '确认删除该商品？',
-            success: (res) => resolve(res.confirm)
-        })
-    })
-    if (confirmed) {
-        await cartStore.removeItem(cartId)
+    try {
+        await cartStore.removeItem(item.cartId || item.id)
+        
+        // 上报删除行为
+        reportRemoveBehavior(item.seedId || item.id)
+        
+        uni.showToast({ title: '已删除', icon: 'success' })
+    } catch (error) {
+        uni.showToast({ title: '删除失败', icon: 'none' })
     }
 }
 
 function settle() {
-    if (!cartStore.selectedItems.length) {
-        uni.showToast({ title: '请选择结算商品', icon: 'none' })
+    if (!cartStore.hasSelected) {
+        uni.showToast({ title: '请选择商品', icon: 'none' })
         return
     }
-    orderStore.setConfirmItems([...cartStore.selectedItems], 'cart')
-    uni.navigateTo({ url: '/pages/order/confirm?from=cart' })
+    
+    const selectedItems = cartStore.selectedItems
+    
+    // 上报结算行为
+    reportSettleBehavior(selectedItems)
+    
+    // 使用正确的订单store方法
+    orderStore.setConfirmItems(selectedItems, 'cart')
+    uni.navigateTo({ url: '/pages/order/confirm' })
 }
 </script>
 
@@ -174,6 +266,13 @@ function settle() {
 
 .cart-scroll {
     flex: 1;
+}
+
+.loading-state {
+    padding: 100rpx 0;
+    text-align: center;
+    color: #999;
+    font-size: 28rpx;
 }
 
 .empty {
