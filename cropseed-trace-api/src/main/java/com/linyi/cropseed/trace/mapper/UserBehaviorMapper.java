@@ -81,4 +81,21 @@ public interface UserBehaviorMapper extends BaseMapper<UserBehavior> {
         @Select("SELECT * FROM user_behavior WHERE target_id = #{targetId} AND target_type = #{targetType} AND deleted_flag = 0 ORDER BY behavior_time DESC LIMIT #{limit}")
         List<UserBehavior> selectByTargetId(@Param("targetId") Long targetId, @Param("targetType") Integer targetType,
                         @Param("limit") Integer limit);
+
+        /**
+         * 批量查询多个用户的行为记录（优化N+1查询问题）
+         */
+        @Select({
+                "<script>",
+                "SELECT * FROM user_behavior",
+                "WHERE user_id IN",
+                "<foreach collection='userIds' item='userId' open='(' separator=',' close=')'>",
+                "#{userId}",
+                "</foreach>",
+                "AND deleted_flag = 0",
+                "ORDER BY behavior_time DESC",
+                "LIMIT #{limit}",
+                "</script>"
+        })
+        List<UserBehavior> selectByUserIds(@Param("userIds") List<Long> userIds, @Param("limit") Integer limit);
 }
