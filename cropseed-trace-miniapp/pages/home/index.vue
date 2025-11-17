@@ -43,7 +43,13 @@
                         <view class="product-info">
                             <view class="product-name">{{ item.seedName }}</view>
                             <view class="product-price">￥{{ item.unitPrice }}</view>
-                            <view class="product-desc">{{ item.characteristics || '高产稳产' }}</view>
+                            <view class="recommendation-tags" v-if="item.recommendationTags && item.recommendationTags.length">
+                                <view v-for="tag in item.recommendationTags" :key="tag.name" 
+                                      class="tag" :class="tag.type">
+                                    {{ tag.name }}
+                                </view>
+                            </view>
+                            <view v-else class="product-desc">{{ item.characteristics || '高产稳产' }}</view>
                         </view>
                     </view>
                     <view v-if="!recommendList.length && !loading" class="empty">暂无推荐数据</view>
@@ -107,7 +113,8 @@ async function loadRecommend() {
                 seedName: item.targetName || '商品名称',
                 imageUrl: item.targetImage || '/static/no-image-available.png',
                 unitPrice: item.targetPrice || '0.00',
-                characteristics: item.recommendationReason || '推荐商品'
+                characteristics: item.recommendationReason || '推荐商品',
+                recommendationTags: parseRecommendationTags(item.recommendationReason)
             }))
         } else {
             // 如果没有推荐数据，则获取商品列表作为后备
@@ -187,6 +194,52 @@ function goLogin() {
 
 function chooseAddress() {
     uni.showToast({ title: '定位服务开发中', icon: 'none' })
+}
+
+// 解析推荐理由为标签
+function parseRecommendationTags(reason) {
+    if (!reason) return []
+    
+    // 定义算法标签映射
+    const algorithmMap = {
+        '协同过滤': { name: '协同过滤', type: 'collaborative' },
+        '内容推荐': { name: '内容', type: 'content' },
+        '个性化推荐': { name: '个性化', type: 'personalized' },
+        '热门推荐': { name: '热门', type: 'popular' },
+        '混合推荐': { name: '智能推荐', type: 'hybrid' }
+    }
+    
+    const tags = []
+    
+    // 如果是混合推荐，只显示智能推荐标签，避免标签过多
+    if (reason.includes('混合推荐:')) {
+        tags.push(algorithmMap['混合推荐'])
+        
+        // 可以选择性地添加1-2个主要算法标签
+        const algorithms = reason.replace('混合推荐:', '').split('+')
+        let addedCount = 0
+        algorithms.forEach(alg => {
+            const trimmed = alg.trim()
+            if (algorithmMap[trimmed] && addedCount < 2) {
+                tags.push(algorithmMap[trimmed])
+                addedCount++
+            }
+        })
+    } else {
+        // 单一算法推荐
+        Object.keys(algorithmMap).forEach(key => {
+            if (reason.includes(key)) {
+                tags.push(algorithmMap[key])
+            }
+        })
+    }
+    
+    // 如果没有匹配到任何算法，返回默认标签
+    if (tags.length === 0) {
+        tags.push({ name: '推荐', type: 'default' })
+    }
+    
+    return tags
 }
 </script>
 
@@ -357,6 +410,60 @@ function chooseAddress() {
     margin-top: 8rpx;
     font-size: 24rpx;
     color: #999;
+}
+
+.recommendation-tags {
+    margin-top: 8rpx;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8rpx;
+}
+
+.tag {
+    padding: 6rpx 16rpx;
+    border-radius: 24rpx;
+    font-size: 20rpx;
+    color: #fff;
+    background: #667eea;
+    white-space: nowrap;
+    max-width: 140rpx;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.3);
+    transform: scale(1);
+    transition: all 0.2s ease;
+}
+
+/* 不同算法类型的标签颜色 */
+.tag.hybrid {
+    background: #667eea;
+    box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.3);
+}
+
+.tag.collaborative {
+    background: #f093fb;
+    box-shadow: 0 4rpx 12rpx rgba(240, 147, 251, 0.3);
+}
+
+.tag.content {
+    background: #4facfe;
+    box-shadow: 0 4rpx 12rpx rgba(79, 172, 254, 0.3);
+}
+
+.tag.personalized {
+    background: #43e97b;
+    box-shadow: 0 4rpx 12rpx rgba(67, 233, 123, 0.3);
+}
+
+.tag.popular {
+    background: #fa709a;
+    box-shadow: 0 4rpx 12rpx rgba(250, 112, 154, 0.3);
+}
+
+.tag.default {
+    background: #a8edea;
+    color: #666;
+    box-shadow: 0 4rpx 12rpx rgba(168, 237, 234, 0.3);
 }
 
 .empty {
