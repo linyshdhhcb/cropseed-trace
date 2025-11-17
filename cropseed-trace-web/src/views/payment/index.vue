@@ -91,8 +91,8 @@
       <!-- 分页 -->
       <div class="pagination-container">
         <el-pagination
-          v-model:current-page="pagination.page"
-          v-model:page-size="pagination.size"
+          :current-page="pagination.page"
+          :page-size="pagination.size"
           :page-sizes="[10, 20, 50, 100]"
           :total="pagination.total"
           layout="total, sizes, prev, pager, next, jumper"
@@ -181,7 +181,7 @@ async function fetchData() {
     
     if (response.success) {
       tableData.value = response.data.list || response.data.records || []
-      pagination.total = response.data.total || 0
+      pagination.total = parseInt(response.data.total) || 0
     } else {
       ElMessage.error(response.message || '获取数据失败')
     }
@@ -310,7 +310,7 @@ async function cancelOrder(row) {
 
 .pagination-container {
   margin-top: 20px;
-  text-align: right;
+  text-align: center;
 }
 
 .payment-info {

@@ -11,6 +11,7 @@
                     <el-option label="内容推荐" :value="2" />
                     <el-option label="热门推荐" :value="3" />
                     <el-option label="个性化推荐" :value="4" />
+                    <el-option label="混合推荐" :value="5" />
                 </el-select>
             </el-form-item>
             <el-form-item>
@@ -252,6 +253,7 @@ const getRecommendationTypeName = (type) => {
         2: "内容推荐",
         3: "热门推荐",
         4: "个性化推荐",
+        5: "混合推荐",
     };
     return typeMap[type] || "未知";
 };
@@ -260,9 +262,10 @@ const getRecommendationTypeName = (type) => {
 const getRecommendationTypeTag = (type) => {
     const tagMap = {
         1: "primary",
-        2: "success",
+        2: "success", 
         3: "warning",
         4: "danger",
+        5: "info",      // 混合推荐
     };
     return tagMap[type] || "info";
 };
@@ -294,7 +297,7 @@ const loadRecommendationList = async () => {
         };
         const response = await getRecommendationList(params);
         tableData.value = response.data.list;
-        pagination.total = response.data.total;
+        pagination.total = parseInt(response.data.total) || 0;
     } catch (error) {
         console.error("获取推荐列表失败:", error);
         ElMessage.error("获取推荐列表失败");
@@ -437,11 +440,11 @@ onMounted(() => {
         margin-bottom: 20px;
     }
 
-    .page-container {
-        .pagination-container {
-            margin-top: 20px;
-            text-align: center;
-        }
+    .pagination-container {
+        margin-top: 20px;
+        text-align: center !important;
+        display: flex !important;
+        justify-content: center !important;
     }
 }
 

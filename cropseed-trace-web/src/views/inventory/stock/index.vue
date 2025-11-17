@@ -78,7 +78,7 @@
 
             <!-- 分页 -->
             <div class="pagination-container">
-                <el-pagination v-model:current-page="pagination.current" v-model:page-size="pagination.size"
+                <el-pagination :current-page="pagination.current" :page-size="pagination.size"
                     :page-sizes="[10, 20, 50, 100]" :total="pagination.total"
                     layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange"
                     @current-change="handleCurrentChange" />
@@ -248,7 +248,7 @@ const loadInventoryList = async () => {
         };
         const response = await getInventoryList(params);
         tableData.value = response.data.list;
-        pagination.total = response.data.total;
+        pagination.total = parseInt(response.data.total) || 0;
     } catch (error) {
         console.error("获取库存列表失败:", error);
     } finally {

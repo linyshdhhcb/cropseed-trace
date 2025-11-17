@@ -85,6 +85,19 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- 分页组件 -->
+                <div class="pagination-container">
+                    <el-pagination
+                        :current-page="pagination.current"
+                        :page-size="pagination.size"
+                        :page-sizes="[8, 12, 16, 24]"
+                        :total="pagination.total"
+                        layout="total, sizes, prev, pager, next, jumper"
+                        @size-change="handleSizeChange"
+                        @current-change="handleCurrentChange"
+                    />
+                </div>
             </div>
         </el-card>
 
@@ -145,15 +158,33 @@ const users = ref([])
 const tempSelectedUser = ref(null)
 const userTableRef = ref()
 
-// 算法标签类型映射
+// 分页数据
+const pagination = reactive({
+    current: 1,
+    size: 12,
+    total: 0
+})
+
+// 算法标签类型映射 - 与后端RecommendationVO保持一致
 const getAlgorithmTagType = (type) => {
     const typeMap = {
         1: 'primary',   // 协同过滤
-        2: 'success',   // 内容推荐
+        2: 'success',   // 内容推荐  
         3: 'warning',   // 热门推荐
         4: 'danger'     // 个性化推荐
     }
     return typeMap[type] || 'info'
+}
+
+// 获取推荐类型名称
+const getRecommendationTypeName = (type) => {
+    const typeMap = {
+        1: '协同过滤',
+        2: '内容推荐', 
+        3: '热门推荐',
+        4: '个性化推荐'
+    }
+    return typeMap[type] || '未知'
 }
 
 // 处理算法切换
@@ -161,6 +192,9 @@ const handleAlgorithmChange = () => {
     if (selectedAlgorithm.value === 'popular') {
         selectedUser.value = null
     }
+    // 重置分页
+    pagination.current = 1
+    pagination.total = 0
     loadRecommendations()
 }
 
@@ -175,29 +209,43 @@ const loadRecommendations = async () => {
     try {
         let response
         const userId = selectedUser.value?.id
-        const limit = 12
+        
+        // 根据分页加载推荐结果
+        const params = {
+            pageNum: pagination.current,
+            pageSize: pagination.size,
+            userId: userId,
+            recommendationType: getRecommendationTypeByAlgorithm(selectedAlgorithm.value)
+        }
         
         switch (selectedAlgorithm.value) {
             case 'collaborative':
-                response = await collaborativeFilteringRecommend(userId, limit)
+                response = await collaborativeFilteringRecommend(userId, pagination.size)
                 break
             case 'content':
-                response = await contentBasedRecommend(userId, limit)
+                response = await contentBasedRecommend(userId, pagination.size)
                 break
             case 'popular':
-                response = await popularRecommend(limit)
+                response = await popularRecommend(pagination.size)
                 break
             case 'personalized':
-                response = await personalizedRecommend(userId, limit)
+                response = await personalizedRecommend(userId, pagination.size)
                 break
             case 'hybrid':
-                response = await hybridRecommend(userId, limit)
+                response = await hybridRecommend(userId, pagination.size)
                 break
             default:
                 response = { data: [] }
         }
         
         recommendations.value = response.data || []
+        // 如果API返回了分页信息，更新总数
+        if (response.total !== undefined) {
+            pagination.total = parseInt(response.total) || 0
+        } else {
+            // 如果没有分页信息，根据返回结果估算
+            pagination.total = recommendations.value.length
+        }
         
         if (recommendations.value.length === 0) {
             ElMessage.info('暂无推荐结果')
@@ -206,9 +254,35 @@ const loadRecommendations = async () => {
         console.error('获取推荐失败:', error)
         ElMessage.error('获取推荐失败')
         recommendations.value = []
+        pagination.total = 0
     } finally {
         loading.value = false
     }
+}
+
+// 根据算法名称获取推荐类型编码
+const getRecommendationTypeByAlgorithm = (algorithm) => {
+    const typeMap = {
+        'collaborative': 1,  // 协同过滤
+        'content': 2,       // 内容推荐
+        'popular': 3,       // 热门推荐
+        'personalized': 4,  // 个性化推荐
+        'hybrid': 5         // 混合推荐
+    }
+    return typeMap[algorithm] || null
+}
+
+// 分页大小变化
+const handleSizeChange = (size) => {
+    pagination.size = size
+    pagination.current = 1
+    loadRecommendations()
+}
+
+// 当前页变化
+const handleCurrentChange = (current) => {
+    pagination.current = current
+    loadRecommendations()
 }
 
 // 加载用户列表
@@ -393,5 +467,14 @@ onMounted(() => {
 .empty-state {
     padding: 40px;
     text-align: center;
+}
+
+.pagination-container {
+    margin-top: 30px;
+    text-align: center;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-height: 50px;
 }
 </style>

@@ -329,7 +329,7 @@ const loadSeedList = async () => {
         };
         const response = await getSeedInfoList(params);
         tableData.value = response.data.list;
-        pagination.total = response.data.total;
+        pagination.total = parseInt(response.data.total) || 0;
     } catch (error) {
         console.error("获取种子列表失败:", error);
     } finally {

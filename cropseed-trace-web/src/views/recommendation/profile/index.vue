@@ -75,7 +75,7 @@
 
             <!-- 分页 -->
             <div class="pagination-container">
-                <el-pagination v-model:current-page="pagination.current" v-model:page-size="pagination.size"
+                <el-pagination :current-page="pagination.current" :page-size="pagination.size"
                     :page-sizes="[10, 20, 50, 100]" :total="pagination.total"
                     layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange"
                     @current-change="handleCurrentChange" />
@@ -256,7 +256,7 @@ const loadProfileList = async () => {
         };
         const response = await getUserProfileList(params);
         tableData.value = response.data.list;
-        pagination.total = response.data.total;
+        pagination.total = parseInt(response.data.total) || 0;
     } catch (error) {
         console.error("获取画像列表失败:", error);
         ElMessage.error("获取画像列表失败");
@@ -337,11 +337,9 @@ onMounted(() => {
         margin-bottom: 20px;
     }
 
-    .page-container {
-        .pagination-container {
-            margin-top: 20px;
-            text-align: center;
-        }
+    .pagination-container {
+        margin-top: 20px;
+        text-align: center;
     }
 }
 
