@@ -57,7 +57,7 @@ export function deleteCart(id) {
  * @param {Array} ids - 购物车ID数组
  */
 export function batchDeleteCart(ids) {
-  return http.delete("/wx/cart/batch", { ids });
+  return http.delete("/wx/cart/batch", { cartIds: ids });
 }
 
 /**

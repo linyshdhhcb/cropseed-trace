@@ -84,6 +84,7 @@ onShow(async () => {
     
     loading.value = true
     try {
+        // 每次显示页面时都强制刷新购物车数据，确保数据最新
         await cartStore.fetchCart(true)
         console.log('已登录，从服务器获取购物车数据:', cartStore.list.length)
     } catch (error) {

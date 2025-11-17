@@ -132,12 +132,23 @@ export const useCartStore = defineStore("cart", {
     },
     async removeItems(ids = []) {
       if (ids.length === 0) return;
-      await batchDeleteCart(ids);
-      this.list = this.list.filter((item) => {
-        const itemId = item.cartId || item.id;
-        return !ids.includes(itemId);
-      });
-      uni.setStorageSync(config.cartKey, this.list);
+      
+      try {
+        // 先更新本地状态，提升用户体验
+        this.list = this.list.filter((item) => {
+          const itemId = item.cartId || item.id;
+          return !ids.includes(itemId);
+        });
+        uni.setStorageSync(config.cartKey, this.list);
+        
+        // 再调用后端API删除
+        await batchDeleteCart(ids);
+      } catch (error) {
+        console.error('批量删除购物车商品失败:', error);
+        // 如果后端删除失败，重新获取数据保持一致性
+        await this.fetchCart(true);
+        throw error;
+      }
     },
     async clearCart() {
       await clearCartApi();

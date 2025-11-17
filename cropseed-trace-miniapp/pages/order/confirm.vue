@@ -191,7 +191,17 @@ async function submitOrder() {
 
         const order = await orderStore.submitOrder(payload)
         orderStore.clearConfirm()
+        
+        // 如果是从购物车提交订单，删除已提交的购物车商品
         if (source.value === 'cart') {
+            const cartIds = items.value
+                .map((item) => item.cartId || item.id)
+                .filter(Boolean)
+            if (cartIds.length > 0) {
+                // 先从本地删除，提升用户体验
+                await cartStore.removeItems(cartIds)
+            }
+            // 再重新获取服务器数据，确保数据同步
             await cartStore.fetchCart(true)
         }
         uni.showToast({ title: '下单成功', icon: 'success' })
