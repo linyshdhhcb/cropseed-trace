@@ -31,9 +31,11 @@
         <hutool.version>5.8.29</hutool.version>
         <easyexcel.version>4.0.3</easyexcel.version>
         <alipay.version>4.39.218.ALL</alipay.version>
+        <redisson.version>3.24.3</redisson.version>
     </properties>
 
     <dependencies>
+
         <!-- Spring Boot Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -144,7 +146,26 @@
             <artifactId>alipay-sdk-java</artifactId>
             <version>${alipay.version}</version>
         </dependency>
-        
+
+        <!-- Redisson分布式锁 -->
+        <dependency>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson-spring-boot-starter</artifactId>
+            <version>${redisson.version}</version>
+        </dependency>
+
+        <!-- ZXing二维码生成 -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>3.5.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>3.5.2</version>
+        </dependency>
+
         <!-- 推荐系统相关依赖 -->
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -214,7 +235,7 @@
                     </compilerArgs>
                 </configuration>
             </plugin>
-            
+
             <!-- Spring Boot插件 -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>

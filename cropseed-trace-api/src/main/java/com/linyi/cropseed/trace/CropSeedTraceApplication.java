@@ -8,7 +8,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * 农作物种质资源数字化溯源系统 - 主启动类
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
@@ -21,10 +21,9 @@ public class CropSeedTraceApplication {
     public static void main(String[] args) {
         SpringApplication.run(CropSeedTraceApplication.class, args);
         System.out.println("""
-
                 ========================================
                 农作物种质资源数字化溯源系统启动成功！
-                API文档地址: http://localhost:8085/api/doc.html
+                API文档地址: http://localhost:8085/doc.html
                 ========================================
                 """);
     }
