@@ -171,6 +171,54 @@
                 </el-button>
             </template>
         </el-dialog>
+
+        <!-- 库存详情弹窗 -->
+        <el-dialog v-model="stockDialogVisible" :title="stockDialogTitle" width="1200px" @close="handleStockDialogClose">
+            <el-table v-loading="stockLoading" :data="stockTableData" style="width: 100%" border stripe>
+                <el-table-column prop="seedName" label="种子名称" width="150" />
+                <el-table-column prop="seedCode" label="种子编码" width="120" />
+                <el-table-column prop="batchNumber" label="批次号" width="120" />
+                <el-table-column prop="currentStock" label="当前库存" width="100">
+                    <template #default="{ row }">
+                        <span :style="{ color: row.currentStock <= 0 ? '#f56c6c' : '#303133' }">
+                            {{ row.currentStock || 0 }}
+                        </span>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="unit" label="单位" width="80" />
+                <el-table-column prop="minStock" label="最小库存" width="100" />
+                <el-table-column prop="maxStock" label="最大库存" width="100" />
+                <el-table-column label="库存状态" width="100">
+                    <template #default="{ row }">
+                        <el-tag :type="getStockStatusType(row.currentStock, row.minStock)">
+                            {{ getStockStatusText(row.currentStock, row.minStock) }}
+                        </el-tag>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="location" label="库位" width="120" />
+                <el-table-column prop="productionDate" label="生产日期" width="120" />
+                <el-table-column prop="expiryDate" label="有效期" width="120" />
+                <el-table-column prop="lastInboundTime" label="最近入库" width="150" />
+                <el-table-column prop="lastOutboundTime" label="最近出库" width="150" />
+            </el-table>
+            
+            <!-- 库存分页 -->
+            <div class="pagination-container" style="margin-top: 20px; text-align: center;">
+                <el-pagination 
+                    v-model:current-page="stockPagination.current" 
+                    v-model:page-size="stockPagination.size"
+                    :page-sizes="[10, 20, 50, 100]" 
+                    :total="stockPagination.total"
+                    layout="total, sizes, prev, pager, next, jumper" 
+                    @size-change="handleStockSizeChange"
+                    @current-change="handleStockCurrentChange" 
+                />
+            </div>
+            
+            <template #footer>
+                <el-button @click="stockDialogVisible = false">关闭</el-button>
+            </template>
+        </el-dialog>
     </div>
 </template>
 
@@ -190,6 +238,7 @@ import {
     updateWarehouse,
     deleteWarehouse,
     batchDeleteWarehouse,
+    getInventoryList,
 } from "@/api/inventory";
 
 // 搜索表单
@@ -301,9 +350,28 @@ const handleEdit = (row) => {
 };
 
 // 查看库存
-const handleViewStock = (row) => {
-    ElMessage.info(`查看仓库 ${row.warehouseName} 的库存详情`);
-    // 这里可以跳转到库存详情页面
+const handleViewStock = async (row) => {
+    try {
+        stockDialogVisible.value = true;
+        stockLoading.value = true;
+        currentWarehouse.value = row;
+        stockDialogTitle.value = `${row.warehouseName} - 库存详情`;
+        
+        // 获取该仓库的库存数据
+        const params = {
+            warehouseId: row.id,
+            current: stockPagination.current,
+            size: stockPagination.size
+        };
+        const response = await getInventoryList(params);
+        stockTableData.value = response.data.list || [];
+        stockPagination.total = parseInt(response.data.total) || 0;
+    } catch (error) {
+        console.error('获取库存数据失败:', error);
+        ElMessage.error('获取库存数据失败');
+    } finally {
+        stockLoading.value = false;
+    }
 };
 
 // 删除仓库
@@ -418,6 +486,56 @@ const getUtilizationRateColor = (rate) => {
     if (rate >= 90) return "#f56c6c";
     if (rate >= 70) return "#e6a23c";
     return "#67c23a";
+};
+
+// 库存弹窗相关数据
+const stockDialogVisible = ref(false);
+const stockDialogTitle = ref('');
+const stockLoading = ref(false);
+const stockTableData = ref([]);
+const currentWarehouse = ref({});
+
+// 库存分页
+const stockPagination = reactive({
+    current: 1,
+    size: 10,
+    total: 0,
+});
+
+// 库存分页大小变化
+const handleStockSizeChange = (size) => {
+    stockPagination.size = size;
+    stockPagination.current = 1;
+    handleViewStock(currentWarehouse.value);
+};
+
+// 库存当前页变化
+const handleStockCurrentChange = (current) => {
+    stockPagination.current = current;
+    handleViewStock(currentWarehouse.value);
+};
+
+// 关闭库存弹窗
+const handleStockDialogClose = () => {
+    stockDialogVisible.value = false;
+    stockTableData.value = [];
+    currentWarehouse.value = {};
+    stockPagination.current = 1;
+    stockPagination.total = 0;
+};
+
+// 获取库存状态标签类型
+const getStockStatusType = (stock, minStock) => {
+    if (!stock || stock === 0) return 'danger'; // 缺货
+    if (minStock && stock <= minStock) return 'warning'; // 低库存
+    return 'success'; // 正常
+};
+
+// 获取库存状态文本
+const getStockStatusText = (stock, minStock) => {
+    if (!stock || stock === 0) return '缺货';
+    if (minStock && stock <= minStock) return '低库存';
+    return '正常';
 };
 
 // 初始化
