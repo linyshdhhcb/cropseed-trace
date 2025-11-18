@@ -9,7 +9,7 @@ import java.util.List;
 
 /**
  * 种子品类Mapper
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
@@ -19,7 +19,7 @@ public interface SeedCategoryMapper extends BaseMapper<SeedCategory> {
     /**
      * 查询所有品类（树形结构）
      */
-    @Select("SELECT * FROM seed_category WHERE deleted_flag = 0 AND status = 1 ORDER BY sort ASC, id ASC")
+    @Select("SELECT * FROM seed_category WHERE deleted_flag = 0 ORDER BY sort ASC, id ASC")
     List<SeedCategory> selectAllCategories();
 
     /**
