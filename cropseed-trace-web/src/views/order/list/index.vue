@@ -50,11 +50,15 @@
         <!-- 数据表格 -->
         <el-card class="page-container">
             <el-table v-loading="loading" :data="tableData" @selection-change="handleSelectionChange"
-                style="width: 100%">
+                style="width: 100%" border stripe>
                 <el-table-column type="selection" width="55" />
                 <el-table-column prop="id" label="ID" width="80" />
-                <el-table-column prop="orderNo" label="订单号" width="150" />
-                <el-table-column prop="customerName" label="客户名称" width="120" />
+                <el-table-column prop="orderNo" label="订单号" width="220" />
+                <el-table-column prop="customerName" label="客户名称" width="120">
+                    <template #default="{ row }">
+                        <span>{{ row.customerName || row.consignee || '-' }}</span>
+                    </template>
+                </el-table-column>
                 <el-table-column prop="orderType" label="订单类型" width="100">
                     <template #default="{ row }">
                         <el-tag :type="row.orderType === 1 ? 'primary' : 'success'">
@@ -74,7 +78,11 @@
                         <span class="amount">¥{{ row.totalAmount }}</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="itemCount" label="商品数量" width="100" />
+                <el-table-column prop="itemCount" label="商品数量" width="100">
+                    <template #default="{ row }">
+                        <span>{{ row.itemCount || (row.orderItems ? row.orderItems.length : 0) }}</span>
+                    </template>
+                </el-table-column>
                 <el-table-column prop="paymentMethod" label="支付方式" width="100">
                     <template #default="{ row }">
                         <el-tag :type="getPaymentMethodTagType(row.paymentMethod)">
@@ -118,108 +126,145 @@
         </el-card>
 
         <!-- 订单详情对话框 -->
-        <el-dialog v-model="detailDialogVisible" title="订单详情" width="1000px" @close="handleDetailDialogClose">
+        <el-dialog v-model="detailDialogVisible" title="订单详情" width="1200px" @close="handleDetailDialogClose" class="order-detail-dialog">
             <div v-if="orderDetail" class="order-detail">
-                <!-- 订单基本信息 -->
-                <el-card class="detail-card" shadow="never">
-                    <template #header>
-                        <span>订单基本信息</span>
-                    </template>
-                    <el-row :gutter="20">
-                        <el-col :span="8">
-                            <div class="detail-item">
-                                <label>订单号：</label>
-                                <span>{{ orderDetail.orderNo }}</span>
+                <!-- 订单状态头部 -->
+                <div class="order-header">
+                    <div class="order-status-card">
+                        <div class="status-info">
+                            <div class="order-number">
+                                <i class="el-icon-document"></i>
+                                <span>订单号: {{ orderDetail.orderNo }}</span>
                             </div>
-                        </el-col>
-                        <el-col :span="8">
-                            <div class="detail-item">
-                                <label>客户名称：</label>
-                                <span>{{ orderDetail.customerName }}</span>
-                            </div>
-                        </el-col>
-                        <el-col :span="8">
-                            <div class="detail-item">
-                                <label>订单状态：</label>
-                                <el-tag :type="getOrderStatusTagType(orderDetail.orderStatus)">
+                            <div class="order-status">
+                                <el-tag :type="getOrderStatusTagType(orderDetail.orderStatus)" size="large">
                                     {{ getOrderStatusText(orderDetail.orderStatus) }}
                                 </el-tag>
                             </div>
-                        </el-col>
-                    </el-row>
-                    <el-row :gutter="20">
-                        <el-col :span="8">
-                            <div class="detail-item">
-                                <label>订单金额：</label>
-                                <span class="amount">¥{{ orderDetail.totalAmount }}</span>
+                        </div>
+                        <div class="order-amount">
+                            <div class="amount-label">订单金额</div>
+                            <div class="amount-value">￥{{ orderDetail.totalAmount }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 订单基本信息 -->
+                <el-card class="detail-card" shadow="hover">
+                    <template #header>
+                        <div class="card-header">
+                            <i class="el-icon-info"></i>
+                            <span>订单信息</span>
+                        </div>
+                    </template>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">客户名称</div>
+                            <div class="info-value">{{ orderDetail.customerName || orderDetail.consignee || '-' }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">订单类型</div>
+                            <div class="info-value">
+                                <el-tag :type="orderDetail.orderType === 1 ? 'primary' : 'success'" size="small">
+                                    {{ orderDetail.orderType === 1 ? 'B端订单' : 'C端订单' }}
+                                </el-tag>
                             </div>
-                        </el-col>
-                        <el-col :span="8">
-                            <div class="detail-item">
-                                <label>支付方式：</label>
-                                <span>{{ getPaymentMethodText(orderDetail.paymentMethod) }}</span>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">支付方式</div>
+                            <div class="info-value">
+                                <el-tag :type="getPaymentMethodTagType(orderDetail.paymentMethod)" size="small">
+                                    {{ getPaymentMethodText(orderDetail.paymentMethod) }}
+                                </el-tag>
                             </div>
-                        </el-col>
-                        <el-col :span="8">
-                            <div class="detail-item">
-                                <label>创建时间：</label>
-                                <span>{{ orderDetail.createTime }}</span>
-                            </div>
-                        </el-col>
-                    </el-row>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">创建时间</div>
+                            <div class="info-value">{{ orderDetail.createTime }}</div>
+                        </div>
+                        <div class="info-item" v-if="orderDetail.payTime">
+                            <div class="info-label">支付时间</div>
+                            <div class="info-value">{{ orderDetail.payTime }}</div>
+                        </div>
+                        <div class="info-item" v-if="orderDetail.shipTime">
+                            <div class="info-label">发货时间</div>
+                            <div class="info-value">{{ orderDetail.shipTime }}</div>
+                        </div>
+                    </div>
                 </el-card>
 
                 <!-- 商品信息 -->
-                <el-card class="detail-card" shadow="never">
+                <el-card class="detail-card" shadow="hover">
                     <template #header>
-                        <span>商品信息</span>
+                        <div class="card-header">
+                            <i class="el-icon-goods"></i>
+                            <span>商品信息</span>
+                            <el-tag size="small" type="info">共 {{ orderDetail.orderItems?.length || 0 }} 件商品</el-tag>
+                        </div>
                     </template>
-                    <el-table :data="orderDetail.orderItems" style="width: 100%">
-                        <el-table-column prop="seedName" label="商品名称" width="200" />
-                        <el-table-column prop="seedCode" label="商品编码" width="150" />
-                        <el-table-column prop="quantity" label="数量" width="100" />
-                        <el-table-column prop="unitPrice" label="单价" width="100">
+                    <el-table :data="orderDetail.orderItems" style="width: 100%" class="order-items-table">
+                        <el-table-column prop="seedName" label="商品名称" min-width="200">
                             <template #default="{ row }">
-                                <span class="amount">¥{{ row.unitPrice }}</span>
+                                <div class="product-info">
+                                    <div class="product-name">{{ row.seedName }}</div>
+                                    <div class="product-code">编码: {{ row.seedCode }}</div>
+                                </div>
                             </template>
                         </el-table-column>
-                        <el-table-column prop="totalPrice" label="小计" width="100">
+                        <el-table-column prop="quantity" label="数量" width="100" align="center">
                             <template #default="{ row }">
-                                <span class="amount">¥{{ row.totalPrice }}</span>
+                                <div class="quantity">{{ row.quantity }}</div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="unitPrice" label="单价" width="120" align="right">
+                            <template #default="{ row }">
+                                <span class="price">￥{{ row.unitPrice }}</span>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="totalPrice" label="小计" width="120" align="right">
+                            <template #default="{ row }">
+                                <span class="price total-price">￥{{ row.totalPrice }}</span>
                             </template>
                         </el-table-column>
                     </el-table>
+                    <div class="order-summary">
+                        <div class="summary-item">
+                            <span>商品总金额:</span>
+                            <span class="price">￥{{ orderDetail.totalAmount }}</span>
+                        </div>
+                    </div>
                 </el-card>
 
                 <!-- 收货信息 -->
-                <el-card class="detail-card" shadow="never">
+                <el-card class="detail-card" shadow="hover">
                     <template #header>
-                        <span>收货信息</span>
+                        <div class="card-header">
+                            <i class="el-icon-location"></i>
+                            <span>收货信息</span>
+                        </div>
                     </template>
-                    <el-row :gutter="20">
-                        <el-col :span="12">
-                            <div class="detail-item">
-                                <label>收货人：</label>
+                    <div class="address-info">
+                        <div class="address-main">
+                            <div class="consignee">
+                                <i class="el-icon-user"></i>
                                 <span>{{ orderDetail.consignee }}</span>
+                                <span class="phone">{{ orderDetail.phone }}</span>
                             </div>
-                        </el-col>
-                        <el-col :span="12">
-                            <div class="detail-item">
-                                <label>联系电话：</label>
-                                <span>{{ orderDetail.phone }}</span>
-                            </div>
-                        </el-col>
-                    </el-row>
-                    <el-row :gutter="20">
-                        <el-col :span="24">
-                            <div class="detail-item">
-                                <label>收货地址：</label>
+                            <div class="address">
+                                <i class="el-icon-map-location"></i>
                                 <span>{{ orderDetail.address }}</span>
                             </div>
-                        </el-col>
-                    </el-row>
+                        </div>
+                    </div>
                 </el-card>
             </div>
+            
+            <template #footer>
+                <div class="dialog-footer">
+                    <el-button @click="detailDialogVisible = false">关闭</el-button>
+                    <el-button v-if="orderDetail?.orderStatus === 1" type="primary" @click="handleAuditInDialog">审核订单</el-button>
+                </div>
+            </template>
         </el-dialog>
     </div>
 </template>
@@ -236,6 +281,11 @@ import {
     getOrderList,
     getOrderDetail,
     updateOrderStatus,
+    auditOrder,
+    payOrder,
+    cancelOrder,
+    shipOrder,
+    completeOrder,
 } from "@/api/order";
 
 // 搜索表单
@@ -273,11 +323,26 @@ const loadOrderList = async () => {
             size: pagination.size,
             ...searchForm,
         };
+        console.log('请求订单列表参数:', params);
+        
         const response = await getOrderList(params);
-        tableData.value = response.data.list;
-        pagination.total = parseInt(response.data.total) || 0;
+        console.log('订单列表响应:', response);
+        
+        if (response && response.data) {
+            tableData.value = response.data.list || [];
+            pagination.total = parseInt(response.data.total) || 0;
+        } else {
+            tableData.value = [];
+            pagination.total = 0;
+        }
+        
+        console.log('设置表格数据:', tableData.value.length, '条记录');
+        
     } catch (error) {
         console.error("获取订单列表失败:", error);
+        ElMessage.error('获取订单列表失败: ' + (error.response?.data?.message || error.message));
+        tableData.value = [];
+        pagination.total = 0;
     } finally {
         loading.value = false;
     }
@@ -299,28 +364,46 @@ const handleReset = () => {
 // 查看详情
 const handleView = async (row) => {
     try {
+        console.log('查看订单详情:', row.id);
         const response = await getOrderDetail(row.id);
+        console.log('订单详情响应:', response);
+        
         orderDetail.value = response.data;
         detailDialogVisible.value = true;
+        
     } catch (error) {
         console.error("获取订单详情失败:", error);
+        ElMessage.error('获取订单详情失败: ' + (error.response?.data?.message || error.message));
     }
 };
 
 // 确认支付
 const handlePay = async (row) => {
     try {
-        await ElMessageBox.confirm("确定要确认支付该订单吗？", "提示", {
-            confirmButtonText: "确定",
-            cancelButtonText: "取消",
-            type: "warning",
-        });
-        await updateOrderStatus(row.id, 2);
+        const { value: paymentMethod } = await ElMessageBox.prompt(
+            "请选择支付方式",
+            "确认支付",
+            {
+                confirmButtonText: "确定",
+                cancelButtonText: "取消",
+                inputType: "select",
+                inputOptions: {
+                    1: "微信支付",
+                    2: "支付宝",
+                    3: "银行转账"
+                },
+                inputValue: "1"
+            }
+        );
+        
+        console.log('调用支付API:', { id: row.id, paymentMethod: parseInt(paymentMethod) });
+        await payOrder(row.id, parseInt(paymentMethod));
         ElMessage.success("确认支付成功");
         loadOrderList();
     } catch (error) {
         if (error !== "cancel") {
             console.error("确认支付失败:", error);
+            ElMessage.error('确认支付失败: ' + (error.response?.data?.message || error.message));
         }
     }
 };
@@ -328,17 +411,40 @@ const handlePay = async (row) => {
 // 发货
 const handleShip = async (row) => {
     try {
-        await ElMessageBox.confirm("确定要发货该订单吗？", "提示", {
-            confirmButtonText: "确定",
-            cancelButtonText: "取消",
-            type: "warning",
+        const result = await ElMessageBox.prompt(
+            "请输入物流信息（格式：物流公司|快递单号|备注）",
+            "订单发货",
+            {
+                confirmButtonText: "确定发货",
+                cancelButtonText: "取消",
+                inputPlaceholder: "例如：顺丰速运|SF1234567890|小心轻放"
+            }
+        );
+        
+        const shipInfo = result.value.split('|');
+        const logisticsCompany = shipInfo[0] || '顺丰速运';
+        const trackingNumber = shipInfo[1] || '';
+        const remark = shipInfo[2] || '';
+        
+        if (!trackingNumber) {
+            ElMessage.error('请输入快递单号');
+            return;
+        }
+        
+        console.log('调用发货API:', { 
+            id: row.id, 
+            logisticsCompany, 
+            trackingNumber, 
+            remark 
         });
-        await updateOrderStatus(row.id, 3);
+        
+        await shipOrder(row.id, logisticsCompany, trackingNumber, remark);
         ElMessage.success("发货成功");
         loadOrderList();
     } catch (error) {
         if (error !== "cancel") {
             console.error("发货失败:", error);
+            ElMessage.error('发货失败: ' + (error.response?.data?.message || error.message));
         }
     }
 };
@@ -351,12 +457,15 @@ const handleComplete = async (row) => {
             cancelButtonText: "取消",
             type: "warning",
         });
-        await updateOrderStatus(row.id, 4);
+        
+        console.log('调用完成订单API:', { id: row.id });
+        await completeOrder(row.id);
         ElMessage.success("订单完成");
         loadOrderList();
     } catch (error) {
         if (error !== "cancel") {
             console.error("完成订单失败:", error);
+            ElMessage.error('完成订单失败: ' + (error.response?.data?.message || error.message));
         }
     }
 };
@@ -364,46 +473,87 @@ const handleComplete = async (row) => {
 // 取消订单
 const handleCancel = async (row) => {
     try {
-        await ElMessageBox.confirm("确定要取消该订单吗？", "提示", {
-            confirmButtonText: "确定",
-            cancelButtonText: "取消",
-            type: "warning",
-        });
-        await updateOrderStatus(row.id, 5);
+        const { value: reason } = await ElMessageBox.prompt(
+            "请输入取消原因",
+            "取消订单",
+            {
+                confirmButtonText: "确定取消",
+                cancelButtonText: "返回",
+                inputPlaceholder: "请输入取消订单的原因..."
+            }
+        );
+        
+        if (!reason || reason.trim() === '') {
+            ElMessage.error('请输入取消原因');
+            return;
+        }
+        
+        console.log('调用取消订单API:', { id: row.id, reason });
+        await cancelOrder(row.id, reason.trim());
         ElMessage.success("订单已取消");
         loadOrderList();
     } catch (error) {
         if (error !== "cancel") {
             console.error("取消订单失败:", error);
+            ElMessage.error('取消订单失败: ' + (error.response?.data?.message || error.message));
         }
     }
 };
 
 // 审核订单
 const handleAudit = async (row) => {
+    console.log('开始审核订单:', row.id, '当前状态:', row.orderStatus);
+    
     try {
-        await ElMessageBox.confirm("确定要审核通过该订单吗？", "审核订单", {
+        const result = await ElMessageBox.confirm("确定要审核通过该订单吗？", "审核订单", {
             confirmButtonText: "审核通过",
             cancelButtonText: "审核拒绝",
             distinguishCancelAndClose: true,
             type: "warning",
         });
+        
+        console.log('用户选择结果:', result);
+        
         // 审核通过，状态变为待发货(2)
-        await updateOrderStatus(row.id, 2);
+        console.log('调用API - 审核通过:', { id: row.id, status: 2 });
+        const response = await updateOrderStatus(row.id, 2);
+        console.log('审核通过API响应:', response);
+        
         ElMessage.success("订单审核通过");
-        loadOrderList();
+        await loadOrderList();
+        
     } catch (action) {
+        console.log('用户操作或错误:', action);
+        
         if (action === "cancel") {
             // 审核拒绝，状态变为已取消(5)
             try {
-                await updateOrderStatus(row.id, 5);
+                console.log('调用API - 审核拒绝:', { id: row.id, status: 5 });
+                const response = await updateOrderStatus(row.id, 5);
+                console.log('审核拒绝 API响应:', response);
+                
                 ElMessage.success("订单审核拒绝");
-                loadOrderList();
+                await loadOrderList();
+                
             } catch (error) {
                 console.error("审核拒绝失败:", error);
+                const errorMsg = error.response?.data?.message || error.message || '未知错误';
+                ElMessage.error('审核拒绝失败: ' + errorMsg);
             }
+        } else if (action !== "close" && action !== "cancel") {
+            // 审核通过失败
+            console.error("审核通过失败:", action);
+            const errorMsg = action.response?.data?.message || action.message || '未知错误';
+            ElMessage.error('审核通过失败: ' + errorMsg);
         }
     }
+};
+
+// 在详情弹窗中审核订单
+const handleAuditInDialog = async () => {
+    await handleAudit(orderDetail.value);
+    // 审核后关闭弹窗并刷新列表
+    detailDialogVisible.value = false;
 };
 
 // 导出数据
@@ -514,28 +664,208 @@ onMounted(() => {
     }
 }
 
+.order-detail-dialog {
+    .el-dialog__body {
+        padding: 0 20px 20px 20px;
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+}
+
 .order-detail {
+    .order-header {
+        margin-bottom: 24px;
+        
+        .order-status-card {
+            background: #6fa3f7;
+            border-radius: 12px;
+            padding: 24px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            
+            .status-info {
+                .order-number {
+                    display: flex;
+                    align-items: center;
+                    font-size: 16px;
+                    margin-bottom: 8px;
+                    
+                    i {
+                        margin-right: 8px;
+                        font-size: 18px;
+                    }
+                }
+                
+                .order-status {
+                    .el-tag {
+                        border: none;
+                        color: white;
+                        font-weight: 600;
+                    }
+                }
+            }
+            
+            .order-amount {
+                text-align: right;
+                
+                .amount-label {
+                    font-size: 14px;
+                    opacity: 0.9;
+                    margin-bottom: 4px;
+                }
+                
+                .amount-value {
+                    font-size: 28px;
+                    font-weight: 700;
+                }
+            }
+        }
+    }
+    
     .detail-card {
         margin-bottom: 20px;
-
+        border-radius: 8px;
+        
         &:last-child {
             margin-bottom: 0;
         }
-    }
-
-    .detail-item {
-        margin-bottom: 10px;
-
-        label {
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             font-weight: 600;
-            color: #606266;
-            margin-right: 8px;
-        }
-
-        span {
-            color: #303133;
+            
+            i {
+                color: #409eff;
+                font-size: 16px;
+            }
         }
     }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 16px;
+        
+        .info-item {
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            
+            .info-label {
+                font-size: 12px;
+                color: #909399;
+                margin-bottom: 4px;
+                text-transform: uppercase;
+                font-weight: 500;
+            }
+            
+            .info-value {
+                font-size: 14px;
+                color: #303133;
+                font-weight: 500;
+            }
+        }
+    }
+    
+    .order-items-table {
+        .product-info {
+            .product-name {
+                font-weight: 600;
+                color: #303133;
+                margin-bottom: 4px;
+            }
+            
+            .product-code {
+                font-size: 12px;
+                color: #909399;
+            }
+        }
+        
+        .quantity {
+            font-weight: 600;
+            color: #409eff;
+        }
+        
+        .price {
+            color: #f56c6c;
+            font-weight: 600;
+            
+            &.total-price {
+                font-size: 16px;
+            }
+        }
+    }
+    
+    .order-summary {
+        margin-top: 16px;
+        padding: 16px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        text-align: right;
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 16px;
+            font-weight: 600;
+            
+            .price {
+                font-size: 18px;
+                color: #f56c6c;
+            }
+        }
+    }
+    
+    .address-info {
+        .address-main {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            
+            .consignee {
+                display: flex;
+                align-items: center;
+                margin-bottom: 12px;
+                font-size: 16px;
+                font-weight: 600;
+                
+                i {
+                    color: #67c23a;
+                    margin-right: 8px;
+                }
+                
+                .phone {
+                    margin-left: 16px;
+                    color: #606266;
+                    font-weight: normal;
+                }
+            }
+            
+            .address {
+                display: flex;
+                align-items: flex-start;
+                color: #606266;
+                line-height: 1.5;
+                
+                i {
+                    color: #67c23a;
+                    margin-right: 8px;
+                    margin-top: 2px;
+                }
+            }
+        }
+    }
+}
+
+.dialog-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .amount {
