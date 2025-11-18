@@ -5,13 +5,13 @@
             <el-form-item label="菜单名称" prop="menuName">
                 <el-input v-model="searchForm.menuName" placeholder="请输入菜单名称" clearable style="width: 200px" />
             </el-form-item>
-            <el-form-item label="菜单类型" prop="menuType">
+            <!-- <el-form-item label="菜单类型" prop="menuType">
                 <el-select v-model="searchForm.menuType" placeholder="请选择菜单类型" clearable style="width: 150px">
                     <el-option label="目录" :value="1" />
                     <el-option label="菜单" :value="2" />
                     <el-option label="按钮" :value="3" />
                 </el-select>
-            </el-form-item>
+            </el-form-item> -->
             <el-form-item label="状态" prop="status">
                 <el-select v-model="searchForm.status" placeholder="请选择状态" clearable style="width: 150px">
                     <el-option label="启用" :value="1" />
@@ -118,11 +118,11 @@
                             <el-input v-model="formData.menuName" placeholder="请输入菜单名称" />
                         </el-form-item>
                     </el-col>
-                    <el-col :span="12">
+                    <!-- <el-col :span="12">
                         <el-form-item label="菜单编码" prop="menuCode">
                             <el-input v-model="formData.menuCode" placeholder="请输入菜单编码" />
                         </el-form-item>
-                    </el-col>
+                    </el-col> -->
                 </el-row>
                 <el-row :gutter="20" v-if="formData.menuType !== 3">
                     <el-col :span="12">
@@ -222,6 +222,7 @@ const searchForm = reactive({
 // 表格数据
 const loading = ref(false);
 const tableData = ref([]);
+const originalData = ref([]); // 原始完整数据
 const multipleSelection = ref([]);
 const tableRef = ref();
 const expandedRowKeys = ref([]);
@@ -299,13 +300,16 @@ const loadMenuList = async () => {
         const response = await getMenuTree();
         console.log('菜单树响应数据:', response.data);
         if (response.data && Array.isArray(response.data)) {
-            tableData.value = response.data;
+            originalData.value = response.data; // 保存原始数据
+            applyFilters(); // 应用筛选
             console.log('设置表格数据:', tableData.value);
         } else {
+            originalData.value = [];
             tableData.value = [];
         }
     } catch (error) {
         console.error("获取菜单列表失败:", error);
+        originalData.value = [];
         tableData.value = [];
     } finally {
         loading.value = false;
@@ -324,13 +328,13 @@ const loadMenuTree = async () => {
 
 // 搜索
 const handleSearch = () => {
-    loadMenuList();
+    applyFilters();
 };
 
 // 重置搜索
 const handleReset = () => {
     searchFormRef.value.resetFields();
-    loadMenuList();
+    applyFilters();
 };
 
 // 新增菜单
@@ -531,6 +535,72 @@ const getMenuTypeText = (type) => {
         3: "按钮",
     };
     return typeMap[type] || "未知";
+};
+
+// 递归过滤树形数据
+const filterTreeData = (data, filters) => {
+    if (!data || data.length === 0) return [];
+    
+    const result = [];
+    
+    for (const item of data) {
+        // 检查当前节点是否匹配筛选条件
+        let matches = true;
+        
+        // 菜单名称筛选
+        if (filters.menuName && !item.menuName.toLowerCase().includes(filters.menuName.toLowerCase())) {
+            matches = false;
+        }
+        
+        // 菜单类型筛选
+        if (filters.menuType !== null && filters.menuType !== undefined && item.menuType !== filters.menuType) {
+            matches = false;
+        }
+        
+        // 状态筛选
+        if (filters.status !== null && filters.status !== undefined && item.status !== filters.status) {
+            matches = false;
+        }
+        
+        // 递归处理子节点
+        const filteredChildren = item.children ? filterTreeData(item.children, filters) : [];
+        
+        // 如果当前节点匹配或有子节点匹配，则保留该节点
+        if (matches || filteredChildren.length > 0) {
+            const newItem = { ...item };
+            if (filteredChildren.length > 0) {
+                newItem.children = filteredChildren;
+            } else {
+                // 如果没有匹配的子节点，移除children属性以避免展开
+                delete newItem.children;
+            }
+            result.push(newItem);
+        }
+    }
+    
+    return result;
+};
+
+// 应用筛选条件
+const applyFilters = () => {
+    const filters = {
+        menuName: searchForm.menuName?.trim() || '',
+        menuType: searchForm.menuType,
+        status: searchForm.status
+    };
+    
+    // 检查是否有任何筛选条件
+    const hasFilters = filters.menuName || 
+                      filters.menuType !== null && filters.menuType !== undefined || 
+                      filters.status !== null && filters.status !== undefined;
+    
+    if (hasFilters) {
+        // 应用筛选
+        tableData.value = filterTreeData(originalData.value, filters);
+    } else {
+        // 没有筛选条件，显示所有数据
+        tableData.value = originalData.value;
+    }
 };
 
 // 初始化

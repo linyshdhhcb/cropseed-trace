@@ -147,6 +147,7 @@ const searchForm = reactive({
 // 表格数据
 const loading = ref(false);
 const tableData = ref([]);
+const originalData = ref([]); // 原始完整数据
 const multipleSelection = ref([]);
 const tableRef = ref();
 
@@ -194,9 +195,12 @@ const loadCategoryList = async () => {
     try {
         loading.value = true;
         const response = await getCategoryTree();
-        tableData.value = response.data;
+        originalData.value = response.data; // 保存原始数据
+        applyFilters(); // 应用筛选
     } catch (error) {
         console.error("获取品类列表失败:", error);
+        originalData.value = [];
+        tableData.value = [];
     } finally {
         loading.value = false;
     }
@@ -214,13 +218,13 @@ const loadCategoryTree = async () => {
 
 // 搜索
 const handleSearch = () => {
-    loadCategoryList();
+    applyFilters();
 };
 
 // 重置搜索
 const handleReset = () => {
     searchFormRef.value.resetFields();
-    loadCategoryList();
+    applyFilters();
 };
 
 // 新增品类
@@ -333,6 +337,65 @@ const handleDialogClose = () => {
 // 选择变化
 const handleSelectionChange = (selection) => {
     multipleSelection.value = selection;
+};
+
+// 递归过滤树形数据
+const filterTreeData = (data, filters) => {
+    if (!data || data.length === 0) return [];
+    
+    const result = [];
+    
+    for (const item of data) {
+        // 检查当前节点是否匹配筛选条件
+        let matches = true;
+        
+        // 品类名称筛选
+        if (filters.categoryName && !item.categoryName.toLowerCase().includes(filters.categoryName.toLowerCase())) {
+            matches = false;
+        }
+        
+        // 状态筛选
+        if (filters.status !== null && filters.status !== undefined && item.status !== filters.status) {
+            matches = false;
+        }
+        
+        // 递归处理子节点
+        const filteredChildren = item.children ? filterTreeData(item.children, filters) : [];
+        
+        // 如果当前节点匹配或有子节点匹配，则保留该节点
+        if (matches || filteredChildren.length > 0) {
+            const newItem = { ...item };
+            if (filteredChildren.length > 0) {
+                newItem.children = filteredChildren;
+            } else {
+                // 如果没有匹配的子节点，移除children属性以避免展开
+                delete newItem.children;
+            }
+            result.push(newItem);
+        }
+    }
+    
+    return result;
+};
+
+// 应用筛选条件
+const applyFilters = () => {
+    const filters = {
+        categoryName: searchForm.categoryName?.trim() || '',
+        status: searchForm.status
+    };
+    
+    // 检查是否有任何筛选条件
+    const hasFilters = filters.categoryName || 
+                      filters.status !== null && filters.status !== undefined;
+    
+    if (hasFilters) {
+        // 应用筛选
+        tableData.value = filterTreeData(originalData.value, filters);
+    } else {
+        // 没有筛选条件，显示所有数据
+        tableData.value = originalData.value;
+    }
 };
 
 // 初始化
