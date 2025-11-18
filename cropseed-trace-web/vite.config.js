@@ -26,6 +26,12 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    host: '0.0.0.0',
+    cors: true,
+    headers: {
+      'Cross-Origin-Embedder-Policy': 'credentialless',
+      'Cross-Origin-Opener-Policy': 'same-origin'
+    },
     proxy: {
       "/api": {
         target: "http://localhost:8085",
@@ -34,4 +40,21 @@ export default defineConfig({
       },
     },
   },
+  optimizeDeps: {
+    include: ['element-plus/es', 'element-plus/es/components/*/style/css'],
+    force: true
+  },
+  build: {
+    commonjsOptions: {
+      transformMixedEsModules: true,
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'element-plus': ['element-plus'],
+          'vue-vendor': ['vue', 'vue-router', 'pinia']
+        }
+      }
+    }
+  }
 });
