@@ -26,8 +26,8 @@
           <div class="navbar-right">
             <el-dropdown @command="handleCommand">
               <span class="user-info">
-                <el-avatar :size="32" :src="userStore.userInfo.avatar" />
-                <span class="username">{{ userStore.userInfo.realName || userStore.userInfo.username }}</span>
+                <el-avatar :size="32" :src="userStore.userInfo?.avatar" />
+                <span class="username">{{ userStore.userInfo?.realName || userStore.userInfo?.username || '用户' }}</span>
                 <el-icon>
                   <ArrowDown />
                 </el-icon>
@@ -146,6 +146,20 @@ const routes = [
     ]
   },
   {
+    path: '/trace',
+    name: 'Trace',
+    meta: { title: '溯源管理', icon: 'Connection' },
+    children: [
+      { path: '', name: 'TraceIndex', meta: { title: '溯源总览' } },
+      { path: 'records', name: 'TraceRecords', meta: { title: '溯源记录' } },
+      { path: 'codes', name: 'TraceCodes', meta: { title: '溯源码管理' } },
+      { path: 'entities', name: 'TraceEntities', meta: { title: '溯源实体' } },
+      { path: 'query', name: 'TraceQuery', meta: { title: '溯源查询' } },
+      { path: 'blockchain', name: 'TraceBlockchain', meta: { title: '区块链管理' } },
+      { path: 'verify', name: 'TraceVerify', meta: { title: '数据验证' } }
+    ]
+  },
+  {
     path: '/excel',
     name: 'Excel',
     meta: { title: '数据管理', icon: 'Document' },
@@ -182,6 +196,15 @@ const handleLogout = async () => {
 }
 
 onMounted(() => {
+  // 初始化用户信息
+  if (!userStore.userInfo) {
+    userStore.userInfo = {
+      avatar: '',
+      realName: '',
+      username: '用户'
+    }
+  }
+  
   // 获取用户信息
   if (userStore.token) {
     userStore.getUserInfoAction()
