@@ -32,9 +32,22 @@
         <easyexcel.version>4.0.3</easyexcel.version>
         <alipay.version>4.39.218.ALL</alipay.version>
         <redisson.version>3.24.3</redisson.version>
+        <tencentcloud-sdk-java.version>3.0.1</tencentcloud-sdk-java.version>
     </properties>
 
     <dependencies>
+        <!-- 腾讯云TBaas-->
+        <dependency>
+            <groupId>com.tencentcloudapi</groupId>
+            <artifactId>tencentcloud-sdk-java-tbaas</artifactId>
+            <version>3.1.1324</version>
+        </dependency>
+
+<!--        <dependency>-->
+<!--            <groupId>com.tencentcloudapi</groupId>-->
+<!--            <artifactId>tencentcloud-sdk-java</artifactId>-->
+<!--            <version>${tencentcloud-sdk-java.version}</version>-->
+<!--        </dependency>-->
 
         <!-- Spring Boot Web -->
         <dependency>
