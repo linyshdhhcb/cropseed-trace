@@ -29,6 +29,10 @@
             <el-button type="success" :icon="Download" @click="handleExport">
                 导出数据
             </el-button>
+            <el-button type="warning" @click="showTraceManagement = true">
+                <el-icon><Link /></el-icon>
+                溯源管理
+            </el-button>
         </div>
 
         <!-- 数据表格 -->
@@ -37,6 +41,20 @@
                 style="width: 100%" border stripe>
                 <el-table-column type="selection" width="55" />
                 <el-table-column prop="batchNo" label="批次号" width="150" align="center" />
+                <el-table-column prop="traceCode" label="溯源码" width="140" align="center">
+                    <template #default="{ row }">
+                        <div v-if="row.traceCode" class="trace-code-cell">
+                            <el-button type="text" @click="viewTraceChain(row.traceCode)">
+                                {{ row.traceCode }}
+                            </el-button>
+                        </div>
+                        <div v-else>
+                            <el-button type="primary" size="small" @click="generateTraceCode(row)">
+                                生成溯源码
+                            </el-button>
+                        </div>
+                    </template>
+                </el-table-column>
                 <el-table-column prop="seedName" label="种子名称" width="180" show-overflow-tooltip />
                 <el-table-column prop="productionDate" label="生产日期" width="120" align="center" />
                 <el-table-column prop="expiryDate" label="过期日期" width="120" align="center" />
@@ -49,13 +67,16 @@
                 </el-table-column>
                 <el-table-column prop="createTime" label="创建时间" width="160" align="center" />
                 <el-table-column prop="updateTime" label="更新时间" width="160" />
-                <el-table-column label="操作" width="200" fixed="right">
+                <el-table-column label="操作" width="280" fixed="right">
                     <template #default="{ row }">
                         <el-button type="primary" size="small" @click="handleEdit(row)">
                             编辑
                         </el-button>
                         <el-button type="info" size="small" @click="handleView(row)">
                             查看
+                        </el-button>
+                        <el-button v-if="row.traceCode" type="success" size="small" @click="manageTrace(row)">
+                            溯源
                         </el-button>
                         <el-button type="danger" size="small" @click="handleDelete(row)">
                             删除
@@ -138,22 +159,60 @@
                 <el-descriptions :column="2" border>
                     <el-descriptions-item label="批次号">{{ batchDetail.batchNo }}</el-descriptions-item>
                     <el-descriptions-item label="种子名称">{{ batchDetail.seedName }}</el-descriptions-item>
+                    <el-descriptions-item label="溯源码">
+                        <span v-if="batchDetail.traceCode" class="trace-code">{{ batchDetail.traceCode }}</span>
+                        <el-tag v-else type="warning">未生成</el-tag>
+                    </el-descriptions-item>
                     <el-descriptions-item label="生产日期">{{ batchDetail.productionDate }}</el-descriptions-item>
                     <el-descriptions-item label="过期日期">{{ batchDetail.expiryDate }}</el-descriptions-item>
-                    <el-descriptions-item label="质检报告">{{ batchDetail.qualityReport }}</el-descriptions-item>
                     <el-descriptions-item label="质检状态">
                         <el-tag :type="batchDetail.qualityStatus === 1 ? 'success' : 'danger'">
                             {{ batchDetail.qualityStatus === 1 ? '合格' : '不合格' }}
                         </el-tag>
                     </el-descriptions-item>
-                    <el-descriptions-item label="质检报告">{{ batchDetail.qualityReport }}</el-descriptions-item>
                     <el-descriptions-item label="创建时间">{{ batchDetail.createTime }}</el-descriptions-item>
                     <el-descriptions-item label="更新时间">{{ batchDetail.updateTime }}</el-descriptions-item>
                 </el-descriptions>
                 <el-descriptions :column="1" border style="margin-top: 20px;">
                     <el-descriptions-item label="备注">{{ batchDetail.remarks }}</el-descriptions-item>
                 </el-descriptions>
+                
+                <!-- 溯源操作区域 -->
+                <div v-if="batchDetail.traceCode" class="trace-actions" style="margin-top: 20px; text-align: center;">
+                    <el-button type="primary" @click="viewTraceChain(batchDetail.traceCode)">
+                        查看溯源链
+                    </el-button>
+                    <el-button type="success" @click="addTraceRecord(batchDetail)">
+                        添加溯源记录
+                    </el-button>
+                    <el-button type="info" @click="verifyTraceIntegrity(batchDetail.traceCode)">
+                        验证完整性
+                    </el-button>
+                </div>
+                <div v-else class="no-trace" style="margin-top: 20px; text-align: center;">
+                    <el-alert
+                        title="该批次尚未生成溯源码"
+                        type="warning"
+                        show-icon
+                        :closable="false"
+                    />
+                    <el-button type="primary" style="margin-top: 15px;" @click="generateTraceCode(batchDetail)">
+                        立即生成溯源码
+                    </el-button>
+                </div>
             </div>
+        </el-dialog>
+
+        <!-- 溯源管理对话框 -->
+        <el-dialog v-model="showTraceManagement" title="批次溯源管理" width="1200px" :close-on-click-modal="false">
+            <div class="trace-management-content">
+                <router-view name="trace" />
+            </div>
+        </el-dialog>
+
+        <!-- 溯源链查看对话框 -->
+        <el-dialog v-model="showTraceChainDialog" title="完整溯源链" width="1200px">
+            <TraceChainView v-if="currentTraceCode" :trace-code="currentTraceCode" />
         </el-dialog>
     </div>
 </template>
@@ -167,6 +226,7 @@ import {
     Plus,
     Delete,
     Download,
+    Link
 } from "@element-plus/icons-vue";
 import {
     getSeedBatchList,
@@ -175,8 +235,14 @@ import {
     deleteSeedBatch,
     batchDeleteSeedBatch,
     getSeedBatchDetail,
+    updateBatchTraceCode,
 } from "@/api/seed";
 import { getSeedInfoList } from "@/api/seed";
+import { 
+    generateTraceCode as apiGenerateTraceCode,
+    verifyTraceIntegrity as apiVerifyTraceIntegrity
+} from "@/api/trace";
+import TraceChainView from "@/views/trace/components/TraceChainView.vue";
 
 // 搜索表单
 const searchFormRef = ref();
@@ -233,6 +299,11 @@ const seedList = ref([]);
 // 查看详情对话框
 const viewDialogVisible = ref(false);
 const batchDetail = ref(null);
+
+// 溯源相关变量
+const showTraceManagement = ref(false);
+const showTraceChainDialog = ref(false);
+const currentTraceCode = ref('');
 
 // 获取批次列表
 const loadBatchList = async () => {
@@ -424,6 +495,73 @@ const getStatusText = (status) => {
     return statusMap[status] || "未知";
 };
 
+// 溯源相关方法
+const generateTraceCode = async (batch) => {
+    try {
+        // 先生成溯源码
+        const response = await apiGenerateTraceCode('BJ'); // 默认使用北京地区，实际应根据业务需求
+        if (response.code === 200) {
+            const traceCode = response.data;
+            
+            // 调用后端API更新批次的溯源码
+            const updateResponse = await updateBatchTraceCode(batch.id, traceCode);
+            if (updateResponse.code === 200) {
+                // 更新本地数据
+                batch.traceCode = traceCode;
+                ElMessage.success(`溯源码生成并保存成功: ${traceCode}`);
+            } else {
+                ElMessage.error(updateResponse.message || '溯源码保存失败');
+            }
+        } else {
+            ElMessage.error(response.message || '溯源码生成失败');
+        }
+    } catch (error) {
+        console.error('生成溯源码失败', error);
+        ElMessage.error('生成溯源码失败');
+    }
+};
+
+const viewTraceChain = (traceCode) => {
+    currentTraceCode.value = traceCode;
+    showTraceChainDialog.value = true;
+};
+
+const manageTrace = (batch) => {
+    if (batch.traceCode) {
+        // 跳转到溯源管理页面，传递批次信息
+        window.open(`#/trace/records?batchId=${batch.id}&traceCode=${batch.traceCode}`, '_blank');
+    } else {
+        ElMessage.warning('请先生成溯源码');
+    }
+};
+
+const addTraceRecord = (batch) => {
+    if (batch.traceCode) {
+        // 跳转到新增溯源记录页面
+        window.open(`#/trace/records?action=create&batchId=${batch.id}&traceCode=${batch.traceCode}`, '_blank');
+    } else {
+        ElMessage.warning('请先生成溯源码');
+    }
+};
+
+const verifyTraceIntegrity = async (traceCode) => {
+    try {
+        const response = await apiVerifyTraceIntegrity(traceCode);
+        if (response.code === 200) {
+            if (response.data) {
+                ElMessage.success('数据验证通过，完整性良好');
+            } else {
+                ElMessage.warning('数据验证失败，可能存在篡改');
+            }
+        } else {
+            ElMessage.error(response.message || '验证失败');
+        }
+    } catch (error) {
+        console.error('验证失败', error);
+        ElMessage.error('验证失败');
+    }
+};
+
 // 初始化
 onMounted(() => {
     loadBatchList();
@@ -456,6 +594,24 @@ onMounted(() => {
     .el-descriptions {
         margin-bottom: 20px;
     }
+    
+    .trace-code {
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        color: #409eff;
+    }
+}
+
+.trace-code-cell {
+    .el-button--text {
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        color: #409eff;
+    }
+}
+
+.trace-management-content {
+    min-height: 600px;
 }
 
 .amount {

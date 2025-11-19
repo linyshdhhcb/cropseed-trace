@@ -140,3 +140,12 @@ export function batchDeleteSeedBatch(ids) {
     data: { ids },
   });
 }
+
+// 更新批次溯源码
+export function updateBatchTraceCode(batchId, traceCode) {
+  return request({
+    url: `/seed/batch/${batchId}/trace-code`,
+    method: "put",
+    params: { traceCode },
+  });
+}
