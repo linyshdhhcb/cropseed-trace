@@ -44,4 +44,9 @@ public interface SeedBatchService {
      * 批量删除种子批次
      */
     void batchDeleteSeedBatches(List<Long> ids);
+
+    /**
+     * 更新批次溯源码
+     */
+    void updateBatchTraceCode(Long id, String traceCode);
 }

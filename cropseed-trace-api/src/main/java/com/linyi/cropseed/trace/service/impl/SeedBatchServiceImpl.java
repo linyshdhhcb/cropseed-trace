@@ -5,10 +5,12 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.linyi.cropseed.trace.common.page.PageQuery;
 import com.linyi.cropseed.trace.common.page.PageResult;
 import com.linyi.cropseed.trace.entity.SeedBatch;
+import com.linyi.cropseed.trace.entity.TraceRecord;
 import com.linyi.cropseed.trace.mapper.SeedBatchMapper;
 import com.linyi.cropseed.trace.mapper.SeedInfoMapper;
 import com.linyi.cropseed.trace.entity.SeedInfo;
 import com.linyi.cropseed.trace.service.SeedBatchService;
+import com.linyi.cropseed.trace.service.TraceRecordService;
 import com.linyi.cropseed.trace.vo.SeedBatchVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +34,7 @@ import java.util.stream.Collectors;
 public class SeedBatchServiceImpl implements SeedBatchService {
 
     private final SeedBatchMapper seedBatchMapper;
-    private final SeedInfoMapper seedInfoMapper;
+    private final TraceRecordService traceRecordService;
 
     @Override
     public PageResult<SeedBatchVO> pageSeedBatches(PageQuery pageQuery, String batchNo, Long seedId) {
@@ -74,9 +76,47 @@ public class SeedBatchServiceImpl implements SeedBatchService {
         log.info("批量删除种子批次成功: {}", ids);
     }
 
-    private SeedBatchVO convertToVO(SeedBatch seedBatch) {
-        SeedBatchVO vo = new SeedBatchVO();
-        BeanUtils.copyProperties(seedBatch, vo);
-        return vo;
+    @Override
+    @Transactional
+    public void updateBatchTraceCode(Long id, String traceCode) {
+        // 更新批次的溯源码
+        SeedBatch seedBatch = new SeedBatch();
+        seedBatch.setId(id);
+        seedBatch.setTraceCode(traceCode);
+        seedBatchMapper.updateById(seedBatch);
+        log.info("更新批次溯源码成功: batchId={}, traceCode={}", id, traceCode);
+
+        //  查询批次详情，用于创建溯源记录
+        SeedBatch batch = seedBatchMapper.selectById(id);
+        if (batch == null) {
+            log.error("批次不存在: batchId={}", id);
+            throw new RuntimeException("批次不存在");
+        }
+
+        //  创建初始溯源记录
+        TraceRecord traceRecord = new TraceRecord();
+        traceRecord.setTraceCode(traceCode);
+        traceRecord.setBatchId(id);
+        traceRecord.setRecordType(1); // 1-生产记录
+        traceRecord.setRecordStage("批次创建");
+        traceRecord.setOperatorName("系统管理员");
+        traceRecord.setRecordTime(batch.getProductionDate() != null ? batch.getProductionDate().atStartOfDay() : java.time.LocalDateTime.now());
+        traceRecord.setContentSummary("批次 " + batch.getBatchNo() + " 生成溯源码");
+
+        // 构建详细内容
+        String detailedContent = String.format(
+            "{\"action\":\"生成溯源码\",\"batchNo\":\"%s\",\"traceCode\":\"%s\",\"productionDate\":\"%s\"}",
+            batch.getBatchNo(), traceCode, batch.getProductionDate()
+        );
+        traceRecord.setDetailedContent(detailedContent);
+        traceRecord.setBlockchainStatus(0); // 0-未上链
+
+        try {
+            traceRecordService.createTraceRecord(traceRecord);
+            log.info("创建初始溯源记录成功: traceCode={}", traceCode);
+        } catch (Exception e) {
+            log.error("创建初始溯源记录失败: traceCode={}", traceCode, e);
+            // 不影响主流程，只记录日志
+        }
     }
 }

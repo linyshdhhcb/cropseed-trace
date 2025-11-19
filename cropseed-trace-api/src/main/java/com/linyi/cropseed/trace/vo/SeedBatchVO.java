@@ -24,6 +24,7 @@ public class SeedBatchVO {
     private String qualityReport;
     private Integer qualityStatus;
     private String remarks;
+    private String traceCode;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;

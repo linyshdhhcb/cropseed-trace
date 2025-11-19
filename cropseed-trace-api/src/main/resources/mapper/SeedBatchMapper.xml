@@ -12,6 +12,7 @@
         <result property="qualityReport" column="quality_report"/>
         <result property="qualityStatus" column="quality_status"/>
         <result property="remarks" column="remarks"/>
+        <result property="traceCode" column="trace_code"/>
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
     </resultMap>
@@ -24,7 +25,7 @@
 
     <select id="selectPageVo" resultMap="SeedBatchVoMap">
         SELECT b.id, b.batch_no, b.seed_id, si.seed_name,
-               b.production_date, b.expiry_date, b.quality_report, b.quality_status, b.remarks,
+               b.production_date, b.expiry_date, b.quality_report, b.quality_status, b.remarks, b.trace_code,
                b.create_time, b.update_time
         <include refid="BaseFrom"/>
         <if test="batchNo != null and batchNo != ''">
@@ -38,7 +39,7 @@
 
     <select id="selectDetailById" resultMap="SeedBatchVoMap">
         SELECT b.id, b.batch_no, b.seed_id, si.seed_name,
-               b.production_date, b.expiry_date, b.quality_report, b.quality_status, b.remarks,
+               b.production_date, b.expiry_date, b.quality_report, b.quality_status, b.remarks, b.trace_code,
                b.create_time, b.update_time
         <include refid="BaseFrom"/>
         AND b.id = #{id}

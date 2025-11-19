@@ -43,4 +43,7 @@ public class SeedBatch extends BaseEntity {
 
     @Schema(description = "备注")
     private String remarks;
+
+    @Schema(description = "溯源码")
+    private String traceCode;
 }

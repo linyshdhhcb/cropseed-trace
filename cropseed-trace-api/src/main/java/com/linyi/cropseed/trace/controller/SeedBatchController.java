@@ -103,4 +103,14 @@ public class SeedBatchController {
         seedBatchService.batchDeleteSeedBatches(ids);
         return Result.success("批量删除成功");
     }
+
+    @Operation(summary = "更新批次溯源码")
+    @PutMapping("/{id}/trace-code")
+    @PreAuthorize("hasAuthority('seed:batch:edit')")
+    public Result<Void> updateBatchTraceCode(
+            @Parameter(description = "批次ID") @PathVariable Long id,
+            @Parameter(description = "溯源码") @RequestParam String traceCode) {
+        seedBatchService.updateBatchTraceCode(id, traceCode);
+        return Result.success("溯源码更新成功");
+    }
 }
