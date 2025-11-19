@@ -5,7 +5,13 @@ import { getToken, setToken, removeToken } from "@/utils/auth";
 
 export const useUserStore = defineStore("user", () => {
   const token = ref(getToken());
-  const userInfo = ref({});
+  const userInfo = ref({
+    avatar: '',
+    realName: '',
+    username: '用户',
+    email: '',
+    phone: ''
+  });
   const roles = ref([]);
   const permissions = ref([]);
 
@@ -45,7 +51,13 @@ export const useUserStore = defineStore("user", () => {
     try {
       await logout();
       token.value = "";
-      userInfo.value = {};
+      userInfo.value = {
+        avatar: '',
+        realName: '',
+        username: '用户',
+        email: '',
+        phone: ''
+      };
       roles.value = [];
       permissions.value = [];
       removeToken();
@@ -57,7 +69,13 @@ export const useUserStore = defineStore("user", () => {
   // 重置状态
   const resetState = () => {
     token.value = "";
-    userInfo.value = {};
+    userInfo.value = {
+      avatar: '',
+      realName: '',
+      username: '用户',
+      email: '',
+      phone: ''
+    };
     roles.value = [];
     permissions.value = [];
     removeToken();
