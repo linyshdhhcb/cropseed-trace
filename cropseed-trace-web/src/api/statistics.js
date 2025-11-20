@@ -99,3 +99,59 @@ export function exportStatisticsData(params) {
     responseType: "blob",
   });
 }
+
+// ==== 首页专用API ====
+
+// 获取首页统计概览数据
+export function getDashboardOverview() {
+  return request({
+    url: "/statistics/overview",
+    method: "get"
+  });
+}
+
+// 获取近期订单数据
+export function getRecentOrders(limit = 5) {
+  return request({
+    url: "/statistics/table",
+    method: "get",
+    params: {
+      tableType: "recent_orders",
+      limit
+    }
+  });
+}
+
+// 获取库存预警数据
+export function getLowStockItems(limit = 5) {
+  return request({
+    url: "/statistics/inventory",
+    method: "get",
+    params: {
+      type: "low_stock",
+      limit
+    }
+  });
+}
+
+// 获取销售趋势图表数据（近7天）
+export function getDashboardSalesTrend() {
+  return request({
+    url: "/statistics/sales/trend",
+    method: "get",
+    params: {
+      days: 7
+    }
+  });
+}
+
+// 获取库存分布图表数据
+export function getDashboardInventoryDistribution() {
+  return request({
+    url: "/statistics/category/ranking",
+    method: "get",
+    params: {
+      type: "inventory"
+    }
+  });
+}

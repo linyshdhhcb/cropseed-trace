@@ -156,6 +156,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { LineChart, PieChart } from 'echarts/charts'
@@ -166,6 +167,13 @@ import {
     GridComponent
 } from 'echarts/components'
 import VChart from 'vue-echarts'
+import {
+    getDashboardOverview,
+    getRecentOrders,
+    getLowStockItems,
+    getDashboardSalesTrend,
+    getDashboardInventoryDistribution
+} from '@/api/statistics'
 
 // 注册必要的组件
 use([
@@ -250,44 +258,74 @@ const inventoryChartOption = ref({
 // 获取统计数据
 const loadStatsData = async () => {
     try {
-        // 模拟数据，实际应该调用API
-        statsData.userCount = 1250
-        statsData.seedCount = 156
-        statsData.inventoryCount = 15800
-        statsData.orderCount = 3420
+        const response = await getDashboardOverview()
+        if (response.code === 200 && response.data) {
+            const data = response.data
+            statsData.userCount = data.totalUsers || 0
+            statsData.seedCount = data.totalSeeds || 0
+            statsData.inventoryCount = data.totalInventory || 0
+            statsData.orderCount = data.totalOrders || 0
+        } else {
+            // 如果API返回失败，使用默认值0
+            statsData.userCount = 0
+            statsData.seedCount = 0
+            statsData.inventoryCount = 0
+            statsData.orderCount = 0
+        }
     } catch (error) {
         console.error('加载统计数据失败:', error)
+        ElMessage.warning('获取统计数据失败')
+        // 使用默认值0
+        statsData.userCount = 0
+        statsData.seedCount = 0
+        statsData.inventoryCount = 0
+        statsData.orderCount = 0
     }
 }
 
 // 获取最新订单
 const loadRecentOrders = async () => {
     try {
-        // 模拟数据
-        recentOrders.value = [
-            { orderNo: 'ORD001', customerName: '张三', amount: 1250, status: 1, createTime: '2025-10-25' },
-            { orderNo: 'ORD002', customerName: '李四', amount: 890, status: 2, createTime: '2025-10-25' },
-            { orderNo: 'ORD003', customerName: '王五', amount: 2100, status: 3, createTime: '2025-10-24' },
-            { orderNo: 'ORD004', customerName: '赵六', amount: 680, status: 1, createTime: '2025-10-24' },
-            { orderNo: 'ORD005', customerName: '钱七', amount: 1500, status: 2, createTime: '2025-10-23' }
-        ]
+        const response = await getRecentOrders(5)
+        if (response.code === 200 && response.data && response.data.data) {
+            recentOrders.value = response.data.data.map(order => ({
+                orderNo: order.orderNo || order.order_no,
+                customerName: order.customerName || order.customer_name,
+                amount: order.amount || order.paid_amount,
+                status: order.status || order.order_status,
+                createTime: order.createTime || order.create_time
+            }))
+        } else {
+            // 没有数据时显示空列表
+            recentOrders.value = []
+        }
     } catch (error) {
         console.error('获取最新订单失败:', error)
+        ElMessage.warning('获取最新订单失败')
+        // 没有数据时显示空列表
+        recentOrders.value = []
     }
 }
 
 // 获取库存预警
 const loadLowStockItems = async () => {
     try {
-        // 模拟数据
-        lowStockItems.value = [
-            { seedName: '玉米种子A', currentStock: 50, minStock: 100 },
-            { seedName: '水稻种子B', currentStock: 30, minStock: 80 },
-            { seedName: '小麦种子C', currentStock: 20, minStock: 50 },
-            { seedName: '蔬菜种子D', currentStock: 15, minStock: 30 }
-        ]
+        const response = await getLowStockItems(4)
+        if (response.code === 200 && response.data) {
+            lowStockItems.value = response.data.map(item => ({
+                seedName: item.seedName || item.seed_name || item.productName,
+                currentStock: item.currentStock || item.current_stock || item.quantity,
+                minStock: item.minStock || item.min_stock || item.safetyStock
+            }))
+        } else {
+            // 没有数据时显示空列表
+            lowStockItems.value = []
+        }
     } catch (error) {
         console.error('获取库存预警失败:', error)
+        ElMessage.warning('获取库存预警失败')
+        // 没有数据时显示空列表
+        lowStockItems.value = []
     }
 }
 
@@ -314,15 +352,62 @@ const getOrderStatusText = (status) => {
 }
 
 // 刷新销售图表
-const refreshSalesChart = () => {
-    // 重新加载销售数据
-    console.log('刷新销售图表')
+const refreshSalesChart = async () => {
+    try {
+        const response = await getDashboardSalesTrend()
+        if (response.code === 200 && response.data) {
+            const data = response.data
+            salesChartOption.value = {
+                ...salesChartOption.value,
+                xAxis: {
+                    type: 'category',
+                    data: data.map(item => item.date || item.day)
+                },
+                series: [{
+                    data: data.map(item => item.sales || item.amount),
+                    type: 'line',
+                    smooth: true,
+                    areaStyle: {}
+                }]
+            }
+        }
+        ElMessage.success('销售图表刷新成功')
+    } catch (error) {
+        console.error('刷新销售图表失败:', error)
+        ElMessage.warning('刷新销售图表失败，保持原有数据')
+    }
 }
 
 // 刷新库存图表
-const refreshInventoryChart = () => {
-    // 重新加载库存数据
-    console.log('刷新库存图表')
+const refreshInventoryChart = async () => {
+    try {
+        const response = await getDashboardInventoryDistribution()
+        if (response.code === 200 && response.data) {
+            const data = response.data
+            inventoryChartOption.value = {
+                ...inventoryChartOption.value,
+                series: [{
+                    type: 'pie',
+                    radius: '50%',
+                    data: data.map(item => ({
+                        value: item.value || item.quantity || item.count,
+                        name: item.name || item.category || item.seed_name
+                    })),
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }]
+            }
+        }
+        ElMessage.success('库存图表刷新成功')
+    } catch (error) {
+        console.error('刷新库存图表失败:', error)
+        ElMessage.warning('刷新库存图表失败，保持原有数据')
+    }
 }
 
 // 跳转到订单列表
@@ -335,11 +420,70 @@ const goToInventoryList = () => {
     router.push('/inventory/stock')
 }
 
+// 初始化销售图表数据
+const loadSalesChartData = async () => {
+    try {
+        const response = await getDashboardSalesTrend()
+        if (response.code === 200 && response.data) {
+            const data = response.data
+            salesChartOption.value = {
+                ...salesChartOption.value,
+                xAxis: {
+                    type: 'category',
+                    data: data.map(item => item.date || item.day)
+                },
+                series: [{
+                    data: data.map(item => item.sales || item.amount),
+                    type: 'line',
+                    smooth: true,
+                    areaStyle: {}
+                }]
+            }
+        }
+    } catch (error) {
+        console.error('加载销售图表数据失败:', error)
+        // 保持默认的模拟数据
+    }
+}
+
+// 初始化库存图表数据
+const loadInventoryChartData = async () => {
+    try {
+        const response = await getDashboardInventoryDistribution()
+        if (response.code === 200 && response.data) {
+            const data = response.data
+            inventoryChartOption.value = {
+                ...inventoryChartOption.value,
+                series: [{
+                    type: 'pie',
+                    radius: '50%',
+                    data: data.map(item => ({
+                        value: item.value || item.quantity || item.count,
+                        name: item.name || item.category || item.seed_name
+                    })),
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }]
+            }
+        }
+    } catch (error) {
+        console.error('加载库存图表数据失败:', error)
+        // 保持默认的模拟数据
+    }
+}
+
 // 初始化
 onMounted(() => {
     loadStatsData()
     loadRecentOrders()
     loadLowStockItems()
+    loadSalesChartData()
+    loadInventoryChartData()
 })
 </script>
 
