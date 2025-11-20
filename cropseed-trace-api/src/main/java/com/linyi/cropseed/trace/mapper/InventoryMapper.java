@@ -3,10 +3,12 @@ package com.linyi.cropseed.trace.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.linyi.cropseed.trace.entity.Inventory;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 库存台账Mapper
@@ -79,4 +81,41 @@ public interface InventoryMapper extends BaseMapper<Inventory> {
      */
     @Select("SELECT COALESCE(SUM(available_quantity), 0) FROM inventory WHERE seed_id = #{seedId} AND deleted_flag = 0")
     Integer selectTotalInventoryBySeedId(Long seedId);
+
+    /**
+     * 查询库存预警数据 - 库存数量小于最低库存预警的记录
+     */
+    @Select("SELECT " +
+            "    i.id as inventory_id, " +
+            "    i.quantity as quantity, " +
+            "    i.quantity as currentStock, " +
+            "    i.quantity as current_stock, " +
+            "    i.min_stock as min_stock, " +
+            "    i.min_stock as minStock, " +
+            "    i.min_stock as safetyStock, " +
+            "    i.warehouse_id as warehouseId, " +
+            "    i.batch_id as batchId, " +
+            "    i.seed_id as seedId, " +
+            "    COALESCE(si.seed_name, CONCAT('种子ID-', i.seed_id)) as seedName, " +
+            "    COALESCE(si.seed_name, CONCAT('种子ID-', i.seed_id)) as seed_name, " +
+            "    COALESCE(si.seed_name, CONCAT('种子ID-', i.seed_id)) as productName " +
+            "FROM inventory i " +
+            "LEFT JOIN seed_info si ON i.seed_id = si.id " +
+            "WHERE i.quantity < i.min_stock " +
+            "  AND i.min_stock > 0 " +
+            "  AND i.deleted_flag = 0 " +
+            "ORDER BY i.quantity ASC " +
+            "LIMIT #{limit}")
+    List<Map<String, Object>> selectLowStockItems(@Param("limit") int limit);
+
+    /**
+     * 按种子分类统计库存数量
+     */
+    @Select("SELECT COALESCE(SUM(i.quantity), 0) " +
+            "FROM inventory i " +
+            "LEFT JOIN seed_info si ON i.seed_id = si.id " +
+            "WHERE si.category_id = #{categoryId} " +
+            "  AND i.quantity > 0 " +
+            "  AND i.deleted_flag = 0")
+    Long selectInventoryQuantityByCategory(@Param("categoryId") Long categoryId);
 }

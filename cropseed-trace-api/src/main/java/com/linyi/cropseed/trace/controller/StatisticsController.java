@@ -56,7 +56,8 @@ public class StatisticsController {
     public Result<StatisticsTableVO> getTableData(
             @Parameter(description = "表格类型") @RequestParam String tableType,
             @Parameter(description = "开始日期") @RequestParam(required = false) String startDate,
-            @Parameter(description = "结束日期") @RequestParam(required = false) String endDate) {
+            @Parameter(description = "结束日期") @RequestParam(required = false) String endDate,
+            @Parameter(description = "限制条数") @RequestParam(required = false) Integer limit) {
         StatisticsTableVO result = statisticsService.getTableData(tableType, startDate, endDate);
         return Result.success(result);
     }
@@ -66,7 +67,8 @@ public class StatisticsController {
     @PreAuthorize("hasAuthority('statistics:view')")
     public Result<List<Map<String, Object>>> getSalesTrend(
             @Parameter(description = "开始日期") @RequestParam(required = false) String startDate,
-            @Parameter(description = "结束日期") @RequestParam(required = false) String endDate) {
+            @Parameter(description = "结束日期") @RequestParam(required = false) String endDate,
+            @Parameter(description = "天数") @RequestParam(required = false) Integer days) {
         List<Map<String, Object>> result = statisticsService.getSalesTrend(startDate, endDate);
         return Result.success(result);
     }
@@ -96,16 +98,32 @@ public class StatisticsController {
     @PreAuthorize("hasAuthority('statistics:view')")
     public Result<List<Map<String, Object>>> getCategoryRanking(
             @Parameter(description = "开始日期") @RequestParam(required = false) String startDate,
-            @Parameter(description = "结束日期") @RequestParam(required = false) String endDate) {
-        List<Map<String, Object>> result = statisticsService.getCategoryRanking(startDate, endDate);
+            @Parameter(description = "结束日期") @RequestParam(required = false) String endDate,
+            @Parameter(description = "统计类型") @RequestParam(required = false) String type) {
+        List<Map<String, Object>> result;
+        if ("inventory".equals(type)) {
+            // 返回库存分布数据
+            result = statisticsService.getInventoryStatistics();
+        } else {
+            // 返回品类销售排行
+            result = statisticsService.getCategoryRanking(startDate, endDate);
+        }
         return Result.success(result);
     }
 
     @Operation(summary = "获取库存统计")
     @GetMapping("/inventory")
     @PreAuthorize("hasAuthority('statistics:view')")
-    public Result<List<Map<String, Object>>> getInventoryStatistics() {
-        List<Map<String, Object>> result = statisticsService.getInventoryStatistics();
+    public Result<List<Map<String, Object>>> getInventoryStatistics(
+            @Parameter(description = "统计类型") @RequestParam(required = false) String type,
+            @Parameter(description = "限制条数") @RequestParam(required = false) Integer limit) {
+        List<Map<String, Object>> result;
+        if ("low_stock".equals(type)) {
+            result = ((com.linyi.cropseed.trace.service.impl.StatisticsServiceImpl) statisticsService)
+                    .getInventoryStatistics(type, limit);
+        } else {
+            result = statisticsService.getInventoryStatistics();
+        }
         return Result.success(result);
     }
 
