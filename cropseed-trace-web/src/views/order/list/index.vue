@@ -45,6 +45,10 @@
             <el-button type="warning" :icon="Refresh" @click="handleRefresh">
                 刷新
             </el-button>
+            <el-button type="info" @click="showTraceOverview = true">
+                <el-icon><Link /></el-icon>
+                溯源总览
+            </el-button>
         </div>
 
         <!-- 数据表格 -->
@@ -90,8 +94,16 @@
                         </el-tag>
                     </template>
                 </el-table-column>
+                <el-table-column prop="traceStatus" label="溯源状态" width="100">
+                    <template #default="{ row }">
+                        <el-tag v-if="row.traceRecordCount > 0" type="success" size="small">
+                            已溯源({{ row.traceRecordCount }})
+                        </el-tag>
+                        <el-tag v-else type="info" size="small">未溯源</el-tag>
+                    </template>
+                </el-table-column>
                 <el-table-column prop="createTime" label="创建时间" width="160" />
-                <el-table-column label="操作" width="250" fixed="right">
+                <el-table-column label="操作" width="280" fixed="right">
                     <template #default="{ row }">
                         <el-button type="primary" size="small" @click="handleView(row)">
                             查看详情
@@ -108,6 +120,18 @@
                         <el-button v-if="row.orderStatus === 3" type="info" size="small" @click="handleComplete(row)">
                             完成
                         </el-button>
+                        <el-dropdown v-if="row.orderStatus >= 2" @command="handleTraceAction">
+                            <el-button type="warning" size="small">
+                                溯源<el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                            </el-button>
+                            <template #dropdown>
+                                <el-dropdown-menu>
+                                    <el-dropdown-item :command="{action: 'view', order: row}">查看溯源</el-dropdown-item>
+                                    <el-dropdown-item :command="{action: 'manage', order: row}">管理溯源</el-dropdown-item>
+                                    <el-dropdown-item v-if="row.orderStatus === 4" :command="{action: 'generate', order: row}">生成溯源</el-dropdown-item>
+                                </el-dropdown-menu>
+                            </template>
+                        </el-dropdown>
                         <el-button v-if="[0, 1, 2].includes(row.orderStatus)" type="danger" size="small"
                             @click="handleCancel(row)">
                             取消
@@ -266,6 +290,119 @@
                 </div>
             </template>
         </el-dialog>
+
+        <!-- 溯源总览对话框 -->
+        <el-dialog v-model="showTraceOverview" title="订单溯源总览" width="1200px" :close-on-click-modal="false">
+            <div class="trace-overview">
+                <el-tabs v-model="activeTraceTab">
+                    <el-tab-pane label="溯源统计" name="stats">
+                        <div class="trace-stats">
+                            <el-row :gutter="20">
+                                <el-col :span="6">
+                                    <el-card class="stat-card">
+                                        <div class="stat-item">
+                                            <div class="stat-number">{{ orderTraceStats.totalOrders }}</div>
+                                            <div class="stat-label">总订单数</div>
+                                        </div>
+                                    </el-card>
+                                </el-col>
+                                <el-col :span="6">
+                                    <el-card class="stat-card">
+                                        <div class="stat-item">
+                                            <div class="stat-number">{{ orderTraceStats.tracedOrders }}</div>
+                                            <div class="stat-label">已溯源订单</div>
+                                        </div>
+                                    </el-card>
+                                </el-col>
+                                <el-col :span="6">
+                                    <el-card class="stat-card">
+                                        <div class="stat-item">
+                                            <div class="stat-number">{{ orderTraceStats.traceRecords }}</div>
+                                            <div class="stat-label">溯源记录数</div>
+                                        </div>
+                                    </el-card>
+                                </el-col>
+                                <el-col :span="6">
+                                    <el-card class="stat-card">
+                                        <div class="stat-item">
+                                            <div class="stat-number">{{ orderTraceStats.traceRate }}%</div>
+                                            <div class="stat-label">溯源覆盖率</div>
+                                        </div>
+                                    </el-card>
+                                </el-col>
+                            </el-row>
+                        </div>
+                    </el-tab-pane>
+                    <el-tab-pane label="溯源管理" name="manage">
+                        <div style="text-align: center; padding: 40px;">
+                            <el-button type="primary" size="large" @click="goToTraceManagement">
+                                进入溯源管理系统
+                            </el-button>
+                        </div>
+                    </el-tab-pane>
+                </el-tabs>
+            </div>
+        </el-dialog>
+
+        <!-- 订单溯源详情对话框 -->
+        <el-dialog v-model="showOrderTraceDetail" title="订单溯源详情" width="1000px">
+            <div v-if="currentOrder" class="order-trace-detail">
+                <el-descriptions :column="2" border>
+                    <el-descriptions-item label="订单号">{{ currentOrder.orderNo }}</el-descriptions-item>
+                    <el-descriptions-item label="溯源记录数">{{ currentOrder.traceRecordCount || 0 }}</el-descriptions-item>
+                    <el-descriptions-item label="订单状态">
+                        <el-tag :type="getOrderStatusTagType(currentOrder.orderStatus)">
+                            {{ getOrderStatusText(currentOrder.orderStatus) }}
+                        </el-tag>
+                    </el-descriptions-item>
+                    <el-descriptions-item label="最后更新">{{ formatDateTime(currentOrder.updateTime) }}</el-descriptions-item>
+                </el-descriptions>
+
+                <div class="order-items-trace" style="margin-top: 20px;">
+                    <h4>商品溯源信息</h4>
+                    <el-table :data="currentOrder.orderItems || []" border>
+                        <el-table-column prop="seedName" label="商品名称" />
+                        <el-table-column prop="quantity" label="数量" width="80" />
+                        <el-table-column prop="batchNo" label="批次号" width="120">
+                            <template #default="{ row }">
+                                <el-button v-if="row.batchNo" type="text" @click="viewBatchTrace(row.batchNo)">
+                                    {{ row.batchNo }}
+                                </el-button>
+                                <span v-else>-</span>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="traceCode" label="溯源码" width="140">
+                            <template #default="{ row }">
+                                <el-button v-if="row.traceCode" type="text" @click="viewItemTrace(row.traceCode)">
+                                    {{ row.traceCode }}
+                                </el-button>
+                                <el-tag v-else type="warning" size="small">未生成</el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="操作" width="150">
+                            <template #default="{ row }">
+                                <el-button v-if="row.traceCode" type="primary" size="small" @click="viewItemTrace(row.traceCode)">
+                                    查看溯源
+                                </el-button>
+                                <el-button v-else type="success" size="small" @click="generateItemTrace(row)">
+                                    生成溯源
+                                </el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+
+                <div class="trace-actions" style="margin-top: 20px; text-align: center;">
+                    <el-button type="primary" @click="batchGenerateTrace">批量生成溯源</el-button>
+                    <el-button type="success" @click="exportTraceReport">导出溯源报告</el-button>
+                </div>
+            </div>
+        </el-dialog>
+
+        <!-- 溯源链查看对话框 -->
+        <el-dialog v-model="showTraceChainDialog" title="完整溯源链" width="1200px">
+            <TraceChainView v-if="currentTraceCode" :trace-code="currentTraceCode" />
+        </el-dialog>
     </div>
 </template>
 
@@ -276,6 +413,8 @@ import {
     Search,
     Refresh,
     Download,
+    Link,
+    ArrowDown
 } from "@element-plus/icons-vue";
 import {
     getOrderList,
@@ -287,6 +426,12 @@ import {
     shipOrder,
     completeOrder,
 } from "@/api/order";
+import { 
+    generateTraceCode,
+    createTraceRecord,
+    getTraceRecordsByOrderId 
+} from "@/api/trace";
+import TraceChainView from "@/views/trace/components/TraceChainView.vue";
 
 // 搜索表单
 const searchFormRef = ref();
@@ -313,6 +458,22 @@ const pagination = reactive({
 // 订单详情对话框
 const detailDialogVisible = ref(false);
 const orderDetail = ref(null);
+
+// 溯源相关变量
+const showTraceOverview = ref(false);
+const showOrderTraceDetail = ref(false);
+const showTraceChainDialog = ref(false);
+const activeTraceTab = ref('stats');
+const currentOrder = ref(null);
+const currentTraceCode = ref('');
+
+// 溯源统计数据
+const orderTraceStats = reactive({
+    totalOrders: 0,
+    tracedOrders: 0,
+    traceRecords: 0,
+    traceRate: 0
+});
 
 // 获取订单列表
 const loadOrderList = async () => {
@@ -637,6 +798,140 @@ const getPaymentMethodText = (method) => {
     return methodMap[method] || "未知";
 };
 
+// 溯源相关方法
+const handleTraceAction = ({ action, order }) => {
+    currentOrder.value = order;
+    
+    switch (action) {
+        case 'view':
+            showOrderTraceDetail.value = true;
+            break;
+        case 'manage':
+            window.open(`#/trace/records?orderId=${order.id}&orderNo=${order.orderNo}`, '_blank');
+            break;
+        case 'generate':
+            generateOrderTrace(order);
+            break;
+    }
+};
+
+const goToTraceManagement = () => {
+    window.open('#/trace', '_blank');
+};
+
+const viewBatchTrace = (batchNo) => {
+    window.open(`#/seed/batch?batchNo=${batchNo}`, '_blank');
+};
+
+const viewItemTrace = (traceCode) => {
+    currentTraceCode.value = traceCode;
+    showTraceChainDialog.value = true;
+};
+
+const generateItemTrace = async (orderItem) => {
+    try {
+        // 为订单商品生成溯源码
+        const response = await generateTraceCode('BJ'); // 根据实际需求选择地区
+        if (response.code === 200) {
+            orderItem.traceCode = response.data;
+            
+            // 创建销售溯源记录
+            const traceData = {
+                traceCode: response.data,
+                recordType: 4, // 销售记录
+                recordStage: '销售',
+                recordDescription: `订单销售 - ${orderItem.seedName}`,
+                operatorName: '订单系统',
+                recordTime: new Date().toISOString(),
+                quantity: orderItem.quantity,
+                unit: '件',
+                batchId: orderItem.batchId || null,
+                orderId: currentOrder.value.id
+            };
+            
+            await createTraceRecord(traceData);
+            ElMessage.success('溯源码生成成功');
+        } else {
+            ElMessage.error(response.message || '溯源码生成失败');
+        }
+    } catch (error) {
+        console.error('生成溯源码失败', error);
+        ElMessage.error('生成溯源码失败');
+    }
+};
+
+const generateOrderTrace = async (order) => {
+    try {
+        if (!order.orderItems || order.orderItems.length === 0) {
+            ElMessage.warning('订单无商品，无法生成溯源');
+            return;
+        }
+        
+        let successCount = 0;
+        for (const item of order.orderItems) {
+            if (!item.traceCode) {
+                await generateItemTrace(item);
+                successCount++;
+            }
+        }
+        
+        ElMessage.success(`成功生成 ${successCount} 个商品的溯源码`);
+        
+        // 刷新数据
+        loadOrderList();
+    } catch (error) {
+        ElMessage.error('批量生成溯源失败');
+    }
+};
+
+const batchGenerateTrace = async () => {
+    if (currentOrder.value) {
+        await generateOrderTrace(currentOrder.value);
+    }
+};
+
+const exportTraceReport = () => {
+    if (currentOrder.value) {
+        const reportData = {
+            订单号: currentOrder.value.orderNo,
+            溯源记录数: currentOrder.value.traceRecordCount || 0,
+            订单状态: getOrderStatusText(currentOrder.value.orderStatus),
+            商品明细: currentOrder.value.orderItems?.map(item => ({
+                商品名称: item.seedName,
+                数量: item.quantity,
+                批次号: item.batchNo || '-',
+                溯源码: item.traceCode || '未生成'
+            })) || []
+        };
+        
+        const jsonStr = JSON.stringify(reportData, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `订单溯源报告_${currentOrder.value.orderNo}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+        
+        ElMessage.success('溯源报告已导出');
+    }
+};
+
+const loadTraceStats = () => {
+    // 模拟加载溯源统计数据
+    orderTraceStats.totalOrders = tableData.value.length;
+    orderTraceStats.tracedOrders = tableData.value.filter(order => (order.traceRecordCount || 0) > 0).length;
+    orderTraceStats.traceRecords = tableData.value.reduce((sum, order) => sum + (order.traceRecordCount || 0), 0);
+    orderTraceStats.traceRate = orderTraceStats.totalOrders > 0 
+        ? Math.round((orderTraceStats.tracedOrders / orderTraceStats.totalOrders) * 100)
+        : 0;
+};
+
+const formatDateTime = (dateTime) => {
+    if (!dateTime) return '-';
+    return new Date(dateTime).toLocaleString('zh-CN');
+};
+
 // 初始化
 onMounted(() => {
     loadOrderList();
@@ -871,5 +1166,45 @@ onMounted(() => {
 .amount {
     color: #f56c6c;
     font-weight: 600;
+}
+
+/* 溯源相关样式 */
+.trace-overview {
+    .trace-stats {
+        .stat-card {
+            text-align: center;
+            
+            .stat-item {
+                padding: 20px;
+                
+                .stat-number {
+                    font-size: 28px;
+                    font-weight: bold;
+                    color: #409eff;
+                    margin-bottom: 8px;
+                }
+                
+                .stat-label {
+                    color: #909399;
+                    font-size: 14px;
+                }
+            }
+        }
+    }
+}
+
+.order-trace-detail {
+    .order-items-trace {
+        h4 {
+            margin: 0 0 15px 0;
+            color: #303133;
+            font-size: 16px;
+        }
+    }
+    
+    .trace-actions {
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
 }
 </style>
