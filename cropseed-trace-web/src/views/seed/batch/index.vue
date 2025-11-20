@@ -55,7 +55,8 @@
                         </div>
                     </template>
                 </el-table-column>
-                <el-table-column prop="seedName" label="种子名称" width="180" show-overflow-tooltip />
+                <el-table-column prop="seedName" label="种子名称" width="150" show-overflow-tooltip />
+                <el-table-column prop="producerName" label="生产商" width="150" show-overflow-tooltip />
                 <el-table-column prop="productionDate" label="生产日期" width="120" align="center" />
                 <el-table-column prop="expiryDate" label="过期日期" width="120" align="center" />
                 <el-table-column prop="qualityStatus" label="质检状态" width="100" align="center">
@@ -97,6 +98,8 @@
         <!-- 新增/编辑对话框 -->
         <el-dialog v-model="dialogVisible" :title="dialogTitle" width="800px" @close="handleDialogClose">
             <el-form ref="formRef" :model="formData" :rules="formRules" label-width="120px">
+                <!-- 基础信息 -->
+                <el-divider content-position="left">基础信息</el-divider>
                 <el-row :gutter="20">
                     <el-col :span="12">
                         <el-form-item label="批次号" prop="batchNo">
@@ -113,11 +116,113 @@
                     </el-col>
                 </el-row>
                 <el-row :gutter="20">
+                    <!-- <el-col :span="12">
+                        <el-form-item label="溯源码" prop="traceCode">
+                            <el-input v-model="formData.traceCode" placeholder="请输入溯源码（可选）" />
+                        </el-form-item>
+                    </el-col> -->
                     <el-col :span="12">
-                        <el-form-item label="质检报告" prop="qualityReport">
-                            <el-input v-model="formData.qualityReport" placeholder="请输入质检报告URL" />
+                        <el-form-item label="单位" prop="unit">
+                            <el-input v-model="formData.unit" placeholder="如：千克、斤" />
                         </el-form-item>
                     </el-col>
+                </el-row>
+
+                <!-- 生产信息 -->
+                <el-divider content-position="left">生产信息</el-divider>
+                <el-row :gutter="20">
+                    <el-col :span="12">
+                        <el-form-item label="生产商" prop="producerId">
+                            <el-select 
+                                v-model="formData.producerId" 
+                                placeholder="请选择生产商" 
+                                style="width: 100%"
+                                filterable
+                                @change="handleProducerChange"
+                            >
+                                <el-option 
+                                    v-for="entity in producerList" 
+                                    :key="entity.id" 
+                                    :label="entity.entityName" 
+                                    :value="entity.id"
+                                >
+                                    <span>{{ entity.entityName }}</span>
+                                    <span style="color: #8492a6; font-size: 12px; margin-left: 10px">
+                                        {{ entity.entityCode }}
+                                    </span>
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="生产地点" prop="productionLocation">
+                            <el-input v-model="formData.productionLocation" placeholder="自动从生产商获取" readonly />
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="12">
+                        <el-form-item label="生产日期" prop="productionDate">
+                            <el-date-picker v-model="formData.productionDate" type="date" placeholder="请选择生产日期"
+                                style="width: 100%" value-format="YYYY-MM-DD" />
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="收获日期" prop="harvestDate">
+                            <el-date-picker v-model="formData.harvestDate" type="date" placeholder="请选择收获日期"
+                                style="width: 100%" value-format="YYYY-MM-DD" />
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="12">
+                        <el-form-item label="加工日期" prop="processingDate">
+                            <el-date-picker v-model="formData.processingDate" type="date" placeholder="请选择加工日期"
+                                style="width: 100%" value-format="YYYY-MM-DD" />
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="过期日期" prop="expiryDate">
+                            <el-date-picker v-model="formData.expiryDate" type="date" placeholder="请选择过期日期"
+                                style="width: 100%" value-format="YYYY-MM-DD" />
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="12">
+                        <el-form-item label="生产设备" prop="productionEquipment">
+                            <el-input v-model="formData.productionEquipment" placeholder="请输入生产设备" />
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="加工方式" prop="processingMethod">
+                            <el-select v-model="formData.processingMethod" placeholder="请选择或输入加工方式" 
+                                style="width: 100%" filterable allow-create>
+                                <el-option label="干燥加工" value="干燥加工" />
+                                <el-option label="筛选分级" value="筛选分级" />
+                                <el-option label="包衣处理" value="包衣处理" />
+                                <el-option label="清选去杂" value="清选去杂" />
+                                <el-option label="脱粒加工" value="脱粒加工" />
+                            </el-select>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="12">
+                        <el-form-item label="种子来源" prop="seedSource">
+                            <el-input v-model="formData.seedSource" placeholder="请输入种子来源" />
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="亲本品种" prop="parentVariety">
+                            <el-input v-model="formData.parentVariety" placeholder="请输入亲本品种" />
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+
+                <!-- 质量信息 -->
+                <el-divider content-position="left">质量信息</el-divider>
+                <el-row :gutter="20">
                     <el-col :span="12">
                         <el-form-item label="质检状态" prop="qualityStatus">
                             <el-radio-group v-model="formData.qualityStatus">
@@ -126,21 +231,103 @@
                             </el-radio-group>
                         </el-form-item>
                     </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="初始质量等级" prop="initialQualityGrade">
+                            <el-select v-model="formData.initialQualityGrade" placeholder="请选择质量等级" style="width: 100%">
+                                <el-option label="优等" value="优等" />
+                                <el-option label="一等" value="一等" />
+                                <el-option label="二等" value="二等" />
+                                <el-option label="三等" value="三等" />
+                                <el-option label="合格" value="合格" />
+                            </el-select>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="8">
+                        <el-form-item label="含水率(%)" prop="moistureContent">
+                            <el-input-number v-model="formData.moistureContent" :min="0" :max="100" :precision="2" 
+                                placeholder="含水率" style="width: 100%" />
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="8">
+                        <el-form-item label="发芽率(%)" prop="germinationRate">
+                            <el-input-number v-model="formData.germinationRate" :min="0" :max="100" :precision="2"
+                                placeholder="发芽率" style="width: 100%" />
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="8">
+                        <el-form-item label="纯度(%)" prop="purity">
+                            <el-input-number v-model="formData.purity" :min="0" :max="100" :precision="2"
+                                placeholder="纯度" style="width: 100%" />
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-form-item label="质检报告" prop="qualityReport">
+                    <MultiImageUpload 
+                        v-model="formData.qualityReport" 
+                        :max-count="1"
+                        upload-text="上传质检报告图片"
+                    />
+                </el-form-item>
+
+                <!-- 包装信息 -->
+                <el-divider content-position="left">包装与储存</el-divider>
+                <el-row :gutter="20">
+                    <el-col :span="12">
+                        <el-form-item label="包装类型" prop="packagingType">
+                            <el-input v-model="formData.packagingType" placeholder="如：真空袋、编织袋" />
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="包装规格" prop="packagingSpecification">
+                            <el-input v-model="formData.packagingSpecification" placeholder="如：10kg/袋" />
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-form-item label="储存条件" prop="storageCondition">
+                    <el-input v-model="formData.storageCondition" placeholder="请输入储存条件要求" />
+                </el-form-item>
+
+                <!-- 操作员与认证 -->
+                <el-divider content-position="left">操作员与认证</el-divider>
+                <el-row :gutter="20">
+                    <el-col :span="12">
+                        <el-form-item label="操作员姓名" prop="initialOperatorName">
+                            <el-input v-model="formData.initialOperatorName" placeholder="请输入操作员姓名" />
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="操作员电话" prop="initialOperatorPhone">
+                            <el-input v-model="formData.initialOperatorPhone" placeholder="请输入操作员电话" />
+                        </el-form-item>
+                    </el-col>
                 </el-row>
                 <el-row :gutter="20">
                     <el-col :span="12">
-                        <el-form-item label="生产日期" prop="productionDate">
-                            <el-date-picker v-model="formData.productionDate" type="date" placeholder="请选择生产日期"
-                                style="width: 100%" />
+                        <el-form-item label="认证信息" prop="certification">
+                            <el-select v-model="formData.certification" placeholder="请选择认证类型" 
+                                style="width: 100%" multiple collapse-tags>
+                                <el-option label="有机认证" value="有机认证" />
+                                <el-option label="绿色食品" value="绿色食品" />
+                                <el-option label="无公害农产品" value="无公害农产品" />
+                                <el-option label="GAP认证" value="GAP认证" />
+                                <el-option label="ISO9001" value="ISO9001" />
+                            </el-select>
                         </el-form-item>
                     </el-col>
                     <el-col :span="12">
-                        <el-form-item label="过期日期" prop="expiryDate">
-                            <el-date-picker v-model="formData.expiryDate" type="date" placeholder="请选择过期日期"
-                                style="width: 100%" />
+                        <el-form-item label="可追溯等级" prop="traceabilityLevel">
+                            <el-select v-model="formData.traceabilityLevel" placeholder="请选择可追溯等级" style="width: 100%">
+                                <el-option label="基础" :value="1" />
+                                <el-option label="详细" :value="2" />
+                                <el-option label="完整" :value="3" />
+                            </el-select>
                         </el-form-item>
                     </el-col>
                 </el-row>
+
+                <!-- 备注 -->
                 <el-form-item label="备注" prop="remarks">
                     <el-input v-model="formData.remarks" type="textarea" :rows="3" placeholder="请输入备注" />
                 </el-form-item>
@@ -154,8 +341,10 @@
         </el-dialog>
 
         <!-- 查看详情对话框 -->
-        <el-dialog v-model="viewDialogVisible" title="批次详情" width="800px">
+        <el-dialog v-model="viewDialogVisible" title="批次详情" width="900px">
             <div v-if="batchDetail" class="batch-detail">
+                <!-- 基础信息 -->
+                <el-divider content-position="left">基础信息</el-divider>
                 <el-descriptions :column="2" border>
                     <el-descriptions-item label="批次号">{{ batchDetail.batchNo }}</el-descriptions-item>
                     <el-descriptions-item label="种子名称">{{ batchDetail.seedName }}</el-descriptions-item>
@@ -163,18 +352,74 @@
                         <span v-if="batchDetail.traceCode" class="trace-code">{{ batchDetail.traceCode }}</span>
                         <el-tag v-else type="warning">未生成</el-tag>
                     </el-descriptions-item>
+                    <el-descriptions-item label="单位">{{ batchDetail.unit || '-' }}</el-descriptions-item>
+                </el-descriptions>
+
+                <!-- 生产信息 -->
+                <el-divider content-position="left">生产信息</el-divider>
+                <el-descriptions :column="2" border>
+                    <el-descriptions-item label="生产商名称">{{ batchDetail.producerName || '-' }}</el-descriptions-item>
+                    <el-descriptions-item label="生产地点">{{ batchDetail.productionLocation || '-' }}</el-descriptions-item>
                     <el-descriptions-item label="生产日期">{{ batchDetail.productionDate }}</el-descriptions-item>
-                    <el-descriptions-item label="过期日期">{{ batchDetail.expiryDate }}</el-descriptions-item>
+                    <el-descriptions-item label="收获日期">{{ batchDetail.harvestDate || '-' }}</el-descriptions-item>
+                    <el-descriptions-item label="加工日期">{{ batchDetail.processingDate || '-' }}</el-descriptions-item>
+                    <el-descriptions-item label="过期日期">{{ batchDetail.expiryDate || '-' }}</el-descriptions-item>
+                    <el-descriptions-item label="生产设备">{{ batchDetail.productionEquipment || '-' }}</el-descriptions-item>
+                    <el-descriptions-item label="加工方式">{{ batchDetail.processingMethod || '-' }}</el-descriptions-item>
+                    <el-descriptions-item label="种子来源">{{ batchDetail.seedSource || '-' }}</el-descriptions-item>
+                    <el-descriptions-item label="亲本品种">{{ batchDetail.parentVariety || '-' }}</el-descriptions-item>
+                </el-descriptions>
+
+                <!-- 质量信息 -->
+                <el-divider content-position="left">质量信息</el-divider>
+                <el-descriptions :column="2" border>
                     <el-descriptions-item label="质检状态">
                         <el-tag :type="batchDetail.qualityStatus === 1 ? 'success' : 'danger'">
                             {{ batchDetail.qualityStatus === 1 ? '合格' : '不合格' }}
                         </el-tag>
                     </el-descriptions-item>
+                    <el-descriptions-item label="初始质量等级">{{ batchDetail.initialQualityGrade || '-' }}</el-descriptions-item>
+                    <el-descriptions-item label="含水率">{{ batchDetail.moistureContent ? batchDetail.moistureContent + '%' : '-' }}</el-descriptions-item>
+                    <el-descriptions-item label="发芽率">{{ batchDetail.germinationRate ? batchDetail.germinationRate + '%' : '-' }}</el-descriptions-item>
+                    <el-descriptions-item label="纯度">{{ batchDetail.purity ? batchDetail.purity + '%' : '-' }}</el-descriptions-item>
+                    <el-descriptions-item label="质检报告">
+                        <el-link v-if="batchDetail.qualityReport" :href="batchDetail.qualityReport" target="_blank" type="primary">查看报告</el-link>
+                        <span v-else>-</span>
+                    </el-descriptions-item>
+                </el-descriptions>
+
+                <!-- 包装与储存 -->
+                <el-divider content-position="left">包装与储存</el-divider>
+                <el-descriptions :column="2" border>
+                    <el-descriptions-item label="包装类型">{{ batchDetail.packagingType || '-' }}</el-descriptions-item>
+                    <el-descriptions-item label="包装规格">{{ batchDetail.packagingSpecification || '-' }}</el-descriptions-item>
+                    <el-descriptions-item label="储存条件" :span="2">{{ batchDetail.storageCondition || '-' }}</el-descriptions-item>
+                </el-descriptions>
+
+                <!-- 操作员与认证 -->
+                <el-divider content-position="left">操作员与认证</el-divider>
+                <el-descriptions :column="2" border>
+                    <el-descriptions-item label="操作员姓名">{{ batchDetail.initialOperatorName || '-' }}</el-descriptions-item>
+                    <el-descriptions-item label="操作员电话">{{ batchDetail.initialOperatorPhone || '-' }}</el-descriptions-item>
+                    <el-descriptions-item label="认证信息">{{ batchDetail.certification || '-' }}</el-descriptions-item>
+                    <el-descriptions-item label="可追溯等级">
+                        <el-tag v-if="batchDetail.traceabilityLevel === 1" type="info">基础</el-tag>
+                        <el-tag v-else-if="batchDetail.traceabilityLevel === 2" type="warning">详细</el-tag>
+                        <el-tag v-else-if="batchDetail.traceabilityLevel === 3" type="success">完整</el-tag>
+                        <span v-else>-</span>
+                    </el-descriptions-item>
+                </el-descriptions>
+
+                <!-- 系统信息 -->
+                <el-divider content-position="left">系统信息</el-divider>
+                <el-descriptions :column="2" border>
                     <el-descriptions-item label="创建时间">{{ batchDetail.createTime }}</el-descriptions-item>
                     <el-descriptions-item label="更新时间">{{ batchDetail.updateTime }}</el-descriptions-item>
                 </el-descriptions>
+
+                <!-- 备注 -->
                 <el-descriptions :column="1" border style="margin-top: 20px;">
-                    <el-descriptions-item label="备注">{{ batchDetail.remarks }}</el-descriptions-item>
+                    <el-descriptions-item label="备注">{{ batchDetail.remarks || '-' }}</el-descriptions-item>
                 </el-descriptions>
                 
                 <!-- 溯源操作区域 -->
@@ -240,9 +485,11 @@ import {
 import { getSeedInfoList } from "@/api/seed";
 import { 
     generateTraceCode as apiGenerateTraceCode,
-    verifyTraceIntegrity as apiVerifyTraceIntegrity
+    verifyTraceIntegrity as apiVerifyTraceIntegrity,
+    getTraceEntities
 } from "@/api/trace";
 import TraceChainView from "@/views/trace/components/TraceChainView.vue";
+import MultiImageUpload from "@/components/MultiImageUpload.vue";
 
 // 搜索表单
 const searchFormRef = ref();
@@ -276,9 +523,31 @@ const formData = reactive({
     seedId: null,
     productionDate: "",
     expiryDate: "",
-    qualityReport: "",
+    qualityReport: [],  // MultiImageUpload需要数组格式
     qualityStatus: 1,
     remarks: "",
+    traceCode: "",
+    producerId: null,
+    producerName: "",
+    productionLocation: "",
+    harvestDate: "",
+    processingDate: "",
+    storageCondition: "",
+    certification: [],  // 多选下拉框需要数组格式
+    traceabilityLevel: 1,
+    unit: "",
+    initialQualityGrade: "",
+    moistureContent: null,
+    germinationRate: null,
+    purity: null,
+    packagingType: "",
+    packagingSpecification: "",
+    initialOperatorName: "",
+    initialOperatorPhone: "",
+    productionEquipment: "",
+    processingMethod: "",
+    seedSource: "",
+    parentVariety: "",
 });
 
 // 表单验证规则
@@ -288,6 +557,7 @@ const formRules = {
         { min: 2, max: 50, message: "批次号长度在 2 到 50 个字符", trigger: "blur" },
     ],
     seedId: [{ required: true, message: "请选择种子", trigger: "change" }],
+    producerId: [{ required: true, message: "请选择生产商", trigger: "change" }],
     productionDate: [{ required: true, message: "请选择生产日期", trigger: "change" }],
     expiryDate: [{ required: true, message: "请选择过期日期", trigger: "change" }],
     qualityStatus: [{ required: true, message: "请选择质检状态", trigger: "change" }],
@@ -295,6 +565,9 @@ const formRules = {
 
 // 种子列表
 const seedList = ref([]);
+
+// 生产商列表（溯源实体-生产商类型）
+const producerList = ref([]);
 
 // 查看详情对话框
 const viewDialogVisible = ref(false);
@@ -334,6 +607,39 @@ const loadSeedList = async () => {
     }
 };
 
+// 获取生产商列表（溯源实体类型为生产商）
+const loadProducerList = async () => {
+    try {
+        const response = await getTraceEntities({ 
+            current: 1, 
+            size: 1000,
+            entityType: 1  // 1-生产商
+        });
+        producerList.value = response.data.list || [];
+        console.log("生产商列表加载成功:", producerList.value.length);
+    } catch (error) {
+        console.error("获取生产商列表失败:", error);
+        producerList.value = [];
+    }
+};
+
+// 处理生产商选择变化
+const handleProducerChange = (producerId) => {
+    if (producerId) {
+        const selectedProducer = producerList.value.find(p => p.id === producerId);
+        if (selectedProducer) {
+            // 自动填充生产商名称和地点
+            formData.producerName = selectedProducer.entityName;
+            if (selectedProducer.address) {
+                formData.productionLocation = selectedProducer.address;
+            }
+            console.log("已选择生产商:", selectedProducer.entityName);
+        }
+    } else {
+        formData.producerName = "";
+    }
+};
+
 // 搜索
 const handleSearch = () => {
     pagination.current = 1;
@@ -359,6 +665,23 @@ const handleEdit = (row) => {
     dialogTitle.value = "编辑批次";
     dialogVisible.value = true;
     Object.assign(formData, row);
+    
+    // 1. 处理认证信息：字符串转数组
+    if (formData.certification && typeof formData.certification === 'string') {
+        formData.certification = formData.certification.split(',').filter(item => item.trim());
+    } else if (!formData.certification) {
+        formData.certification = [];
+    }
+    
+    // 2. 处理质检报告：字符串URL转MultiImageUpload数组格式
+    if (formData.qualityReport && typeof formData.qualityReport === 'string') {
+        formData.qualityReport = [{
+            url: formData.qualityReport,
+            name: '质检报告.jpg'
+        }];
+    } else if (!formData.qualityReport || !Array.isArray(formData.qualityReport)) {
+        formData.qualityReport = [];
+    }
 };
 
 // 查看详情
@@ -420,11 +743,26 @@ const handleSubmit = async () => {
         await formRef.value.validate();
         submitLoading.value = true;
 
+        // 处理数据转换
+        const submitData = { ...formData };
+        
+        // 1. 认证信息：数组转字符串
+        if (Array.isArray(submitData.certification)) {
+            submitData.certification = submitData.certification.join(',');
+        }
+        
+        // 2. 质检报告：MultiImageUpload返回数组，取第一个url
+        if (Array.isArray(submitData.qualityReport)) {
+            submitData.qualityReport = submitData.qualityReport.length > 0 
+                ? submitData.qualityReport[0].url 
+                : '';
+        }
+
         if (formData.id) {
-            await updateSeedBatch(formData);
+            await updateSeedBatch(submitData);
             ElMessage.success("更新成功");
         } else {
-            await addSeedBatch(formData);
+            await addSeedBatch(submitData);
             ElMessage.success("新增成功");
         }
 
@@ -432,6 +770,7 @@ const handleSubmit = async () => {
         loadBatchList();
     } catch (error) {
         console.error("提交失败:", error);
+        ElMessage.error(error.message || "提交失败");
     } finally {
         submitLoading.value = false;
     }
@@ -445,9 +784,31 @@ const resetForm = () => {
         seedId: null,
         productionDate: "",
         expiryDate: "",
-        qualityReport: "",
+        qualityReport: [],  // MultiImageUpload需要数组
         qualityStatus: 1,
         remarks: "",
+        traceCode: null,
+        producerId: null,
+        producerName: "",
+        productionLocation: "",
+        harvestDate: "",
+        processingDate: "",
+        storageCondition: "",
+        certification: [],  // 多选需要数组
+        traceabilityLevel: 1,
+        unit: "",
+        initialQualityGrade: "",
+        moistureContent: null,
+        germinationRate: null,
+        purity: null,
+        packagingType: "",
+        packagingSpecification: "",
+        initialOperatorName: "",
+        initialOperatorPhone: "",
+        productionEquipment: "",
+        processingMethod: "",
+        seedSource: "",
+        parentVariety: "",
     });
     formRef.value?.resetFields();
 };
@@ -566,6 +927,7 @@ const verifyTraceIntegrity = async (traceCode) => {
 onMounted(() => {
     loadBatchList();
     loadSeedList();
+    loadProducerList();  // 加载生产商列表
 });
 </script>
 
