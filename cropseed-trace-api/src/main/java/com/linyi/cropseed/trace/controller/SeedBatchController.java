@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -55,15 +56,7 @@ public class SeedBatchController {
     @PreAuthorize("hasAuthority('seed:batch:add')")
     public Result<Void> addSeedBatch(@Valid @RequestBody SeedBatchAddDTO seedBatchAddDTO) {
         SeedBatch seedBatch = new SeedBatch();
-        seedBatch.setBatchNo(seedBatchAddDTO.getBatchNo());
-        seedBatch.setSeedId(seedBatchAddDTO.getSeedId());
-        seedBatch.setProductionDate(
-                seedBatchAddDTO.getProductionDate() != null ? seedBatchAddDTO.getProductionDate().toLocalDate() : null);
-        seedBatch.setExpiryDate(
-                seedBatchAddDTO.getExpiryDate() != null ? seedBatchAddDTO.getExpiryDate().toLocalDate() : null);
-        seedBatch.setQualityReport(seedBatchAddDTO.getQualityReport());
-        seedBatch.setQualityStatus(seedBatchAddDTO.getQualityStatus());
-
+        BeanUtils.copyProperties(seedBatchAddDTO, seedBatch);
         seedBatchService.addSeedBatch(seedBatch);
         return Result.success("种子批次新增成功");
     }
@@ -73,17 +66,7 @@ public class SeedBatchController {
     @PreAuthorize("hasAuthority('seed:batch:edit')")
     public Result<Void> updateSeedBatch(@Valid @RequestBody SeedBatchUpdateDTO seedBatchUpdateDTO) {
         SeedBatch seedBatch = new SeedBatch();
-        seedBatch.setId(seedBatchUpdateDTO.getId());
-        seedBatch.setBatchNo(seedBatchUpdateDTO.getBatchNo());
-        seedBatch.setSeedId(seedBatchUpdateDTO.getSeedId());
-        seedBatch.setProductionDate(
-                seedBatchUpdateDTO.getProductionDate() != null ? seedBatchUpdateDTO.getProductionDate().toLocalDate()
-                        : null);
-        seedBatch.setExpiryDate(
-                seedBatchUpdateDTO.getExpiryDate() != null ? seedBatchUpdateDTO.getExpiryDate().toLocalDate() : null);
-        seedBatch.setQualityReport(seedBatchUpdateDTO.getQualityReport());
-        seedBatch.setQualityStatus(seedBatchUpdateDTO.getQualityStatus());
-
+        BeanUtils.copyProperties(seedBatchUpdateDTO, seedBatch);
         seedBatchService.updateSeedBatch(seedBatch);
         return Result.success("种子批次修改成功");
     }

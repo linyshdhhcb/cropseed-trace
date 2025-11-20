@@ -7,6 +7,8 @@
         <result property="batchNo" column="batch_no"/>
         <result property="seedId" column="seed_id"/>
         <result property="seedName" column="seed_name"/>
+        <result property="producerId" column="producer_id"/>
+        <result property="producerName" column="producer_name"/>
         <result property="productionDate" column="production_date"/>
         <result property="expiryDate" column="expiry_date"/>
         <result property="qualityReport" column="quality_report"/>
@@ -25,6 +27,7 @@
 
     <select id="selectPageVo" resultMap="SeedBatchVoMap">
         SELECT b.id, b.batch_no, b.seed_id, si.seed_name,
+               b.producer_id, b.producer_name,
                b.production_date, b.expiry_date, b.quality_report, b.quality_status, b.remarks, b.trace_code,
                b.create_time, b.update_time
         <include refid="BaseFrom"/>
@@ -39,6 +42,7 @@
 
     <select id="selectDetailById" resultMap="SeedBatchVoMap">
         SELECT b.id, b.batch_no, b.seed_id, si.seed_name,
+               b.producer_id, b.producer_name,
                b.production_date, b.expiry_date, b.quality_report, b.quality_status, b.remarks, b.trace_code,
                b.create_time, b.update_time
         <include refid="BaseFrom"/>
