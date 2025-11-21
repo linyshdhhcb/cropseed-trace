@@ -39,69 +39,66 @@
               </div>
 
               <div class="record-info">
-                <el-row :gutter="15">
-                  <el-col :span="12">
-                    <div class="info-item">
-                      <span class="label">操作员:</span>
-                      <span class="value">{{ record.operatorName }}</span>
-                    </div>
-                  </el-col>
-                  <el-col :span="12">
-                    <div class="info-item">
-                      <span class="label">实体:</span>
-                      <span class="value">{{ record.entityName || '-' }}</span>
-                    </div>
-                  </el-col>
-                  <el-col :span="24">
-                    <div class="info-item">
-                      <span class="label">位置:</span>
-                      <span class="value">{{ record.location || '-' }}</span>
-                    </div>
-                  </el-col>
-                  <el-col :span="24">
-                    <div class="info-item content-summary">
-                      <span class="label">内容摘要:</span>
-                      <p class="value">{{ record.contentSummary }}</p>
-                    </div>
-                  </el-col>
-                </el-row>
+                <!-- 基本信息区域 -->
+                <el-descriptions :column="2" size="small" border class="record-descriptions">
+                  <el-descriptions-item label="批次ID" v-if="record.batchId">
+                    {{ record.batchId }}
+                  </el-descriptions-item>
+                  <el-descriptions-item label="操作员">
+                    {{ record.operatorName || '-' }}
+                  </el-descriptions-item>
+                  <el-descriptions-item label="联系电话" v-if="record.operatorPhone">
+                    {{ record.operatorPhone }}
+                  </el-descriptions-item>
+                  <el-descriptions-item label="相关实体">
+                    {{ record.entityName || '-' }}
+                  </el-descriptions-item>
+                  <el-descriptions-item label="位置信息" :span="2">
+                    {{ record.location || '-' }}
+                  </el-descriptions-item>
+                  <el-descriptions-item label="温度" v-if="record.temperature !== null">
+                    <span class="env-value">🌡️ {{ record.temperature }}℃</span>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="湿度" v-if="record.humidity !== null">
+                    <span class="env-value">💧 {{ record.humidity }}%</span>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="数量" v-if="record.quantity !== null">
+                    <span class="env-value">📦 {{ record.quantity }} {{ record.unit || '' }}</span>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="质量等级" v-if="record.qualityGrade">
+                    <el-tag size="small">{{ record.qualityGrade }}</el-tag>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="检测结果" :span="2" v-if="record.testResult">
+                    {{ record.testResult }}
+                  </el-descriptions-item>
+                  <el-descriptions-item label="内容摘要" :span="2">
+                    <div class="content-summary-text">{{ record.contentSummary || '-' }}</div>
+                  </el-descriptions-item>
+                </el-descriptions>
 
-                <!-- 环境和数量信息 -->
-                <div v-if="hasEnvironmentData(record)" class="environment-info">
-                  <el-row :gutter="15">
-                    <el-col v-if="record.temperature !== null" :span="8">
-                      <div class="env-item">
-                        <span class="icon">🌡️</span>
-                        <span>{{ record.temperature }}℃</span>
+                <!-- 区块链信息 -->
+                <div v-if="record.blockchainTxHash" class="blockchain-info">
+                  <el-descriptions :column="1" size="small" border>
+                    <el-descriptions-item label="交易哈希">
+                      <div class="tx-hash">
+                        <code>{{ formatTxHash(record.blockchainTxHash) }}</code>
+                        <el-button 
+                          type="primary" 
+                          link
+                          size="small" 
+                          @click="copyTxHash(record.blockchainTxHash)"
+                        >
+                          复制
+                        </el-button>
                       </div>
-                    </el-col>
-                    <el-col v-if="record.humidity !== null" :span="8">
-                      <div class="env-item">
-                        <span class="icon">💧</span>
-                        <span>{{ record.humidity }}%</span>
-                      </div>
-                    </el-col>
-                    <el-col v-if="record.quantity !== null" :span="8">
-                      <div class="env-item">
-                        <span class="icon">📦</span>
-                        <span>{{ record.quantity }} {{ record.unit }}</span>
-                      </div>
-                    </el-col>
-                  </el-row>
+                    </el-descriptions-item>
+                  </el-descriptions>
                 </div>
 
                 <!-- 操作按钮 -->
                 <div class="record-actions">
-                  <el-button type="text" size="small" @click="viewDetail(record)">
-                    查看详情
-                  </el-button>
-                  <el-button 
-                    v-if="record.blockchainTxHash" 
-                    type="text" 
-                    size="small" 
-                    @click="copyTxHash(record.blockchainTxHash)"
-                  >
-                    复制交易哈希
+                  <el-button type="primary" size="small" @click="viewDetail(record)">
+                    查看完整详情
                   </el-button>
                 </div>
               </div>
@@ -136,8 +133,6 @@
 </template>
 
 <script>
-// 暂时不使用图标，避免导入错误
-// import { DataLine, Cloud, Package } from '@element-plus/icons-vue'
 import { getTraceChain, verifyTraceIntegrity } from '@/api/trace'
 import { ElMessage } from 'element-plus'
 import TraceRecordDetail from './TraceRecordDetail.vue'
@@ -314,6 +309,14 @@ export default {
       return new Date(dateTime).toLocaleString('zh-CN')
     },
 
+    formatTxHash(txHash) {
+      if (!txHash) return '-'
+      if (txHash.length > 20) {
+        return `${txHash.substring(0, 10)}...${txHash.substring(txHash.length - 8)}`
+      }
+      return txHash
+    },
+
     getRecordTypeText(type) {
       const typeMap = {
         1: '生产记录',
@@ -411,50 +414,57 @@ export default {
 }
 
 .record-info {
-  margin-bottom: 15px;
+  padding: 0;
 }
 
-.info-item {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 8px;
+.record-descriptions {
+  margin-bottom: 10px;
 }
 
-.info-item .label {
+.record-descriptions :deep(.el-descriptions__label) {
   font-weight: 600;
+  background-color: #fafafa;
+}
+
+.content-summary-text {
+  line-height: 1.6;
   color: #606266;
-  min-width: 80px;
-  margin-right: 10px;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
-.info-item .value {
-  color: #303133;
-  flex: 1;
-}
-
-.info-item.content-summary .value {
-  margin: 0;
-  line-height: 1.5;
-}
-
-.environment-info {
-  background: #f5f7fa;
-  padding: 15px;
-  border-radius: 6px;
-  margin: 15px 0;
-}
-
-.env-item {
-  display: flex;
+.env-value {
+  display: inline-flex;
   align-items: center;
   gap: 5px;
-  color: #606266;
-  font-size: 14px;
+  color: #409eff;
+  font-weight: 500;
 }
 
-.env-item .icon {
-  font-size: 16px;
-  margin-right: 3px;
+.blockchain-info {
+  margin-top: 10px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%);
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #e6f7ff;
+}
+
+.tx-hash {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tx-hash code {
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 12px;
+  background: #f5f7fa;
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: #67c23a;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .record-actions {

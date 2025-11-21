@@ -43,7 +43,7 @@
 
         <el-col :span="12">
           <el-form-item label="记录类型" prop="recordType">
-            <el-select v-model="form.recordType" placeholder="选择记录类型" style="width: 100%">
+            <el-select v-model="form.recordType" placeholder="选择记录类型" style="width: 100%" :disabled="!!record">
               <el-option label="生产记录" :value="1" />
               <el-option label="质检记录" :value="2" />
               <el-option label="流通记录" :value="3" />
@@ -55,18 +55,19 @@
 
         <el-col :span="12">
           <el-form-item label="记录阶段" prop="recordStage">
-            <el-input v-model="form.recordStage" placeholder="如：种植、加工、包装等" />
+            <el-input v-model="form.recordStage" placeholder="如：种植、加工、包装等" :disabled="!!record" />
           </el-form-item>
         </el-col>
 
         <el-col :span="12">
-          <el-form-item label="相关实体" prop="entityId">
+          <el-form-item label="相关实体" prop="entityName">
             <el-select 
-              v-model="form.entityId" 
+              v-model="form.entityName"
               placeholder="选择溯源实体" 
               @change="handleEntityChange"
               filterable
               style="width: 100%"
+              :disabled="!!record"
             >
               <el-option
                 v-for="entity in entityList"
@@ -85,13 +86,13 @@
 
         <el-col :span="12">
           <el-form-item label="操作员" prop="operatorName">
-            <el-input v-model="form.operatorName" placeholder="操作人员姓名" />
+            <el-input v-model="form.operatorName" placeholder="操作人员姓名" :disabled="!!record" />
           </el-form-item>
         </el-col>
 
         <el-col :span="12">
           <el-form-item label="操作员电话" prop="operatorPhone">
-            <el-input v-model="form.operatorPhone" placeholder="联系电话" />
+            <el-input v-model="form.operatorPhone" placeholder="联系电话" :disabled="!!record" />
           </el-form-item>
         </el-col>
 
@@ -102,13 +103,14 @@
               type="datetime"
               placeholder="选择记录时间"
               style="width: 100%"
+              :disabled="!!record"
             />
           </el-form-item>
         </el-col>
 
         <el-col :span="24">
           <el-form-item label="位置信息" prop="location">
-            <el-input v-model="form.location" placeholder="详细地址或GPS坐标" />
+            <el-input v-model="form.location" placeholder="详细地址或GPS坐标" :disabled="!!record" />
           </el-form-item>
         </el-col>
 
@@ -140,7 +142,7 @@
 
         <el-col :span="8">
           <el-form-item label="质量等级" prop="qualityGrade">
-            <el-select v-model="form.qualityGrade" placeholder="选择质量等级" style="width: 100%">
+            <el-select v-model="form.qualityGrade" placeholder="选择质量等级" style="width: 100%" :disabled="!!record">
               <el-option label="优等" value="优等" />
               <el-option label="一等" value="一等" />
               <el-option label="二等" value="二等" />
@@ -158,13 +160,14 @@
               :precision="2"
               controls-position="right"
               style="width: 100%"
+              :disabled="!!record"
             />
           </el-form-item>
         </el-col>
 
         <el-col :span="12">
           <el-form-item label="单位" prop="unit">
-            <el-select v-model="form.unit" placeholder="选择单位" style="width: 100%">
+            <el-select v-model="form.unit" placeholder="选择单位" style="width: 100%" :disabled="!!record">
               <el-option label="公斤" value="公斤" />
               <el-option label="吨" value="吨" />
               <el-option label="袋" value="袋" />
@@ -176,7 +179,7 @@
 
         <el-col :span="24">
           <el-form-item label="检测结果" prop="testResult">
-            <el-input v-model="form.testResult" placeholder="检测结果描述" />
+            <el-input v-model="form.testResult" placeholder="检测结果描述" :disabled="!!record" />
           </el-form-item>
         </el-col>
 
@@ -187,6 +190,7 @@
               type="textarea" 
               :rows="3"
               placeholder="请输入内容摘要"
+              :disabled="!!record"
             />
           </el-form-item>
         </el-col>
@@ -198,6 +202,7 @@
               type="textarea" 
               :rows="4"
               placeholder="请输入详细内容（JSON格式可选）"
+              :disabled="!!record"
             />
           </el-form-item>
         </el-col>
