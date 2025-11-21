@@ -124,9 +124,13 @@
             </template>
           </el-table-column>
 
-          <el-table-column label="操作" width="260" fixed="right">
+          <el-table-column label="操作" width="320" fixed="right">
             <template #default="{ row }">
               <el-button type="primary" size="small" @click="viewDetail(row)">查看</el-button>
+              <el-button type="info" size="small" @click="showQRCode(row)">
+                <el-icon><Picture /></el-icon>
+                二维码
+              </el-button>
               <el-button type="success" size="small" @click="editRecord(row)">编辑</el-button>
               <el-button 
                 v-if="row.blockchainStatus !== 2" 
@@ -184,11 +188,19 @@
     <el-dialog title="完整溯源链" v-model="showChainDialog" width="1200px">
       <TraceChainView :trace-code="currentTraceCode" />
     </el-dialog>
+
+    <!-- 二维码生成对话框 -->
+    <TraceQRCode 
+      v-model="showQRCodeDialog"
+      :trace-code="qrcodeData.traceCode"
+      :batch-no="qrcodeData.batchId"
+      :product-name="qrcodeData.productName"
+    />
   </div>
 </template>
 
 <script>
-import { Plus, Search, Upload, Download } from '@element-plus/icons-vue'
+import { Plus, Search, Upload, Download, Picture } from '@element-plus/icons-vue'
 import { 
   getTraceRecordsPage, 
   deleteTraceRecord, 
@@ -199,6 +211,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import TraceRecordForm from './components/TraceRecordForm.vue'
 import TraceRecordDetail from './components/TraceRecordDetail.vue'
 import TraceChainView from './components/TraceChainView.vue'
+import TraceQRCode from './components/TraceQRCode.vue'
 
 export default {
   name: 'TraceRecords',
@@ -207,9 +220,11 @@ export default {
     Search,
     Upload,
     Download,
+    Picture,
     TraceRecordForm,
     TraceRecordDetail,
-    TraceChainView
+    TraceChainView,
+    TraceQRCode
   },
   data() {
     return {
@@ -237,11 +252,19 @@ export default {
       showCreateDialog: false,
       showDetailDialog: false,
       showChainDialog: false,
+      showQRCodeDialog: false,
       
       // 当前操作的记录
       currentRecord: null,
       detailRecord: null,
-      currentTraceCode: ''
+      currentTraceCode: '',
+      
+      // 二维码数据
+      qrcodeData: {
+        traceCode: '',
+        batchId: '',
+        productName: ''
+      }
     }
   },
   computed: {
@@ -323,6 +346,16 @@ export default {
     viewTraceChain(traceCode) {
       this.currentTraceCode = traceCode
       this.showChainDialog = true
+    },
+
+    // 生成二维码
+    showQRCode(record) {
+      this.qrcodeData = {
+        traceCode: record.traceCode,
+        batchId: record.batchId || '',
+        productName: record.entityName || ''
+      }
+      this.showQRCodeDialog = true
     },
 
     // 编辑记录
