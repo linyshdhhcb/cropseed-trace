@@ -9,7 +9,7 @@
                         @change="handleDateRangeChange" />
                 </el-form-item>
                 <el-form-item label="统计维度">
-                    <el-select v-model="filterForm.dimension" @change="handleDimensionChange">
+                    <el-select v-model="filterForm.dimension" @change="handleDimensionChange" style="width: 80px">
                         <el-option label="按日" value="day" />
                         <el-option label="按周" value="week" />
                         <el-option label="按月" value="month" />
@@ -41,7 +41,7 @@
                                 <el-icon>
                                     <component :is="getTrendIcon(statisticsData.ordersTrend)" />
                                 </el-icon>
-                                {{ Math.abs(statisticsData.ordersTrend) }}%
+                                {{ Math.abs(statisticsData.ordersTrend || 0) }}%
                             </div>
                         </div>
                     </div>
@@ -62,7 +62,7 @@
                                 <el-icon>
                                     <component :is="getTrendIcon(statisticsData.revenueTrend)" />
                                 </el-icon>
-                                {{ Math.abs(statisticsData.revenueTrend) }}%
+                                {{ Math.abs(statisticsData.revenueTrend || 0) }}%
                             </div>
                         </div>
                     </div>
@@ -83,7 +83,7 @@
                                 <el-icon>
                                     <component :is="getTrendIcon(statisticsData.usersTrend)" />
                                 </el-icon>
-                                {{ Math.abs(statisticsData.usersTrend) }}%
+                                {{ Math.abs(statisticsData.usersTrend || 0) }}%
                             </div>
                         </div>
                     </div>
@@ -104,7 +104,7 @@
                                 <el-icon>
                                     <component :is="getTrendIcon(statisticsData.seedsTrend)" />
                                 </el-icon>
-                                {{ Math.abs(statisticsData.seedsTrend) }}%
+                                {{ Math.abs(statisticsData.seedsTrend || 0) }}%
                             </div>
                         </div>
                     </div>
@@ -519,7 +519,7 @@ const loadChartData = async () => {
         // 销售趋势图
         salesChartLoading.value = true;
         const salesResponse = await getChartData({
-            type: "sales",
+            chartType: "sales",
             startDate: filterForm.dateRange[0],
             endDate: filterForm.dateRange[1],
             dimension: filterForm.dimension,
@@ -529,7 +529,7 @@ const loadChartData = async () => {
         // 订单状态分布
         orderStatusChartLoading.value = true;
         const orderStatusResponse = await getChartData({
-            type: "orderStatus",
+            chartType: "orderStatus",
             startDate: filterForm.dateRange[0],
             endDate: filterForm.dateRange[1],
         });
@@ -538,7 +538,7 @@ const loadChartData = async () => {
         // 用户增长趋势
         userGrowthChartLoading.value = true;
         const userGrowthResponse = await getChartData({
-            type: "userGrowth",
+            chartType: "userGrowth",
             startDate: filterForm.dateRange[0],
             endDate: filterForm.dateRange[1],
             dimension: filterForm.dimension,
@@ -548,7 +548,7 @@ const loadChartData = async () => {
         // 种子品类销售排行
         categoryRankingChartLoading.value = true;
         const categoryRankingResponse = await getChartData({
-            type: "categoryRanking",
+            chartType: "categoryRanking",
             startDate: filterForm.dateRange[0],
             endDate: filterForm.dateRange[1],
         });
@@ -568,6 +568,7 @@ const loadTableData = async () => {
     try {
         tableLoading.value = true;
         const response = await getTableData({
+            tableType: "statistics",
             startDate: filterForm.dateRange[0],
             endDate: filterForm.dateRange[1],
             dimension: filterForm.dimension,
@@ -615,12 +616,12 @@ const loadAllData = () => {
 
 // 获取趋势图标
 const getTrendIcon = (trend) => {
-    return trend >= 0 ? ArrowUp : ArrowDown;
+    return (trend || 0) >= 0 ? ArrowUp : ArrowDown;
 };
 
 // 获取趋势样式类
 const getTrendClass = (trend) => {
-    return trend >= 0 ? "trend-up" : "trend-down";
+    return (trend || 0) >= 0 ? "trend-up" : "trend-down";
 };
 
 // 初始化
