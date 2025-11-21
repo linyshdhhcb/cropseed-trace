@@ -29,10 +29,6 @@
             <el-button type="success" :icon="Download" @click="handleExport">
                 导出数据
             </el-button>
-            <el-button type="warning" @click="showTraceManagement = true">
-                <el-icon><Link /></el-icon>
-                溯源管理
-            </el-button>
         </div>
 
         <!-- 数据表格 -->
@@ -40,7 +36,13 @@
             <el-table v-loading="loading" :data="tableData" @selection-change="handleSelectionChange"
                 style="width: 100%" border stripe>
                 <el-table-column type="selection" width="55" />
-                <el-table-column prop="batchNo" label="批次号" width="150" align="center" />
+                <el-table-column prop="batchNo" label="批次号" width="150" align="center">
+                    <template #default="{ row }">
+                        <el-button type="text" @click="handleView(row)" class="batch-no-link">
+                            {{ row.batchNo }}
+                        </el-button>
+                    </template>
+                </el-table-column>
                 <el-table-column prop="traceCode" label="溯源码" width="140" align="center">
                     <template #default="{ row }">
                         <div v-if="row.traceCode" class="trace-code-cell">
@@ -341,86 +343,197 @@
         </el-dialog>
 
         <!-- 查看详情对话框 -->
-        <el-dialog v-model="viewDialogVisible" title="批次详情" width="900px">
+        <el-dialog v-model="viewDialogVisible" title="批次详情" width="1000px" class="batch-detail-dialog">
             <div v-if="batchDetail" class="batch-detail">
                 <!-- 基础信息 -->
-                <el-divider content-position="left">基础信息</el-divider>
-                <el-descriptions :column="2" border>
-                    <el-descriptions-item label="批次号">{{ batchDetail.batchNo }}</el-descriptions-item>
-                    <el-descriptions-item label="种子名称">{{ batchDetail.seedName }}</el-descriptions-item>
-                    <el-descriptions-item label="溯源码">
-                        <span v-if="batchDetail.traceCode" class="trace-code">{{ batchDetail.traceCode }}</span>
-                        <el-tag v-else type="warning">未生成</el-tag>
-                    </el-descriptions-item>
-                    <el-descriptions-item label="单位">{{ batchDetail.unit || '-' }}</el-descriptions-item>
-                </el-descriptions>
+                <el-card class="detail-card" shadow="never">
+                    <template #header>
+                        <div class="card-header">
+                            <span class="card-title">基础信息</span>
+                        </div>
+                    </template>
+                    <el-descriptions :column="2" border size="default">
+                        <el-descriptions-item label="批次号" label-class-name="label-bold">
+                            <el-tag type="primary" size="large">{{ batchDetail.batchNo }}</el-tag>
+                        </el-descriptions-item>
+                        <el-descriptions-item label="种子ID" label-class-name="label-bold">
+                            {{ batchDetail.seedId || '-' }}
+                        </el-descriptions-item>
+                        <el-descriptions-item label="种子名称" label-class-name="label-bold">
+                            {{ batchDetail.seedName || '-' }}
+                        </el-descriptions-item>
+                        <el-descriptions-item label="单位" label-class-name="label-bold">
+                            {{ batchDetail.unit || '-' }}
+                        </el-descriptions-item>
+                        <el-descriptions-item label="溯源码" :span="2" label-class-name="label-bold">
+                            <span v-if="batchDetail.traceCode" class="trace-code-value">
+                                <code>{{ batchDetail.traceCode }}</code>
+                                <el-button type="primary" link size="small" @click="viewTraceChain(batchDetail.traceCode)" style="margin-left: 10px;">
+                                    查看溯源链
+                                </el-button>
+                            </span>
+                            <el-tag v-else type="warning">未生成</el-tag>
+                        </el-descriptions-item>
+                    </el-descriptions>
+                </el-card>
 
                 <!-- 生产信息 -->
-                <el-divider content-position="left">生产信息</el-divider>
-                <el-descriptions :column="2" border>
-                    <el-descriptions-item label="生产商名称">{{ batchDetail.producerName || '-' }}</el-descriptions-item>
-                    <el-descriptions-item label="生产地点">{{ batchDetail.productionLocation || '-' }}</el-descriptions-item>
-                    <el-descriptions-item label="生产日期">{{ batchDetail.productionDate }}</el-descriptions-item>
-                    <el-descriptions-item label="收获日期">{{ batchDetail.harvestDate || '-' }}</el-descriptions-item>
-                    <el-descriptions-item label="加工日期">{{ batchDetail.processingDate || '-' }}</el-descriptions-item>
-                    <el-descriptions-item label="过期日期">{{ batchDetail.expiryDate || '-' }}</el-descriptions-item>
-                    <el-descriptions-item label="生产设备">{{ batchDetail.productionEquipment || '-' }}</el-descriptions-item>
-                    <el-descriptions-item label="加工方式">{{ batchDetail.processingMethod || '-' }}</el-descriptions-item>
-                    <el-descriptions-item label="种子来源">{{ batchDetail.seedSource || '-' }}</el-descriptions-item>
-                    <el-descriptions-item label="亲本品种">{{ batchDetail.parentVariety || '-' }}</el-descriptions-item>
-                </el-descriptions>
+                <el-card class="detail-card" shadow="never">
+                    <template #header>
+                        <div class="card-header">
+                            <span class="card-title">生产信息</span>
+                        </div>
+                    </template>
+                    <el-descriptions :column="2" border size="default">
+                        <el-descriptions-item label="生产商ID" label-class-name="label-bold" v-if="batchDetail.producerId">
+                            {{ batchDetail.producerId }}
+                        </el-descriptions-item>
+                        <el-descriptions-item label="生产商名称" label-class-name="label-bold" :span="batchDetail.producerId ? 1 : 2">
+                            {{ batchDetail.producerName || '-' }}
+                        </el-descriptions-item>
+                        <el-descriptions-item label="生产地点" label-class-name="label-bold" :span="2">
+                            {{ batchDetail.productionLocation || '-' }}
+                        </el-descriptions-item>
+                        <el-descriptions-item label="生产日期" label-class-name="label-bold">
+                            {{ batchDetail.productionDate || '-' }}
+                        </el-descriptions-item>
+                        <el-descriptions-item label="收获日期" label-class-name="label-bold">
+                            {{ batchDetail.harvestDate || '-' }}
+                        </el-descriptions-item>
+                        <el-descriptions-item label="加工日期" label-class-name="label-bold">
+                            {{ batchDetail.processingDate || '-' }}
+                        </el-descriptions-item>
+                        <el-descriptions-item label="过期日期" label-class-name="label-bold">
+                            {{ batchDetail.expiryDate || '-' }}
+                        </el-descriptions-item>
+                        <el-descriptions-item label="生产设备" label-class-name="label-bold">
+                            {{ batchDetail.productionEquipment || '-' }}
+                        </el-descriptions-item>
+                        <el-descriptions-item label="加工方式" label-class-name="label-bold">
+                            {{ batchDetail.processingMethod || '-' }}
+                        </el-descriptions-item>
+                        <el-descriptions-item label="种子来源" label-class-name="label-bold">
+                            {{ batchDetail.seedSource || '-' }}
+                        </el-descriptions-item>
+                        <el-descriptions-item label="亲本品种" label-class-name="label-bold">
+                            {{ batchDetail.parentVariety || '-' }}
+                        </el-descriptions-item>
+                    </el-descriptions>
+                </el-card>
 
                 <!-- 质量信息 -->
-                <el-divider content-position="left">质量信息</el-divider>
-                <el-descriptions :column="2" border>
-                    <el-descriptions-item label="质检状态">
-                        <el-tag :type="batchDetail.qualityStatus === 1 ? 'success' : 'danger'">
-                            {{ batchDetail.qualityStatus === 1 ? '合格' : '不合格' }}
-                        </el-tag>
-                    </el-descriptions-item>
-                    <el-descriptions-item label="初始质量等级">{{ batchDetail.initialQualityGrade || '-' }}</el-descriptions-item>
-                    <el-descriptions-item label="含水率">{{ batchDetail.moistureContent ? batchDetail.moistureContent + '%' : '-' }}</el-descriptions-item>
-                    <el-descriptions-item label="发芽率">{{ batchDetail.germinationRate ? batchDetail.germinationRate + '%' : '-' }}</el-descriptions-item>
-                    <el-descriptions-item label="纯度">{{ batchDetail.purity ? batchDetail.purity + '%' : '-' }}</el-descriptions-item>
-                    <el-descriptions-item label="质检报告">
-                        <el-link v-if="batchDetail.qualityReport" :href="batchDetail.qualityReport" target="_blank" type="primary">查看报告</el-link>
-                        <span v-else>-</span>
-                    </el-descriptions-item>
-                </el-descriptions>
+                <el-card class="detail-card" shadow="never">
+                    <template #header>
+                        <div class="card-header">
+                            <span class="card-title">质量信息</span>
+                        </div>
+                    </template>
+                    <el-descriptions :column="3" border size="default">
+                        <el-descriptions-item label="质检状态" label-class-name="label-bold">
+                            <el-tag :type="batchDetail.qualityStatus === 1 ? 'success' : 'danger'" size="large">
+                                {{ batchDetail.qualityStatus === 1 ? '合格' : '不合格' }}
+                            </el-tag>
+                        </el-descriptions-item>
+                        <el-descriptions-item label="初始质量等级" label-class-name="label-bold" :span="2">
+                            <el-tag v-if="batchDetail.initialQualityGrade" type="success">{{ batchDetail.initialQualityGrade }}</el-tag>
+                            <span v-else>-</span>
+                        </el-descriptions-item>
+                        <el-descriptions-item label="含水率" label-class-name="label-bold">
+                            <span v-if="batchDetail.moistureContent" class="quality-value">💧 {{ batchDetail.moistureContent }}%</span>
+                            <span v-else>-</span>
+                        </el-descriptions-item>
+                        <el-descriptions-item label="发芽率" label-class-name="label-bold">
+                            <span v-if="batchDetail.germinationRate" class="quality-value">🌱 {{ batchDetail.germinationRate }}%</span>
+                            <span v-else>-</span>
+                        </el-descriptions-item>
+                        <el-descriptions-item label="纯度" label-class-name="label-bold">
+                            <span v-if="batchDetail.purity" class="quality-value">✅ {{ batchDetail.purity }}%</span>
+                            <span v-else>-</span>
+                        </el-descriptions-item>
+                        <el-descriptions-item label="质检报告" label-class-name="label-bold" :span="3">
+                            <el-link v-if="batchDetail.qualityReport" :href="batchDetail.qualityReport" target="_blank" type="primary">
+                                <el-icon><Document /></el-icon> 查看报告
+                            </el-link>
+                            <span v-else>-</span>
+                        </el-descriptions-item>
+                    </el-descriptions>
+                </el-card>
 
                 <!-- 包装与储存 -->
-                <el-divider content-position="left">包装与储存</el-divider>
-                <el-descriptions :column="2" border>
-                    <el-descriptions-item label="包装类型">{{ batchDetail.packagingType || '-' }}</el-descriptions-item>
-                    <el-descriptions-item label="包装规格">{{ batchDetail.packagingSpecification || '-' }}</el-descriptions-item>
-                    <el-descriptions-item label="储存条件" :span="2">{{ batchDetail.storageCondition || '-' }}</el-descriptions-item>
-                </el-descriptions>
+                <el-card class="detail-card" shadow="never">
+                    <template #header>
+                        <div class="card-header">
+                            <span class="card-title">包装与储存</span>
+                        </div>
+                    </template>
+                    <el-descriptions :column="2" border size="default">
+                        <el-descriptions-item label="包装类型" label-class-name="label-bold">
+                            {{ batchDetail.packagingType || '-' }}
+                        </el-descriptions-item>
+                        <el-descriptions-item label="包装规格" label-class-name="label-bold">
+                            {{ batchDetail.packagingSpecification || '-' }}
+                        </el-descriptions-item>
+                        <el-descriptions-item label="储存条件" label-class-name="label-bold" :span="2">
+                            {{ batchDetail.storageCondition || '-' }}
+                        </el-descriptions-item>
+                    </el-descriptions>
+                </el-card>
 
                 <!-- 操作员与认证 -->
-                <el-divider content-position="left">操作员与认证</el-divider>
-                <el-descriptions :column="2" border>
-                    <el-descriptions-item label="操作员姓名">{{ batchDetail.initialOperatorName || '-' }}</el-descriptions-item>
-                    <el-descriptions-item label="操作员电话">{{ batchDetail.initialOperatorPhone || '-' }}</el-descriptions-item>
-                    <el-descriptions-item label="认证信息">{{ batchDetail.certification || '-' }}</el-descriptions-item>
-                    <el-descriptions-item label="可追溯等级">
-                        <el-tag v-if="batchDetail.traceabilityLevel === 1" type="info">基础</el-tag>
-                        <el-tag v-else-if="batchDetail.traceabilityLevel === 2" type="warning">详细</el-tag>
-                        <el-tag v-else-if="batchDetail.traceabilityLevel === 3" type="success">完整</el-tag>
-                        <span v-else>-</span>
-                    </el-descriptions-item>
-                </el-descriptions>
+                <el-card class="detail-card" shadow="never">
+                    <template #header>
+                        <div class="card-header">
+                            <span class="card-title">操作员与认证</span>
+                        </div>
+                    </template>
+                    <el-descriptions :column="2" border size="default">
+                        <el-descriptions-item label="操作员姓名" label-class-name="label-bold">
+                            {{ batchDetail.initialOperatorName || '-' }}
+                        </el-descriptions-item>
+                        <el-descriptions-item label="操作员电话" label-class-name="label-bold">
+                            {{ batchDetail.initialOperatorPhone || '-' }}
+                        </el-descriptions-item>
+                        <el-descriptions-item label="认证信息" label-class-name="label-bold">
+                            <el-tag v-if="batchDetail.certification" type="success">{{ batchDetail.certification }}</el-tag>
+                            <span v-else>-</span>
+                        </el-descriptions-item>
+                        <el-descriptions-item label="可追溯等级" label-class-name="label-bold">
+                            <el-tag v-if="batchDetail.traceabilityLevel === 1" type="info" size="large">基础</el-tag>
+                            <el-tag v-else-if="batchDetail.traceabilityLevel === 2" type="warning" size="large">详细</el-tag>
+                            <el-tag v-else-if="batchDetail.traceabilityLevel === 3" type="success" size="large">完整</el-tag>
+                            <span v-else>-</span>
+                        </el-descriptions-item>
+                    </el-descriptions>
+                </el-card>
+
+                <!-- 备注信息 -->
+                <el-card class="detail-card" shadow="never" v-if="batchDetail.remarks">
+                    <template #header>
+                        <div class="card-header">
+                            <span class="card-title">备注信息</span>
+                        </div>
+                    </template>
+                    <div class="remarks-content">
+                        {{ batchDetail.remarks }}
+                    </div>
+                </el-card>
 
                 <!-- 系统信息 -->
-                <el-divider content-position="left">系统信息</el-divider>
-                <el-descriptions :column="2" border>
-                    <el-descriptions-item label="创建时间">{{ batchDetail.createTime }}</el-descriptions-item>
-                    <el-descriptions-item label="更新时间">{{ batchDetail.updateTime }}</el-descriptions-item>
-                </el-descriptions>
-
-                <!-- 备注 -->
-                <el-descriptions :column="1" border style="margin-top: 20px;">
-                    <el-descriptions-item label="备注">{{ batchDetail.remarks || '-' }}</el-descriptions-item>
-                </el-descriptions>
+                <el-card class="detail-card" shadow="never">
+                    <template #header>
+                        <div class="card-header">
+                            <span class="card-title">系统信息</span>
+                        </div>
+                    </template>
+                    <el-descriptions :column="2" border size="default">
+                        <el-descriptions-item label="创建时间" label-class-name="label-bold">
+                            {{ batchDetail.createTime || '-' }}
+                        </el-descriptions-item>
+                        <el-descriptions-item label="更新时间" label-class-name="label-bold">
+                            {{ batchDetail.updateTime || '-' }}
+                        </el-descriptions-item>
+                    </el-descriptions>
+                </el-card>
                 
                 <!-- 溯源操作区域 -->
                 <div v-if="batchDetail.traceCode" class="trace-actions" style="margin-top: 20px; text-align: center;">
@@ -448,13 +561,6 @@
             </div>
         </el-dialog>
 
-        <!-- 溯源管理对话框 -->
-        <el-dialog v-model="showTraceManagement" title="批次溯源管理" width="1200px" :close-on-click-modal="false">
-            <div class="trace-management-content">
-                <router-view name="trace" />
-            </div>
-        </el-dialog>
-
         <!-- 溯源链查看对话框 -->
         <el-dialog v-model="showTraceChainDialog" title="完整溯源链" width="1200px">
             <TraceChainView v-if="currentTraceCode" :trace-code="currentTraceCode" />
@@ -465,13 +571,15 @@
 <script setup>
 import { ref, reactive, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { useRouter } from "vue-router";
 import {
     Search,
     Refresh,
     Plus,
     Delete,
     Download,
-    Link
+    Link,
+    Document
 } from "@element-plus/icons-vue";
 import {
     getSeedBatchList,
@@ -490,6 +598,9 @@ import {
 } from "@/api/trace";
 import TraceChainView from "@/views/trace/components/TraceChainView.vue";
 import MultiImageUpload from "@/components/MultiImageUpload.vue";
+
+// 路由
+const router = useRouter();
 
 // 搜索表单
 const searchFormRef = ref();
@@ -574,7 +685,6 @@ const viewDialogVisible = ref(false);
 const batchDetail = ref(null);
 
 // 溯源相关变量
-const showTraceManagement = ref(false);
 const showTraceChainDialog = ref(false);
 const currentTraceCode = ref('');
 
@@ -889,8 +999,14 @@ const viewTraceChain = (traceCode) => {
 
 const manageTrace = (batch) => {
     if (batch.traceCode) {
-        // 跳转到溯源管理页面，传递批次信息
-        window.open(`#/trace/records?batchId=${batch.id}&traceCode=${batch.traceCode}`, '_blank');
+        // 使用路由导航跳转到溯源管理页面，传递批次信息
+        router.push({
+            path: '/trace/records',
+            query: {
+                batchId: batch.id,
+                traceCode: batch.traceCode
+            }
+        });
     } else {
         ElMessage.warning('请先生成溯源码');
     }
@@ -898,8 +1014,15 @@ const manageTrace = (batch) => {
 
 const addTraceRecord = (batch) => {
     if (batch.traceCode) {
-        // 跳转到新增溯源记录页面
-        window.open(`#/trace/records?action=create&batchId=${batch.id}&traceCode=${batch.traceCode}`, '_blank');
+        // 使用路由导航跳转到新增溯源记录页面
+        router.push({
+            path: '/trace/records',
+            query: {
+                action: 'create',
+                batchId: batch.id,
+                traceCode: batch.traceCode
+            }
+        });
     } else {
         ElMessage.warning('请先生成溯源码');
     }
@@ -952,15 +1075,76 @@ onMounted(() => {
     }
 }
 
+// 批次详情对话框样式
+.batch-detail-dialog {
+    :deep(.el-dialog__body) {
+        max-height: 70vh;
+        overflow-y: auto;
+        padding: 10px 20px;
+    }
+}
+
 .batch-detail {
-    .el-descriptions {
+    .detail-card {
         margin-bottom: 20px;
+        border: 1px solid #ebeef5;
+        
+        &:last-child {
+            margin-bottom: 0;
+        }
     }
     
-    .trace-code {
-        font-family: 'Courier New', monospace;
-        font-weight: bold;
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .card-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #303133;
+    }
+    
+    :deep(.label-bold) {
+        font-weight: 600;
+        color: #606266;
+        background-color: #fafafa;
+    }
+    
+    .trace-code-value {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        
+        code {
+            font-family: 'Courier New', Consolas, monospace;
+            font-size: 14px;
+            font-weight: bold;
+            color: #409eff;
+            background: #ecf5ff;
+            padding: 4px 12px;
+            border-radius: 4px;
+        }
+    }
+    
+    .quality-value {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
         color: #409eff;
+        font-weight: 500;
+        font-size: 14px;
+    }
+    
+    .remarks-content {
+        padding: 15px;
+        background: #f5f7fa;
+        border-radius: 6px;
+        line-height: 1.8;
+        color: #606266;
+        white-space: pre-wrap;
+        word-break: break-word;
     }
 }
 
@@ -969,6 +1153,15 @@ onMounted(() => {
         font-family: 'Courier New', monospace;
         font-weight: bold;
         color: #409eff;
+    }
+}
+
+.batch-no-link {
+    font-weight: 600;
+    color: #409eff;
+    
+    &:hover {
+        color: #66b1ff;
     }
 }
 
