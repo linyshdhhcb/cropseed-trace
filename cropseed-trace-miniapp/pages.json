@@ -13,6 +13,12 @@
       }
     },
     {
+      "path": "pages/trace/index",
+      "style": {
+        "navigationBarTitleText": "溯源查询"
+      }
+    },
+    {
       "path": "pages/cart/index",
       "style": {
         "navigationBarTitleText": "购物车"
@@ -126,6 +132,12 @@
         "text": "分类",
         "iconPath": "static/navigation/category.png",
         "selectedIconPath": "static/navigation/category.png"
+      },
+      {
+        "pagePath": "pages/trace/index",
+        "text": "溯源",
+        "iconPath": "static/trace.png",
+        "selectedIconPath": "static/trace.png"
       },
       {
         "pagePath": "pages/cart/index",
