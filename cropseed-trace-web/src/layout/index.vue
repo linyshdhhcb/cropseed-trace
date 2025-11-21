@@ -151,12 +151,12 @@ const routes = [
     meta: { title: '溯源管理', icon: 'Connection' },
     children: [
       { path: '', name: 'TraceIndex', meta: { title: '溯源总览' } },
-      { path: 'records', name: 'TraceRecords', meta: { title: '溯源记录' } },
-      { path: 'codes', name: 'TraceCodes', meta: { title: '溯源码管理' } },
+       { path: 'codes', name: 'TraceCodes', meta: { title: '溯源码管理' } },
       { path: 'entities', name: 'TraceEntities', meta: { title: '溯源实体' } },
+      { path: 'verify', name: 'TraceVerify', meta: { title: '数据验证' } },
       { path: 'query', name: 'TraceQuery', meta: { title: '溯源查询' } },
-      { path: 'blockchain', name: 'TraceBlockchain', meta: { title: '区块链管理' } },
-      { path: 'verify', name: 'TraceVerify', meta: { title: '数据验证' } }
+      { path: 'records', name: 'TraceRecords', meta: { title: '溯源记录' } },
+      { path: 'blockchain', name: 'TraceBlockchain', meta: { title: '区块链管理' } }
     ]
   },
   {
