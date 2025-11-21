@@ -172,6 +172,50 @@
               </div>
             </div>
           </el-tab-pane>
+
+          <el-tab-pane label="生成二维码" name="qrcode">
+            <div class="tool-content">
+              <el-form :inline="true">
+                <el-form-item label="溯源码">
+                  <el-input 
+                    v-model="qrcodeForm.traceCode"
+                    placeholder="请输入溯源码"
+                    style="width: 300px;"
+                  />
+                </el-form-item>
+                <el-form-item label="批次号">
+                  <el-input 
+                    v-model="qrcodeForm.batchNo"
+                    placeholder="可选"
+                    style="width: 200px;"
+                  />
+                </el-form-item>
+                <el-form-item>
+                  <el-button 
+                    type="primary" 
+                    @click="generateQRCode" 
+                    :disabled="!qrcodeForm.traceCode"
+                  >
+                    <el-icon><Picture /></el-icon>
+                    生成二维码
+                  </el-button>
+                </el-form-item>
+              </el-form>
+
+              <div v-if="qrcodeForm.traceCode" class="qrcode-preview">
+                <el-alert
+                  title="二维码预览"
+                  type="success"
+                  :closable="false"
+                  show-icon
+                >
+                  <template #default>
+                    <p>点击"生成二维码"按钮查看完整的二维码预览和下载选项</p>
+                  </template>
+                </el-alert>
+              </div>
+            </div>
+          </el-tab-pane>
         </el-tabs>
       </el-card>
     </div>
@@ -222,11 +266,19 @@
     >
       <TraceCodeGenerator @generated="handleCodeGenerated" />
     </el-dialog>
+
+    <!-- 二维码生成对话框 -->
+    <TraceQRCode 
+      v-model="showQRCodeDialog"
+      :trace-code="qrcodeForm.traceCode"
+      :batch-no="qrcodeForm.batchNo"
+      :product-name="qrcodeForm.productName"
+    />
   </div>
 </template>
 
 <script>
-import { Plus, Postcard, CircleCheck, View, Refresh } from '@element-plus/icons-vue'
+import { Plus, Postcard, CircleCheck, View, Refresh, Picture } from '@element-plus/icons-vue'
 import { 
   validateTraceCode, 
   parseTraceCode, 
@@ -236,6 +288,7 @@ import {
 } from '@/api/trace'
 import { ElMessage } from 'element-plus'
 import TraceCodeGenerator from './components/TraceCodeGenerator.vue'
+import TraceQRCode from './components/TraceQRCode.vue'
 
 export default {
   name: 'TraceCodes',
@@ -245,7 +298,9 @@ export default {
     CircleCheck,
     View,
     Refresh,
-    TraceCodeGenerator
+    Picture,
+    TraceCodeGenerator,
+    TraceQRCode
   },
   data() {
     return {
@@ -272,6 +327,14 @@ export default {
       },
       checking: false,
       checkResult: null,
+
+      // 二维码表单
+      qrcodeForm: {
+        traceCode: '',
+        batchNo: '',
+        productName: ''
+      },
+      showQRCodeDialog: false,
 
       // 地区数据
       regions: {}
@@ -394,6 +457,18 @@ export default {
       this.showGeneratorDialog = false
       ElMessage.success(`生成溯源码: ${traceCode}`)
       this.copyToClipboard(traceCode)
+      // 自动填充到二维码表单
+      this.qrcodeForm.traceCode = traceCode
+      this.activeTab = 'qrcode'
+    },
+
+    // 生成二维码
+    generateQRCode() {
+      if (!this.qrcodeForm.traceCode) {
+        ElMessage.error('请输入溯源码')
+        return
+      }
+      this.showQRCodeDialog = true
     },
 
     copyToClipboard(text) {
