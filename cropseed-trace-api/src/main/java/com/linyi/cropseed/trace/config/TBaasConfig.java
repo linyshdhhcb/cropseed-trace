@@ -145,12 +145,16 @@ public class TBaasConfig {
         HttpProfile httpProfile = new HttpProfile();
         httpProfile.setEndpoint("tbaas.tencentcloudapi.com");
         httpProfile.setReqMethod("POST");
-        httpProfile.setConnTimeout(properties.getTimeout());
+        httpProfile.setConnTimeout(properties.getTimeout()); // 连接超时
+        httpProfile.setReadTimeout(properties.getTimeout()); // 读取超时（关键修复）
+        httpProfile.setWriteTimeout(properties.getTimeout()); // 写入超时
 
         // 客户端配置
         ClientProfile clientProfile = new ClientProfile();
         clientProfile.setHttpProfile(httpProfile);
         clientProfile.setSignMethod(ClientProfile.SIGN_TC3_256);
+
+        log.info("TBaas客户端配置: region={}, timeout={}ms", properties.getRegion(), properties.getTimeout());
 
         // 创建客户端
         return new TbaasClient(cred, properties.getRegion(), clientProfile);
