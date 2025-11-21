@@ -35,62 +35,103 @@ public class TBaasBlockchainServiceImpl implements BlockchainService {
 
     @Override
     public String uploadTraceRecord(TraceRecord traceRecord) {
-        try {
-            // 构建上链数据
-            TraceChainData chainData = TraceChainData.builder()
-                .traceCode(traceRecord.getTraceCode())
-                .batchId(traceRecord.getBatchId())
-                .recordType(traceRecord.getRecordType())
-                .recordStage(traceRecord.getRecordStage())
-                .operatorName(traceRecord.getOperatorName())
-                .recordTime(traceRecord.getRecordTime())
-                .location(traceRecord.getLocation())
-                .contentSummary(traceRecord.getContentSummary())
-                .entityName(traceRecord.getEntityName())
-                .qualityGrade(traceRecord.getQualityGrade())
-                .testResult(traceRecord.getTestResult())
-                .dataHash(calculateDataHash(traceRecord))
-                .timestamp(System.currentTimeMillis())
-                .build();
+        int maxAttempts = tbaasProperties.getRetry().getMaxAttempts();
+        long retryDelay = tbaasProperties.getRetry().getDelay();
+        
+        Exception lastException = null;
+        
+        // 重试机制
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                log.info("尝试上链: traceCode={}, 第{}/{}次", traceRecord.getTraceCode(), attempt, maxAttempts);
+                
+                // 构建上链数据
+                TraceChainData chainData = TraceChainData.builder()
+                    .traceCode(traceRecord.getTraceCode())
+                    .batchId(traceRecord.getBatchId())
+                    .recordType(traceRecord.getRecordType())
+                    .recordStage(traceRecord.getRecordStage())
+                    .operatorName(traceRecord.getOperatorName())
+                    .recordTime(traceRecord.getRecordTime())
+                    .location(traceRecord.getLocation())
+                    .contentSummary(traceRecord.getContentSummary())
+                    .entityName(traceRecord.getEntityName())
+                    .qualityGrade(traceRecord.getQualityGrade())
+                    .testResult(traceRecord.getTestResult())
+                    .dataHash(calculateDataHash(traceRecord))
+                    .timestamp(System.currentTimeMillis())
+                    .build();
 
-            // 创建请求
-            InvokeChainMakerDemoContractRequest req = new InvokeChainMakerDemoContractRequest();
-            req.setClusterId(tbaasProperties.getClusterId());
-            req.setChainId(tbaasProperties.getChainId());
-            req.setContractName(tbaasProperties.getContractName());
-            req.setFuncName("save");
+                // 创建请求
+                InvokeChainMakerDemoContractRequest req = new InvokeChainMakerDemoContractRequest();
+                req.setClusterId(tbaasProperties.getClusterId());
+                req.setChainId(tbaasProperties.getChainId());
+                req.setContractName(tbaasProperties.getContractName());
+                req.setFuncName("save");
 
-            //  设置参数 - 使用Map格式符合TBaas要求
-            Map<String, String> params = new HashMap<>();
-            params.put("key", traceRecord.getTraceCode());
-            params.put("field", "traceData");
-            params.put("value", JSON.toJSONString(chainData));
-            req.setFuncParam(JSON.toJSONString(params));
-            req.setAsyncFlag(0L); // 同步执行
+                //  设置参数 - 使用Map格式符合TBaas要求
+                Map<String, String> params = new HashMap<>();
+                params.put("key", traceRecord.getTraceCode());
+                params.put("field", "traceData");
+                params.put("value", JSON.toJSONString(chainData));
+                req.setFuncParam(JSON.toJSONString(params));
+                req.setAsyncFlag(0L); // 同步执行
 
-            //  调用合约
-            InvokeChainMakerDemoContractResponse resp = tbaasClient.InvokeChainMakerDemoContract(req);
+                //  调用合约
+                InvokeChainMakerDemoContractResponse resp = tbaasClient.InvokeChainMakerDemoContract(req);
 
-            // 检查结果
-            if (resp.getResult() != null && resp.getResult().getCode() == 0) {
-                String txHash = resp.getResult().getTxId();
-                log.info("溯源记录上链成功: traceCode={}, txHash={}", traceRecord.getTraceCode(), txHash);
+                // 检查结果
+                if (resp.getResult() != null && resp.getResult().getCode() == 0) {
+                    String txHash = resp.getResult().getTxId();
+                    log.info("溯源记录上链成功: traceCode={}, txHash={}, 尝试次数={}", 
+                        traceRecord.getTraceCode(), txHash, attempt);
 
-                // 异步验证上链结果
-                CompletableFuture.runAsync(() -> verifyChainTransaction(txHash));
+                    // 异步验证上链结果
+                    CompletableFuture.runAsync(() -> verifyChainTransaction(txHash));
 
-                return txHash;
-            } else {
-                String errorMsg = resp.getResult() != null ? resp.getResult().getCodeMessage() : "未知错误";
-                throw new RuntimeException("合约执行失败: " + errorMsg);
+                    return txHash;
+                } else {
+                    String errorMsg = resp.getResult() != null ? resp.getResult().getCodeMessage() : "未知错误";
+                    throw new RuntimeException("合约执行失败: " + errorMsg);
+                }
+
+            } catch (TencentCloudSDKException e) {
+                lastException = e;
+                log.warn("TBaas调用失败(第{}/{}次): code={}, message={}", 
+                    attempt, maxAttempts, e.getErrorCode(), e.getMessage());
+                
+                // 如果不是最后一次尝试，等待后重试
+                if (attempt < maxAttempts) {
+                    try {
+                        Thread.sleep(retryDelay);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException("重试被中断", ie);
+                    }
+                }
+            } catch (Exception e) {
+                lastException = e;
+                log.warn("上链存储失败(第{}/{}次): {}", attempt, maxAttempts, e.getMessage());
+                
+                // 如果不是最后一次尝试，等待后重试
+                if (attempt < maxAttempts) {
+                    try {
+                        Thread.sleep(retryDelay);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException("重试被中断", ie);
+                    }
+                }
             }
-
-        } catch (TencentCloudSDKException e) {
-            log.error("TBaas调用异常: code={}, message={}", e.getErrorCode(), e.getMessage());
-            throw new RuntimeException("区块链调用异常: " + e.getMessage(), e);
-        } catch (Exception e) {
-            log.error("上链存储异常", e);
-            throw new RuntimeException("上链存储失败", e);
+        }
+        
+        // 所有重试都失败
+        log.error("溯源记录上链失败，已重试{}次: traceCode={}", maxAttempts, traceRecord.getTraceCode());
+        if (lastException instanceof TencentCloudSDKException) {
+            TencentCloudSDKException sdkEx = (TencentCloudSDKException) lastException;
+            throw new RuntimeException("区块链调用异常(重试" + maxAttempts + "次后失败): " + sdkEx.getMessage(), sdkEx);
+        } else {
+            throw new RuntimeException("上链存储失败(重试" + maxAttempts + "次后失败)", lastException);
         }
     }
 
