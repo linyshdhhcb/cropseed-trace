@@ -121,17 +121,86 @@ public class SeedBatchServiceImpl implements SeedBatchService {
         // 单位和数量（初始记录不填数量，后续流通时填写）
         traceRecord.setUnit(batch.getUnit());
         
-        // 质量等级
+        // 质量等级和检测结果
         traceRecord.setQualityGrade(batch.getInitialQualityGrade());
         
-        // 内容摘要
-        traceRecord.setContentSummary(String.format(
-            "批次 %s 生成溯源码，生产商：%s，生产地点：%s，质量等级：%s",
-            batch.getBatchNo(),
-            batch.getProducerName() != null ? batch.getProducerName() : "未填写",
-            batch.getProductionLocation() != null ? batch.getProductionLocation() : "未填写",
-            batch.getInitialQualityGrade() != null ? batch.getInitialQualityGrade() : "未评级"
-        ));
+        // 构建检测结果摘要（含水率、发芽率、纯度）
+        StringBuilder testResultBuilder = new StringBuilder();
+        if (batch.getMoistureContent() != null) {
+            testResultBuilder.append("含水率:").append(batch.getMoistureContent()).append("% ");
+        }
+        if (batch.getGerminationRate() != null) {
+            testResultBuilder.append("发芽率:").append(batch.getGerminationRate()).append("% ");
+        }
+        if (batch.getPurity() != null) {
+            testResultBuilder.append("纯度:").append(batch.getPurity()).append("%");
+        }
+        if (testResultBuilder.length() > 0) {
+            traceRecord.setTestResult(testResultBuilder.toString().trim());
+        }
+        
+        // 环境信息（如果有储存条件信息，可以解析温湿度）
+        if (batch.getStorageCondition() != null && batch.getStorageCondition().contains("温度")) {
+            // 尝试从储存条件中提取温度信息（示例：温度15-25℃）
+            try {
+                String condition = batch.getStorageCondition();
+                if (condition.matches(".*温度.*\\d+.*")) {
+                    // 这里可以添加更复杂的解析逻辑
+                    // 暂时不设置，等实际环境监测数据
+                }
+            } catch (Exception e) {
+                log.debug("解析储存条件失败", e);
+            }
+        }
+        
+        // 内容摘要（包含更多关键信息）
+        StringBuilder summaryBuilder = new StringBuilder();
+        summaryBuilder.append("批次").append(batch.getBatchNo()).append("生成溯源码。");
+        
+        // 生产信息
+        if (batch.getProducerName() != null) {
+            summaryBuilder.append("生产商：").append(batch.getProducerName()).append("；");
+        }
+        if (batch.getProductionLocation() != null) {
+            summaryBuilder.append("产地：").append(batch.getProductionLocation()).append("；");
+        }
+        if (batch.getProductionDate() != null) {
+            summaryBuilder.append("生产日期：").append(batch.getProductionDate()).append("；");
+        }
+        
+        // 质量信息
+        if (batch.getInitialQualityGrade() != null) {
+            summaryBuilder.append("质量等级：").append(batch.getInitialQualityGrade()).append("；");
+        }
+        if (batch.getMoistureContent() != null || batch.getGerminationRate() != null || batch.getPurity() != null) {
+            summaryBuilder.append("质检数据：");
+            if (batch.getMoistureContent() != null) {
+                summaryBuilder.append("含水率").append(batch.getMoistureContent()).append("% ");
+            }
+            if (batch.getGerminationRate() != null) {
+                summaryBuilder.append("发芽率").append(batch.getGerminationRate()).append("% ");
+            }
+            if (batch.getPurity() != null) {
+                summaryBuilder.append("纯度").append(batch.getPurity()).append("%");
+            }
+            summaryBuilder.append("；");
+        }
+        
+        // 认证信息
+        if (batch.getCertification() != null) {
+            summaryBuilder.append("认证：").append(batch.getCertification()).append("；");
+        }
+        
+        // 包装信息
+        if (batch.getPackagingType() != null) {
+            summaryBuilder.append("包装：").append(batch.getPackagingType());
+            if (batch.getPackagingSpecification() != null) {
+                summaryBuilder.append("(").append(batch.getPackagingSpecification()).append(")");
+            }
+            summaryBuilder.append("；");
+        }
+        
+        traceRecord.setContentSummary(summaryBuilder.toString());
 
         // 构建详细内容（JSON格式，包含所有关键信息）
         StringBuilder detailBuilder = new StringBuilder();
@@ -145,11 +214,17 @@ public class SeedBatchServiceImpl implements SeedBatchService {
         if (batch.getProducerName() != null) {
             detailBuilder.append("\"producerName\":\"").append(batch.getProducerName()).append("\",");
         }
+        if (batch.getProducerId() != null) {
+            detailBuilder.append("\"producerId\":").append(batch.getProducerId()).append(",");
+        }
         if (batch.getProductionLocation() != null) {
             detailBuilder.append("\"productionLocation\":\"").append(batch.getProductionLocation()).append("\",");
         }
         if (batch.getProductionDate() != null) {
             detailBuilder.append("\"productionDate\":\"").append(batch.getProductionDate()).append("\",");
+        }
+        if (batch.getExpiryDate() != null) {
+            detailBuilder.append("\"expiryDate\":\"").append(batch.getExpiryDate()).append("\",");
         }
         if (batch.getHarvestDate() != null) {
             detailBuilder.append("\"harvestDate\":\"").append(batch.getHarvestDate()).append("\",");
@@ -184,6 +259,9 @@ public class SeedBatchServiceImpl implements SeedBatchService {
             detailBuilder.append("\"purity\":").append(batch.getPurity()).append(",");
         }
         detailBuilder.append("\"qualityStatus\":").append(batch.getQualityStatus()).append(",");
+        if (batch.getQualityReport() != null) {
+            detailBuilder.append("\"qualityReport\":\"").append(batch.getQualityReport()).append("\",");
+        }
         
         // 包装和储存
         if (batch.getUnit() != null) {
@@ -213,6 +291,11 @@ public class SeedBatchServiceImpl implements SeedBatchService {
         }
         if (batch.getInitialOperatorPhone() != null) {
             detailBuilder.append("\"operatorPhone\":\"").append(batch.getInitialOperatorPhone()).append("\",");
+        }
+        
+        // 备注信息
+        if (batch.getRemarks() != null) {
+            detailBuilder.append("\"remarks\":\"").append(batch.getRemarks()).append("\",");
         }
         
         // 移除最后一个逗号并关闭JSON
