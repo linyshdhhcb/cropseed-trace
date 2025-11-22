@@ -4,7 +4,7 @@ spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/seed_trace_system?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://127.0.0.1:3306/cropseed_trace?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
     username: root
     password: abc123
     druid:
@@ -38,10 +38,10 @@ spring:
   # Redis配置
   data:
     redis:
-      database: 1
+      database: 7
       host: 127.0.0.1
       port: 6379
-      password: lpy.3826
+      password: abc123
       timeout: 10000ms
       lettuce:
         pool:
@@ -56,10 +56,10 @@ spring:
 
   # 邮件配置
   mail:
-    host: smtphz.qiye.163.com
+    host: smtp.qq.com
     port: 465
-    username: ies_training@zhku.edu.cn
-    password: PfnMSsdKE8txg3bA
+    username: xxxxxxxxxxx@qq.com
+    password: xxxxxx
     protocol: smtp
     properties:
       mail:
@@ -67,14 +67,14 @@ spring:
           auth: true
           ssl:
             enable: true
-            trust: smtphz.qiye.163.com
+            trust: smtp.qq.com
     default-encoding: utf-8
 
 # MinIO配置
 minio:
-  endpoint: http://117.72.101.170:9000
-  accessKey: linyi
-  secretKey: lpy.3826
+  endpoint: http://127.0.0.1:9000
+  accessKey: admin
+  secretKey: abc123
   bucketName: cropseed-trace
 
 # JWT配置
@@ -91,8 +91,94 @@ jwt:
 # 日志配置
 logging:
   level:
-    com.linyi.cropseed.trace: DEBUG
-    org.springframework.security: DEBUG
+    root: INFO
+    com.cropseed: INFO
+  file:
+    name: ./logs/cropseed-trace.log
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'
+    file: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'
+  logback:
+    rollingpolicy:
+      max-file-size: 100MB
+      max-history: 30
+      total-size-cap: 10GB
+
+# 微信小程序配置
+wx:
+  app-id: wx5xxxxxxxxxxxxxxxxxxxxx
+  app-secret: 0f85cxxxxxxxxxxxxxxxxxxxxxxxxx
+  pay:
+    mch-id: 1666666666666666
+    key: 1666666666666666
+    notify-url: http://your-domain.com/api/wechat/pay/notify
+    cert-path: /path/to/cert.p12
+# 支付宝沙箱配置
+pay:
+  alipay:
+    # 应用 ID
+    app-id: 90ddds00xxxxxxxxxxxxxxxxxx
+    # 应用私钥
+    private-key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/Hqs4N4j5De4k2J7CygqsjrsNpxweF9O6jtuzJTqKbrDcGBXWg7AXIFiNb7Q0QRiD2Oh/o2IgcACR1pw/jY+/A2lyaM8KPE9kSEXDQR2lirlqdZrOI21EffJEI1hUWptuYS0GKpCLppYC5Jb3R+T3JeTlnnX9WmNohGG+GcdvDGW7oka26h1wsUC5knNGAjf713i+elARc6i474Pcvdi0zCW/SSxeU9tjtSsKuP+7s1n3BieEesJKsjwjrBbfWHQC4eCxI0FycOGSpMYnqdEJAOl582ltBh6j745Dbwt3SvUmQ7uClwbxAgMBAAECggEAHAlnRttQ3t8jXBLKQm7BRs6HOFD3NnPdSNt/eu7aUJrqJPE1W/njiCxFU8TXlJr0LBiNWPoqNAZivnL6UErfviteBtdzQMyMFYDhtGkbtSdSKktt3A9RSZUz62nVeDsIq+g+5PK8jf5PnxhNdpC45gkAdlJ+nNHE7HQ4aAJEK1nc4wBrDrjfSBt3j0Gvo2T80S1P/sxA2ZBVOQC+xuALVds1TKwGmuwsASI7X+wK0+mInuzNojyQixKvuAq60659x8qa1cE+qyhGZGpOBw6IxtCy8wdcALzLnuaNwdspYbrKjh9AGypwRgDOuetJXGjGDL/O5iGVGDnQg3gtRQqC8QKBgQD67xA7Ki9qDyWF4MucZCL69jwx/XdV5tV1EDkwC0m76dVkBwMbpN/GbOtSSg86HVIsM6NKeZmLATZTphUZd+8oiA2eVsk3PUr94bZBeS2UCjvrkFu7C/zPhpRpTGm7FDQhLv8RwRAl16uaBx/5epQy2lddxwBtKTBmQ8ILkeV0CwKBgQDszc30FWi/LP1oHX2jfebPmrPGUmnLw/CbxHE+yKQPlOBqvJtlYBtdE9SXL308gP2B8Fw/HC6xD3RbIUYXWXrFiojOiNuW78J46Gb5iICKkej/myFNuPFthKP8XEllWlnZETALxNH1K92AQf4mF+POX7gm+u3Ndl6ToSiJF+VycwKBgBGzcXKq/CNAJEZ4YASNL8aCPibMmXFu0hnq5g3UjgP6b7oZoId/ruVhY4wvezl/Pf+uONOVFlau5DUsXwqn4i/6wPMtbg4+fZ7BIEkoEiYCPs3UJhRguRmuhaOT51VyDGdW2FlZRBlXSFyaKhBALFoV+tm7ovUQVcCxAOwuA4CXAoGAUrgNgn7cCTQBDRaIJc08DDchJ1zwgfJfITp8yI6z6JF71y0tJztsM5ZSw8EeAT2Z0IMS5iTFFqqsXY0A+/UQ0uJyqZrbAh2clDmyhuYs6LrRZkBdYNYC19vmoKfoJ5RpIE9Ftka5hOgexsfGrK3ZsOR04oDzArufi/hWvZTwXIsCgYAWBjpW6qG52zso48awbuj+2wIkxIrZcudlh9rYATkzK3Z0zjDTo8vmCTm2e6YuyJ0WLO11J63gNzY/Tkj083La1SWMcCaEBDRDg/sTcfKsbQFkfJYbXBc1HtL0Z1mB8Yt7mqnEtOtTdXXWVd+xHKZZzi5eB5IPLuUTVkJfiCwlow==
+    # 支付宝公钥
+    alipay-public-key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx+rwyPYbAqAvvZN4jPxn1K3RjH1MGuXLm5IIXkD/aITjBAgBk3pTbg60az9uaa7O92O1h1eLmBhSq698AHDpBctZwdlkGlohXqKpkXEcrcAfFLL9d6dVLgHsdFuHri0yIBG/tSbZ/3XPuMSKJWbaXptVBzZhbOr3XLbuWRCTiXnE1tws7MEM4UQ1/qoxIDGVoQsDKWSjSddGW1cYiM/IBY3N/TpstSEIzceuHvOZeJGpoVdnx0R+bAPWap78eVee/tX1rUTKGc3EeaOmq1e88knmdIwkzlHJIGQIDAQAB
+    # 支付宝网关
+    server-url: https://openapi-sandbox.dl.alipaydev.com/gateway.do
+    # 同步通知 URL - 修正为你的前端页面
+    return-url: http://xxxxxxxxxxxxxxxcpolar.top/api/payment/alipay/return
+    # 异步通知 URL（使用内网穿透地址）
+    notify-url: http://xxxxxxxxxxxxxxar.top/api/payment/alipay/notify
+    # 字符集
+    charset: UTF-8
+    # 签名类型，通常是 RSA2
+    sign-type: RSA2
+
+# 推荐系统配置
+recommendation:
+  # 相似度阈值
+  similarity-threshold: 0.1
+  # 时间衰减天数
+  time-decay-days: 30
+  # 最近购买天数
+  recent-purchase-days: 30
+  # 行为权重配置
+  behavior-weight:
+    view: 1.0
+    search: 1.5
+    collect: 3.0
+    cart: 3.5
+    purchase: 5.0
+    rate: 4.0
+  # 混合推荐权重配置
+  hybrid-weight:
+    collaborative: 0.30
+    content: 0.25
+    personalized: 0.25
+    popular: 0.20
+  # 用户相似度权重配置
+  similarity-weight:
+    behavior: 0.7
+    profile: 0.3
+  # 降权配置
+  downgrade:
+    enabled: true
+    recent-purchase-ratio: 0.3
+
+# 腾讯云TBaas配置
+tencent:
+  tbaas:
+    # 认证信息
+    secret-id: AKIDGXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    secret-key: dn5KUXXXXXXXXXXXXXXXXXXXXXX
+    # 地域配置
+    region: ap-beijing
+    # 网络配置
+    cluster-id: chainmaker-demo
+    chain-id: chain_demo
+    contract-name: ChainMakerDemo
+    # 超时配置（毫秒）- 增加超时时间以应对网络波动
+    timeout: 120000
+    # 重试配置
+    retry:
+      max-attempts: 3  # 最多重试3次
+      delay: 2000      # 重试间隔2秒
