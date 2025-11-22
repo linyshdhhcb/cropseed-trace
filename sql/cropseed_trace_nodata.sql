@@ -5,13 +5,13 @@
  Source Server Type    : MySQL
  Source Server Version : 80035 (8.0.35)
  Source Host           : localhost:3306
- Source Schema         : seed_trace_system
+ Source Schema         : cropseed_trace
 
  Target Server Type    : MySQL
  Target Server Version : 80035 (8.0.35)
  File Encoding         : 65001
 
- Date: 13/11/2025 17:05:05
+ Date: 22/11/2025 15:20:42
 */
 
 SET NAMES utf8mb4;
@@ -141,7 +141,7 @@ CREATE TABLE `inventory_inbound`  (
   `update_by` bigint NULL DEFAULT NULL COMMENT '修改用户ID',
   `deleted_flag` tinyint NOT NULL DEFAULT 0 COMMENT '删除标记',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '入库记录表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '入库记录表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Table structure for inventory_outbound
@@ -163,7 +163,7 @@ CREATE TABLE `inventory_outbound`  (
   `update_by` bigint NULL DEFAULT NULL COMMENT '修改用户ID',
   `deleted_flag` tinyint NOT NULL DEFAULT 0 COMMENT '删除标记',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '出库记录表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '出库记录表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Table structure for order_info
@@ -197,7 +197,7 @@ CREATE TABLE `order_info`  (
   INDEX `idx_order_type`(`order_type` ASC) USING BTREE,
   INDEX `idx_order_status`(`order_status` ASC) USING BTREE,
   INDEX `idx_create_time`(`create_time` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '订单表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 20 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '订单表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Table structure for order_item
@@ -208,6 +208,7 @@ CREATE TABLE `order_item`  (
   `order_id` bigint NOT NULL COMMENT '订单ID',
   `seed_id` bigint NOT NULL COMMENT '种子ID',
   `batch_id` bigint NULL DEFAULT NULL COMMENT '批次ID',
+  `trace_code` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '溯源码',
   `seed_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '种子名称',
   `seed_image` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '种子图片',
   `unit_price` decimal(10, 2) NOT NULL COMMENT '单价',
@@ -221,8 +222,9 @@ CREATE TABLE `order_item`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_order_id`(`order_id` ASC) USING BTREE,
   INDEX `idx_seed_id`(`seed_id` ASC) USING BTREE,
-  INDEX `idx_batch_id`(`batch_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '订单商品明细表' ROW_FORMAT = DYNAMIC;
+  INDEX `idx_batch_id`(`batch_id` ASC) USING BTREE,
+  INDEX `idx_trace_code`(`trace_code` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 22 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '订单商品明细表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Table structure for order_operation_log
@@ -246,7 +248,7 @@ CREATE TABLE `order_operation_log`  (
   INDEX `idx_order_id`(`order_id` ASC) USING BTREE,
   INDEX `idx_operator_id`(`operator_id` ASC) USING BTREE,
   INDEX `idx_create_time`(`create_time` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '订单操作日志表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 35 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '订单操作日志表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Table structure for outbound_record
@@ -276,7 +278,7 @@ CREATE TABLE `outbound_record`  (
   INDEX `idx_warehouse_id`(`warehouse_id` ASC) USING BTREE,
   INDEX `idx_outbound_time`(`outbound_time` ASC) USING BTREE,
   INDEX `idx_order_id`(`order_id` ASC) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '出库记录表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 11 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '出库记录表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Table structure for recommendation
@@ -324,16 +326,40 @@ CREATE TABLE `seed_batch`  (
   `quality_report` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '质检报告URL',
   `quality_status` tinyint NULL DEFAULT 1 COMMENT '质检状态：0-不合格，1-合格',
   `remarks` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '备注',
+  `trace_code` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '溯源码',
+  `producer_id` bigint NULL DEFAULT NULL COMMENT '生产商ID',
+  `producer_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '生产商名称',
+  `production_location` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '生产地点',
+  `harvest_date` date NULL DEFAULT NULL COMMENT '收获日期',
+  `processing_date` date NULL DEFAULT NULL COMMENT '加工日期',
+  `storage_condition` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '储存条件',
+  `certification` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '认证信息(有机/绿色/无公害等)',
+  `traceability_level` tinyint NULL DEFAULT 1 COMMENT '可追溯等级：1-基础，2-详细，3-完整',
   `create_time` datetime NULL DEFAULT NULL COMMENT '创建时间',
   `create_by` bigint NULL DEFAULT NULL COMMENT '创建用户ID',
   `update_time` datetime NULL DEFAULT NULL COMMENT '修改时间',
   `update_by` bigint NULL DEFAULT NULL COMMENT '修改用户ID',
   `deleted_flag` tinyint NOT NULL DEFAULT 0 COMMENT '删除标记',
+  `unit` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '单位',
+  `initial_quality_grade` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '初始质量等级',
+  `moisture_content` decimal(5, 2) NULL DEFAULT NULL COMMENT '含水率(%)',
+  `germination_rate` decimal(5, 2) NULL DEFAULT NULL COMMENT '发芽率(%)',
+  `purity` decimal(5, 2) NULL DEFAULT NULL COMMENT '纯度(%)',
+  `packaging_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '包装类型',
+  `packaging_specification` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '包装规格',
+  `initial_operator_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '初始操作员姓名',
+  `initial_operator_phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '初始操作员电话',
+  `production_equipment` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '生产设备',
+  `processing_method` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '加工方式',
+  `seed_source` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '种子来源',
+  `parent_variety` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '亲本品种',
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `uk_batch_no`(`batch_no` ASC) USING BTREE,
+  UNIQUE INDEX `uk_trace_code`(`trace_code` ASC) USING BTREE,
   INDEX `idx_seed_id`(`seed_id` ASC) USING BTREE,
-  INDEX `idx_production_date`(`production_date` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '种子批次表' ROW_FORMAT = DYNAMIC;
+  INDEX `idx_production_date`(`production_date` ASC) USING BTREE,
+  INDEX `idx_producer_id`(`producer_id` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '种子批次表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Table structure for seed_category
@@ -578,6 +604,136 @@ CREATE TABLE `sys_user_role`  (
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
   INDEX `idx_role_id`(`role_id` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '用户角色关联表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for trace_code_config
+-- ----------------------------
+DROP TABLE IF EXISTS `trace_code_config`;
+CREATE TABLE `trace_code_config`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `region_code` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '地区代码',
+  `region_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '地区名称',
+  `code_prefix` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '编码前缀',
+  `current_number` bigint NOT NULL DEFAULT 1 COMMENT '当前编号',
+  `code_format` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '编码格式(如：{prefix}{year}{number:06d})',
+  `status` tinyint NOT NULL DEFAULT 1 COMMENT '状态：0-停用，1-启用',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` bigint NULL DEFAULT NULL COMMENT '创建用户ID',
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  `update_by` bigint NULL DEFAULT NULL COMMENT '修改用户ID',
+  `deleted_flag` tinyint NOT NULL DEFAULT 0 COMMENT '删除标记',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_region_code`(`region_code` ASC) USING BTREE,
+  INDEX `idx_status`(`status` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '溯源码生成规则配置表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for trace_entity
+-- ----------------------------
+DROP TABLE IF EXISTS `trace_entity`;
+CREATE TABLE `trace_entity`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `entity_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '实体编码',
+  `entity_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '实体名称',
+  `entity_type` tinyint NOT NULL COMMENT '实体类型：1-生产基地，2-加工厂，3-仓库，4-经销商，5-零售商',
+  `legal_person` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '法人代表',
+  `contact_person` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '联系人',
+  `contact_phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '联系电话',
+  `address` varchar(300) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '地址',
+  `longitude` decimal(10, 7) NULL DEFAULT NULL COMMENT '经度',
+  `latitude` decimal(10, 7) NULL DEFAULT NULL COMMENT '纬度',
+  `license_number` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '营业执照号',
+  `certification_info` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT '资质认证信息(JSON)',
+  `status` tinyint NOT NULL DEFAULT 1 COMMENT '状态：0-停用，1-启用',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` bigint NULL DEFAULT NULL COMMENT '创建用户ID',
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  `update_by` bigint NULL DEFAULT NULL COMMENT '修改用户ID',
+  `deleted_flag` tinyint NOT NULL DEFAULT 0 COMMENT '删除标记',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_entity_code`(`entity_code` ASC) USING BTREE,
+  INDEX `idx_entity_type`(`entity_type` ASC) USING BTREE,
+  INDEX `idx_status`(`status` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '溯源实体表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for trace_query
+-- ----------------------------
+DROP TABLE IF EXISTS `trace_query`;
+CREATE TABLE `trace_query`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `trace_code` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '溯源码',
+  `query_user_id` bigint NULL DEFAULT NULL COMMENT '查询用户ID(如果已登录)',
+  `query_openid` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '微信用户openid',
+  `query_ip` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '查询IP地址',
+  `query_location` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '查询地理位置',
+  `query_device` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '查询设备信息',
+  `query_channel` tinyint NOT NULL DEFAULT 1 COMMENT '查询渠道：1-小程序扫码，2-小程序输入，3-网页查询，4-APP查询',
+  `query_time` datetime NOT NULL COMMENT '查询时间',
+  `query_result` tinyint NOT NULL COMMENT '查询结果：1-成功，2-溯源码不存在，3-溯源码已过期，4-系统错误',
+  `response_time` int NULL DEFAULT NULL COMMENT '响应时间(毫秒)',
+  `user_feedback` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '用户反馈',
+  `satisfaction_score` tinyint NULL DEFAULT NULL COMMENT '满意度评分：1-5分',
+  `feedback_time` datetime NULL DEFAULT NULL COMMENT '反馈时间',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` bigint NULL DEFAULT NULL COMMENT '创建用户ID',
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  `update_by` bigint NULL DEFAULT NULL COMMENT '修改用户ID',
+  `deleted_flag` tinyint NOT NULL DEFAULT 0 COMMENT '删除标记',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_trace_code`(`trace_code` ASC) USING BTREE,
+  INDEX `idx_query_user_id`(`query_user_id` ASC) USING BTREE,
+  INDEX `idx_query_openid`(`query_openid` ASC) USING BTREE,
+  INDEX `idx_query_time`(`query_time` ASC) USING BTREE,
+  INDEX `idx_query_result`(`query_result` ASC) USING BTREE,
+  INDEX `idx_query_channel`(`query_channel` ASC) USING BTREE,
+  INDEX `idx_query_stat`(`query_time` ASC, `query_result` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '消费者溯源查询记录表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for trace_record
+-- ----------------------------
+DROP TABLE IF EXISTS `trace_record`;
+CREATE TABLE `trace_record`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `trace_code` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '溯源码',
+  `batch_id` bigint NOT NULL COMMENT '批次ID',
+  `record_type` tinyint NOT NULL COMMENT '记录类型：1-生产记录，2-质检记录，3-流通记录，4-销售记录，5-异常记录',
+  `record_stage` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '记录阶段',
+  `entity_id` bigint NULL DEFAULT NULL COMMENT '相关实体ID',
+  `entity_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '相关实体名称',
+  `operator_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '操作人员',
+  `operator_phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '操作人电话',
+  `record_time` datetime NOT NULL COMMENT '记录时间',
+  `location` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '位置信息',
+  `temperature` decimal(5, 2) NULL DEFAULT NULL COMMENT '温度(℃)',
+  `humidity` decimal(5, 2) NULL DEFAULT NULL COMMENT '湿度(%)',
+  `quantity` decimal(12, 2) NULL DEFAULT NULL COMMENT '数量',
+  `unit` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '单位',
+  `quality_grade` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '质量等级',
+  `test_result` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '检测结果',
+  `content_summary` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '内容摘要',
+  `detailed_content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT '详细内容(JSON格式)',
+  `image_urls` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT '图片URLs(JSON数组)',
+  `attachment_urls` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT '附件URLs(JSON数组)',
+  `blockchain_tx_hash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '区块链交易哈希',
+  `blockchain_status` tinyint NOT NULL DEFAULT 0 COMMENT '区块链状态：0-未上链，1-上链中，2-上链成功，3-上链失败',
+  `remark` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '备注',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` bigint NULL DEFAULT NULL COMMENT '创建用户ID',
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  `update_by` bigint NULL DEFAULT NULL COMMENT '修改用户ID',
+  `deleted_flag` tinyint NOT NULL DEFAULT 0 COMMENT '删除标记',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_trace_code`(`trace_code` ASC) USING BTREE,
+  INDEX `idx_batch_id`(`batch_id` ASC) USING BTREE,
+  INDEX `idx_record_type`(`record_type` ASC) USING BTREE,
+  INDEX `idx_entity_id`(`entity_id` ASC) USING BTREE,
+  INDEX `idx_record_time`(`record_time` ASC) USING BTREE,
+  INDEX `idx_trace_record_time`(`trace_code` ASC, `record_time` ASC) USING BTREE,
+  INDEX `idx_blockchain_status`(`blockchain_status` ASC) USING BTREE,
+  INDEX `idx_blockchain_tx_hash`(`blockchain_tx_hash` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '溯源记录表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Table structure for user_address
