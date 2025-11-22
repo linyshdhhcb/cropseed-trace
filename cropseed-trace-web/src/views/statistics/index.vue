@@ -56,7 +56,7 @@
                             </el-icon>
                         </div>
                         <div class="metric-info">
-                            <div class="metric-value">¥{{ formatMoney(statisticsData.totalRevenue) }}</div>
+                            <div class="metric-value">{{ formatMoney(statisticsData.totalRevenue) }}</div>
                             <div class="metric-label">总销售额</div>
                             <div class="metric-trend" :class="getTrendClass(statisticsData.revenueTrend)">
                                 <el-icon>
