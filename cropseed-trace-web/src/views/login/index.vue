@@ -3,7 +3,7 @@
         <div class="login-form">
             <div class="login-header">
                 <img src="@/assets/logo.png" alt="logo" class="logo" />
-                <h2 class="title">农作物种质资源数字化溯源系统</h2>
+                <h2 class="title">基于区块链的农作物种质资源数字化溯源系统</h2>
                 <p class="subtitle">Crop Seed Germplasm Digital Traceability System</p>
             </div>
 
@@ -37,7 +37,7 @@
             </el-form>
 
             <div class="login-footer">
-                <p class="copyright">© 2025 农作物种质资源数字化溯源系统. All rights reserved.</p>
+                <p class="copyright">© 2025 基于区块链的农作物种质资源数字化溯源系统. All rights reserved.</p>
             </div>
         </div>
     </div>
@@ -122,18 +122,45 @@ onMounted(() => {
 <style lang="scss" scoped>
 .login-container {
     height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #d1fae5;
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+    overflow: hidden;
+
+    // 添加农业风格的装饰元素
+    &::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+        background-size: 50px 50px;
+        animation: moveBackground 20s linear infinite;
+    }
+
+    @keyframes moveBackground {
+        0% {
+            transform: translate(0, 0);
+        }
+        100% {
+            transform: translate(50px, 50px);
+        }
+    }
 
     .login-form {
-        width: 400px;
+        width: 550px;
         background: rgba(255, 255, 255, 0.95);
-        border-radius: 10px;
+        border-radius: 16px;
         padding: 40px;
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 20px 60px rgba(22, 163, 74, 0.3);
         backdrop-filter: blur(10px);
+        position: relative;
+        z-index: 1;
+        border: 1px solid rgba(255, 255, 255, 0.3);
 
         .login-header {
             text-align: center;
@@ -143,23 +170,49 @@ onMounted(() => {
                 width: 60px;
                 height: 60px;
                 margin-bottom: 20px;
+                filter: drop-shadow(0 4px 8px rgba(22, 163, 74, 0.2));
             }
 
             .title {
-                font-size: 24px;
+                font-size: 22px;
                 font-weight: 600;
-                color: #333;
+                color: #16a34a;
                 margin-bottom: 10px;
+                text-shadow: 0 2px 4px rgba(22, 163, 74, 0.1);
+                line-height: 1.4;
             }
 
             .subtitle {
                 font-size: 14px;
-                color: #666;
+                color: #22c55e;
                 margin: 0;
+                font-weight: 500;
             }
         }
 
         .login-form-content {
+            :deep(.el-input__wrapper) {
+                box-shadow: 0 0 0 1px #d1fae5 inset;
+                transition: all 0.3s;
+
+                &:hover {
+                    box-shadow: 0 0 0 1px #86efac inset;
+                }
+
+                &.is-focus {
+                    box-shadow: 0 0 0 1px #22c55e inset;
+                }
+            }
+
+            :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
+                background-color: #22c55e;
+                border-color: #22c55e;
+            }
+
+            :deep(.el-checkbox__input.is-checked + .el-checkbox__label) {
+                color: #16a34a;
+            }
+
             .captcha-container {
                 display: flex;
                 gap: 10px;
@@ -169,7 +222,13 @@ onMounted(() => {
                     height: 40px;
                     border-radius: 4px;
                     cursor: pointer;
-                    border: 1px solid #dcdfe6;
+                    border: 1px solid #d1fae5;
+                    transition: all 0.3s;
+
+                    &:hover {
+                        border-color: #22c55e;
+                        transform: scale(1.05);
+                    }
                 }
             }
 
@@ -178,6 +237,19 @@ onMounted(() => {
                 height: 45px;
                 font-size: 16px;
                 font-weight: 500;
+                background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+                border: none;
+                transition: all 0.3s;
+
+                &:hover {
+                    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 16px rgba(22, 163, 74, 0.3);
+                }
+
+                &:active {
+                    transform: translateY(0);
+                }
             }
         }
 
@@ -187,8 +259,9 @@ onMounted(() => {
 
             .copyright {
                 font-size: 12px;
-                color: #999;
+                color: #16a34a;
                 margin: 0;
+                opacity: 0.8;
             }
         }
     }
@@ -201,7 +274,7 @@ onMounted(() => {
 
         .login-form {
             width: 100%;
-            max-width: 400px;
+            max-width: 500px;
             padding: 30px 20px;
         }
     }
