@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  # 后端服务
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: cropseed-backend
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+    ports:
+      - "8085:8085"
+    volumes:
+      - ./logs:/app/logs
+      - ./config/application.yml:/app/config/application.yml
+    networks:
+      - cropseed-network
+
+  # 前端服务
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: cropseed-frontend
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+    ports:
+      - "8086:80"
+    depends_on:
+      - backend
+    networks:
+      - cropseed-network
+
+networks:
+  cropseed-network:
+    driver: bridge
