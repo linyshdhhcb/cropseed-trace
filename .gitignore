@@ -136,3 +136,7 @@ files/
 
 # Docker
 .dockerignore
+
+# Linux部署脚本
+script/linux/dist/
+script/linux/jar/
