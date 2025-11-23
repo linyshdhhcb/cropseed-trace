@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * 权限工具类
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
@@ -22,7 +22,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PermissionUtils {
 
-    private final SysUserMapper sysUserMapper;
     private final SysRoleMapper sysRoleMapper;
 
     /**
