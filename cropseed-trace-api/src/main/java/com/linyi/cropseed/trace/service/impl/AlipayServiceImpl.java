@@ -13,7 +13,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.linyi.cropseed.trace.common.exception.BusinessException;
 import com.linyi.cropseed.trace.common.result.ResultCode;
 import com.linyi.cropseed.trace.common.util.QRCodeUtil;
-import com.linyi.cropseed.trace.config.AlipayConfig;
+import com.linyi.cropseed.trace.config.properties.AlipayProperties;
 import com.linyi.cropseed.trace.dto.AlipayDTO;
 import com.linyi.cropseed.trace.service.AlipayService;
 import com.linyi.cropseed.trace.service.OrderService;
@@ -38,7 +38,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AlipayServiceImpl implements AlipayService {
 
-    private final AlipayConfig alipayConfig;
+    private final AlipayProperties alipayConfig;
     private final OrderService orderService;
 
     @Override

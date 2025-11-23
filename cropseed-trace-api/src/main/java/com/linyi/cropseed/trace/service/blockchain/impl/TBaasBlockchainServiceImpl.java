@@ -37,14 +37,14 @@ public class TBaasBlockchainServiceImpl implements BlockchainService {
     public String uploadTraceRecord(TraceRecord traceRecord) {
         int maxAttempts = tbaasProperties.getRetry().getMaxAttempts();
         long retryDelay = tbaasProperties.getRetry().getDelay();
-        
+
         Exception lastException = null;
-        
+
         // 重试机制
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
                 log.info("尝试上链: traceCode={}, 第{}/{}次", traceRecord.getTraceCode(), attempt, maxAttempts);
-                
+
                 // 构建上链数据
                 TraceChainData chainData = TraceChainData.builder()
                     .traceCode(traceRecord.getTraceCode())
@@ -83,7 +83,7 @@ public class TBaasBlockchainServiceImpl implements BlockchainService {
                 // 检查结果
                 if (resp.getResult() != null && resp.getResult().getCode() == 0) {
                     String txHash = resp.getResult().getTxId();
-                    log.info("溯源记录上链成功: traceCode={}, txHash={}, 尝试次数={}", 
+                    log.info("溯源记录上链成功: traceCode={}, txHash={}, 尝试次数={}",
                         traceRecord.getTraceCode(), txHash, attempt);
 
                     // 异步验证上链结果
@@ -97,9 +97,9 @@ public class TBaasBlockchainServiceImpl implements BlockchainService {
 
             } catch (TencentCloudSDKException e) {
                 lastException = e;
-                log.warn("TBaas调用失败(第{}/{}次): code={}, message={}", 
+                log.warn("TBaas调用失败(第{}/{}次): code={}, message={}",
                     attempt, maxAttempts, e.getErrorCode(), e.getMessage());
-                
+
                 // 如果不是最后一次尝试，等待后重试
                 if (attempt < maxAttempts) {
                     try {
@@ -112,7 +112,7 @@ public class TBaasBlockchainServiceImpl implements BlockchainService {
             } catch (Exception e) {
                 lastException = e;
                 log.warn("上链存储失败(第{}/{}次): {}", attempt, maxAttempts, e.getMessage());
-                
+
                 // 如果不是最后一次尝试，等待后重试
                 if (attempt < maxAttempts) {
                     try {
@@ -124,7 +124,7 @@ public class TBaasBlockchainServiceImpl implements BlockchainService {
                 }
             }
         }
-        
+
         // 所有重试都失败
         log.error("溯源记录上链失败，已重试{}次: traceCode={}", maxAttempts, traceRecord.getTraceCode());
         if (lastException instanceof TencentCloudSDKException) {
@@ -162,7 +162,7 @@ public class TBaasBlockchainServiceImpl implements BlockchainService {
                         // 链上数据是Base64编码的JSON，需要先解码
                         String decodedJson = new String(java.util.Base64.getDecoder().decode(result), java.nio.charset.StandardCharsets.UTF_8);
                         log.debug("解码后的链上数据: traceCode={}, json={}", traceCode, decodedJson);
-                        
+
                         // 解析JSON为TraceChainData对象
                         TraceChainData chainData = JSON.parseObject(decodedJson, TraceChainData.class);
                         log.info("查询链上溯源记录成功: traceCode={}", traceCode);

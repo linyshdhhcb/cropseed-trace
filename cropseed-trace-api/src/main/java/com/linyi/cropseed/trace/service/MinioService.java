@@ -1,5 +1,6 @@
 package com.linyi.cropseed.trace.service;
 
+import com.linyi.cropseed.trace.config.properties.MinioProperties;
 import io.minio.*;
 import io.minio.http.Method;
 import io.minio.messages.Item;
@@ -16,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * MinIO文件存储服务
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
@@ -26,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 public class MinioService {
 
     private final MinioClient minioClient;
-    private final com.linyi.cropseed.trace.config.MinioConfig minioConfig;
+    private final MinioProperties minioConfig;
 
     /**
      * 检查存储桶是否存在
@@ -61,7 +62,7 @@ public class MinioService {
 
     /**
      * 上传文件
-     * 
+     *
      * @param file   文件
      * @param folder 文件夹路径（可选）
      * @return 文件URL
@@ -140,7 +141,7 @@ public class MinioService {
 
     /**
      * 获取文件预签名URL（用于临时访问）
-     * 
+     *
      * @param objectName 对象名称
      * @param expiry     过期时间（分钟）
      */

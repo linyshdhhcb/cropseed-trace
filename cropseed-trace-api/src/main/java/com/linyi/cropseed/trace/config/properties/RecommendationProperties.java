@@ -1,21 +1,19 @@
-package com.linyi.cropseed.trace.config;
+package com.linyi.cropseed.trace.config.properties;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.Map;
-
 /**
  * 推荐系统配置类
- * 
+ *
  * @author linyi
  * @since 2025-11-17
  */
 @Data
 @Configuration
 @ConfigurationProperties(prefix = "recommendation")
-public class RecommendationConfig {
+public class RecommendationProperties {
 
     /**
      * 相似度阈值

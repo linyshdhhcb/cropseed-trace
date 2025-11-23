@@ -1,4 +1,4 @@
-package com.linyi.cropseed.trace.config;
+package com.linyi.cropseed.trace.config.properties;
 
 import io.minio.MinioClient;
 import lombok.Data;
@@ -8,14 +8,14 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * MinIO配置
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
 @Data
 @Configuration
 @ConfigurationProperties(prefix = "minio")
-public class MinioConfig {
+public class MinioProperties {
 
     /**
      * MinIO服务地址

@@ -4,7 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.linyi.cropseed.trace.common.util.IdGenerator;
-import com.linyi.cropseed.trace.config.RecommendationConfig;
+import com.linyi.cropseed.trace.config.properties.RecommendationProperties;
 import com.linyi.cropseed.trace.dto.Recommend.ContentPreferenceDTO;
 import com.linyi.cropseed.trace.dto.Recommend.HybridRecommendationItemDTO;
 import com.linyi.cropseed.trace.entity.*;
@@ -39,7 +39,7 @@ public class RecommendationServiceImpl implements RecommendationService {
     private final SeedFeaturesMapper seedFeaturesMapper;
     private final SeedInfoMapper seedInfoMapper;
     private final RecommendationMapper recommendationMapper;
-    private final RecommendationConfig recommendationConfig;
+    private final RecommendationProperties recommendationConfig;
 
     @Override
     public List<RecommendationVO> collaborativeFilteringRecommend(Long userId, Integer limit) {

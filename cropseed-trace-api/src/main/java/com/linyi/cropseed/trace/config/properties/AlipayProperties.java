@@ -1,4 +1,4 @@
-package com.linyi.cropseed.trace.config;
+package com.linyi.cropseed.trace.config.properties;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -6,14 +6,14 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * 支付宝配置
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
 @Data
 @Configuration
 @ConfigurationProperties(prefix = "pay.alipay")
-public class AlipayConfig {
+public class AlipayProperties {
 
     /**
      * 应用ID
