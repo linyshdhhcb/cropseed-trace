@@ -1,11 +1,14 @@
-package com.linyi.cropseed.trace.service;
+package com.linyi.cropseed.trace.infrastructure.storage.impl;
 
 import com.linyi.cropseed.trace.config.properties.MinioProperties;
+import com.linyi.cropseed.trace.infrastructure.storage.StorageService;
 import io.minio.*;
 import io.minio.http.Method;
+import io.minio.messages.DeleteObject;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,57 +19,48 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
- * MinIO文件存储服务
+ * MinIO对象存储服务实现
  *
  * @author LinYi
- * @since 2025-10-25
+ * @since 2025-11-23
  */
 @Slf4j
-@Service
+@Service("minioStorageService")
 @RequiredArgsConstructor
-public class MinioService {
+@ConditionalOnProperty(name = "storage.type", havingValue = "minio", matchIfMissing = true)
+public class MinioStorageServiceImpl implements StorageService {
 
     private final MinioClient minioClient;
     private final MinioProperties minioConfig;
 
-    /**
-     * 检查存储桶是否存在
-     */
+    @Override
     public boolean bucketExists(String bucketName) {
         try {
             return minioClient.bucketExists(BucketExistsArgs.builder()
                     .bucket(bucketName)
                     .build());
         } catch (Exception e) {
-            log.error("检查存储桶是否存在失败：{}", e.getMessage());
+            log.error("检查MinIO存储桶是否存在失败：{}", e.getMessage());
             return false;
         }
     }
 
-    /**
-     * 创建存储桶
-     */
+    @Override
     public void createBucket(String bucketName) {
         try {
             if (!bucketExists(bucketName)) {
                 minioClient.makeBucket(MakeBucketArgs.builder()
                         .bucket(bucketName)
                         .build());
-                log.info("创建存储桶成功：{}", bucketName);
+                log.info("创建MinIO存储桶成功：{}", bucketName);
             }
         } catch (Exception e) {
-            log.error("创建存储桶失败：{}", e.getMessage());
-            throw new RuntimeException("创建存储桶失败", e);
+            log.error("创建MinIO存储桶失败：{}", e.getMessage());
+            throw new RuntimeException("创建MinIO存储桶失败", e);
         }
     }
 
-    /**
-     * 上传文件
-     *
-     * @param file   文件
-     * @param folder 文件夹路径（可选）
-     * @return 文件URL
-     */
+    @Override
     public String uploadFile(MultipartFile file, String folder) {
         try {
             // 确保存储桶存在
@@ -77,11 +71,11 @@ public class MinioService {
 
             // 生成唯一文件名
             String originalFilename = file.getOriginalFilename();
-            String suffix = originalFilename.substring(originalFilename.lastIndexOf("."));
+            String suffix = originalFilename != null ? originalFilename.substring(originalFilename.lastIndexOf(".")) : "";
             String fileName = UUID.randomUUID().toString().replace("-", "") + suffix;
 
             // 如果指定了文件夹，则拼接路径
-            String objectName = folder != null && !folder.isEmpty()
+            String objectName = (folder != null && !folder.isEmpty())
                     ? folder + "/" + fileName
                     : fileName;
 
@@ -93,24 +87,15 @@ public class MinioService {
                     .contentType(file.getContentType())
                     .build());
 
-            log.info("文件上传成功：{}", objectName);
-            return minioConfig.getEndpoint() + "/" + bucketName + "/" + objectName;
+            log.info("文件上传到MinIO成功：{}", objectName);
+            return getFileUrl(objectName);
         } catch (Exception e) {
-            log.error("文件上传失败：{}", e.getMessage());
-            throw new RuntimeException("文件上传失败", e);
+            log.error("文件上传到MinIO失败：{}", e.getMessage());
+            throw new RuntimeException("文件上传到MinIO失败", e);
         }
     }
 
-    /**
-     * 上传文件（使用默认存储桶）
-     */
-    public String uploadFile(MultipartFile file) {
-        return uploadFile(file, null);
-    }
-
-    /**
-     * 下载文件
-     */
+    @Override
     public InputStream downloadFile(String objectName) {
         try {
             return minioClient.getObject(GetObjectArgs.builder()
@@ -118,33 +103,45 @@ public class MinioService {
                     .object(objectName)
                     .build());
         } catch (Exception e) {
-            log.error("文件下载失败：{}", e.getMessage());
-            throw new RuntimeException("文件下载失败", e);
+            log.error("从MinIO下载文件失败：{}", e.getMessage());
+            throw new RuntimeException("从MinIO下载文件失败", e);
         }
     }
 
-    /**
-     * 删除文件
-     */
+    @Override
     public void deleteFile(String objectName) {
         try {
             minioClient.removeObject(RemoveObjectArgs.builder()
                     .bucket(minioConfig.getBucketName())
                     .object(objectName)
                     .build());
-            log.info("文件删除成功：{}", objectName);
+            log.info("从MinIO删除文件成功：{}", objectName);
         } catch (Exception e) {
-            log.error("文件删除失败：{}", e.getMessage());
-            throw new RuntimeException("文件删除失败", e);
+            log.error("从MinIO删除文件失败：{}", e.getMessage());
+            throw new RuntimeException("从MinIO删除文件失败", e);
         }
     }
 
-    /**
-     * 获取文件预签名URL（用于临时访问）
-     *
-     * @param objectName 对象名称
-     * @param expiry     过期时间（分钟）
-     */
+    @Override
+    public void deleteFiles(List<String> objectNames) {
+        try {
+            List<DeleteObject> objects = objectNames.stream()
+                    .map(DeleteObject::new)
+                    .toList();
+            
+            minioClient.removeObjects(RemoveObjectsArgs.builder()
+                    .bucket(minioConfig.getBucketName())
+                    .objects(objects)
+                    .build());
+            
+            log.info("从MinIO批量删除文件成功，数量：{}", objectNames.size());
+        } catch (Exception e) {
+            log.error("从MinIO批量删除文件失败：{}", e.getMessage());
+            throw new RuntimeException("从MinIO批量删除文件失败", e);
+        }
+    }
+
+    @Override
     public String getPresignedUrl(String objectName, int expiry) {
         try {
             return minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder()
@@ -154,14 +151,12 @@ public class MinioService {
                     .expiry(expiry, TimeUnit.MINUTES)
                     .build());
         } catch (Exception e) {
-            log.error("获取文件预签名URL失败：{}", e.getMessage());
-            throw new RuntimeException("获取文件预签名URL失败", e);
+            log.error("获取MinIO文件预签名URL失败：{}", e.getMessage());
+            throw new RuntimeException("获取MinIO文件预签名URL失败", e);
         }
     }
 
-    /**
-     * 获取文件列表
-     */
+    @Override
     public List<String> listFiles(String prefix) {
         List<String> fileList = new ArrayList<>();
         try {
@@ -176,15 +171,13 @@ public class MinioService {
                 fileList.add(item.objectName());
             }
         } catch (Exception e) {
-            log.error("获取文件列表失败：{}", e.getMessage());
-            throw new RuntimeException("获取文件列表失败", e);
+            log.error("获取MinIO文件列表失败：{}", e.getMessage());
+            throw new RuntimeException("获取MinIO文件列表失败", e);
         }
         return fileList;
     }
 
-    /**
-     * 检查文件是否存在
-     */
+    @Override
     public boolean fileExists(String objectName) {
         try {
             minioClient.statObject(StatObjectArgs.builder()
@@ -195,5 +188,10 @@ public class MinioService {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    @Override
+    public String getFileUrl(String objectName) {
+        return minioConfig.getEndpoint() + "/" + minioConfig.getBucketName() + "/" + objectName;
     }
 }
