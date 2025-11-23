@@ -1,4 +1,4 @@
-package com.linyi.cropseed.trace.entity.base;
+package com.linyi.cropseed.trace.infrastructure.persistence.entity;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 
 /**
  * 基础实体类
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

@@ -1,4 +1,4 @@
-package com.linyi.cropseed.trace.config;
+package com.linyi.cropseed.trace.infrastructure.persistence.handler;
 
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.linyi.cropseed.trace.common.util.SecurityUtils;
@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 /**
  * MyBatis-Plus字段自动填充配置
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

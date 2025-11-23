@@ -1,14 +1,14 @@
 package com.linyi.cropseed.trace.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.linyi.cropseed.trace.entity.base.BaseEntity;
+import com.linyi.cropseed.trace.infrastructure.persistence.entity.BaseEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
  * 用户角色关联实体
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

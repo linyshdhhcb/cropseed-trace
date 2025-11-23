@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.linyi.cropseed.trace.entity.base.BaseEntity;
+import com.linyi.cropseed.trace.infrastructure.persistence.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 
 /**
  * 用户画像实体
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
