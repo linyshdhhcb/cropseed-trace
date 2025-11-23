@@ -1,7 +1,7 @@
 package com.linyi.cropseed.trace.controller;
 
 import com.linyi.cropseed.trace.common.result.Result;
-import com.linyi.cropseed.trace.service.MinioService;
+import com.linyi.cropseed.trace.infrastructure.storage.StorageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,7 +17,7 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * 文件管理Controller
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
@@ -28,7 +28,7 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 public class FileController {
 
-    private final MinioService minioService;
+    private final StorageService storageService;
 
     @Operation(summary = "上传文件")
     @PostMapping("/upload")
@@ -43,7 +43,7 @@ public class FileController {
             return Result.fail("文件大小不能超过100MB");
         }
 
-        String url = minioService.uploadFile(file, folder);
+        String url = storageService.uploadFile(file, folder);
         return Result.success("文件上传成功", url);
     }
 
@@ -58,7 +58,7 @@ public class FileController {
         java.util.List<String> urls = new java.util.ArrayList<>();
         for (MultipartFile file : files) {
             if (!file.isEmpty()) {
-                String url = minioService.uploadFile(file, folder);
+                String url = storageService.uploadFile(file, folder);
                 urls.add(url);
             }
         }
@@ -71,7 +71,7 @@ public class FileController {
     public void download(@RequestParam("objectName") String objectName,
             HttpServletResponse response) {
         try {
-            InputStream inputStream = minioService.downloadFile(objectName);
+            InputStream inputStream = storageService.downloadFile(objectName);
 
             // 设置响应头
             response.setContentType("application/octet-stream");
@@ -95,7 +95,7 @@ public class FileController {
     @Operation(summary = "删除文件")
     @DeleteMapping("/delete")
     public Result<Void> delete(@RequestParam("objectName") String objectName) {
-        minioService.deleteFile(objectName);
+        storageService.deleteFile(objectName);
         return Result.success("文件删除成功");
     }
 
@@ -103,14 +103,14 @@ public class FileController {
     @GetMapping("/presigned-url")
     public Result<String> getPresignedUrl(@RequestParam("objectName") String objectName,
             @RequestParam(value = "expiry", defaultValue = "60") int expiry) {
-        String url = minioService.getPresignedUrl(objectName, expiry);
+        String url = storageService.getPresignedUrl(objectName, expiry);
         return Result.success("获取预签名URL成功", url);
     }
 
     @Operation(summary = "获取文件列表")
     @GetMapping("/list")
     public Result<java.util.List<String>> list(@RequestParam(value = "prefix", required = false) String prefix) {
-        java.util.List<String> files = minioService.listFiles(prefix);
+        java.util.List<String> files = storageService.listFiles(prefix);
         return Result.success("获取文件列表成功", files);
     }
 }
