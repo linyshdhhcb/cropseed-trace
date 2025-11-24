@@ -1,7 +1,7 @@
-package com.linyi.cropseed.trace.mapper;
+package com.linyi.cropseed.trace.module.order.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.linyi.cropseed.trace.entity.OutboundRecord;
+import com.linyi.cropseed.trace.module.order.model.entity.OutboundRecord;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
@@ -9,7 +9,7 @@ import java.util.List;
 
 /**
  * 出库记录Mapper
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

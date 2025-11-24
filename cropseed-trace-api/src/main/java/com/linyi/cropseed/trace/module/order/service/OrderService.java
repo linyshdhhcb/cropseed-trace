@@ -1,18 +1,18 @@
-package com.linyi.cropseed.trace.service;
+package com.linyi.cropseed.trace.module.order.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.linyi.cropseed.trace.common.page.PageQuery;
 import com.linyi.cropseed.trace.common.page.PageResult;
 import com.linyi.cropseed.trace.dto.OrderSubmitGoodsDTO;
-import com.linyi.cropseed.trace.entity.OrderInfo;
-import com.linyi.cropseed.trace.vo.OrderDetailVO;
-import com.linyi.cropseed.trace.vo.OrderVO;
+import com.linyi.cropseed.trace.module.order.model.entity.OrderInfo;
+import com.linyi.cropseed.trace.module.order.model.vo.OrderDetailVO;
+import com.linyi.cropseed.trace.module.order.model.vo.OrderVO;
 
 import java.util.List;
 
 /**
  * 订单服务接口
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

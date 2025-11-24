@@ -1,24 +1,22 @@
-package com.linyi.cropseed.trace.entity;
+package com.linyi.cropseed.trace.module.order.model.vo;
 
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.linyi.cropseed.trace.infrastructure.persistence.entity.BaseEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 
 /**
- * 订单商品明细实体
+ * 订单商品明细VO
  *
  * @author LinYi
  * @since 2025-10-25
  */
 @Data
-@EqualsAndHashCode(callSuper = true)
-@TableName("order_item")
-@Schema(description = "订单商品明细")
-public class OrderItem extends BaseEntity {
+@Schema(description = "订单商品明细VO")
+public class OrderItemVO {
+
+    @Schema(description = "主键ID")
+    private Long id;
 
     @Schema(description = "订单ID")
     private Long orderId;

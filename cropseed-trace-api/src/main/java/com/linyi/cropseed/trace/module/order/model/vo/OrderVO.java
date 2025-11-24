@@ -1,4 +1,4 @@
-package com.linyi.cropseed.trace.vo;
+package com.linyi.cropseed.trace.module.order.model.vo;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 /**
  * 订单VO
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

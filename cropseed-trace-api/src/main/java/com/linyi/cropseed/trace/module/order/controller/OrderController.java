@@ -1,11 +1,11 @@
-package com.linyi.cropseed.trace.controller;
+package com.linyi.cropseed.trace.module.order.controller;
 
 import com.linyi.cropseed.trace.common.page.PageQuery;
 import com.linyi.cropseed.trace.common.page.PageResult;
 import com.linyi.cropseed.trace.common.result.Result;
-import com.linyi.cropseed.trace.service.OrderService;
-import com.linyi.cropseed.trace.vo.OrderDetailVO;
-import com.linyi.cropseed.trace.vo.OrderVO;
+import com.linyi.cropseed.trace.module.order.service.OrderService;
+import com.linyi.cropseed.trace.module.order.model.vo.OrderDetailVO;
+import com.linyi.cropseed.trace.module.order.model.vo.OrderVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -17,7 +17,7 @@ import java.util.List;
 
 /**
  * 订单管理Controller
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

@@ -1,6 +1,7 @@
-package com.linyi.cropseed.trace.vo;
+package com.linyi.cropseed.trace.module.order.model.vo;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.linyi.cropseed.trace.module.order.model.entity.OrderOperationLog;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -10,7 +11,7 @@ import java.util.List;
 
 /**
  * 订单详情VO
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
@@ -75,5 +76,5 @@ public class OrderDetailVO {
     private List<OrderItemVO> orderItems;
 
     @Schema(description = "订单操作日志")
-    private List<com.linyi.cropseed.trace.entity.OrderOperationLog> operationLogs;
+    private List<OrderOperationLog> operationLogs;
 }

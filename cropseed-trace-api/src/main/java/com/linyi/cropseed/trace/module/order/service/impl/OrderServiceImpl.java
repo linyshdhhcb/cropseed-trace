@@ -1,4 +1,4 @@
-package com.linyi.cropseed.trace.service.impl;
+package com.linyi.cropseed.trace.module.order.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
@@ -15,11 +15,20 @@ import com.linyi.cropseed.trace.common.util.SecurityUtils;
 import com.linyi.cropseed.trace.dto.OrderSubmitGoodsDTO;
 import com.linyi.cropseed.trace.entity.*;
 import com.linyi.cropseed.trace.mapper.*;
-import com.linyi.cropseed.trace.service.InventoryService;
-import com.linyi.cropseed.trace.service.OrderService;
-import com.linyi.cropseed.trace.vo.OrderDetailVO;
-import com.linyi.cropseed.trace.vo.OrderItemVO;
-import com.linyi.cropseed.trace.vo.OrderVO;
+import com.linyi.cropseed.trace.module.inventory.model.entity.Inventory;
+import com.linyi.cropseed.trace.module.order.mapper.OrderInfoMapper;
+import com.linyi.cropseed.trace.module.order.mapper.OrderItemMapper;
+import com.linyi.cropseed.trace.module.order.mapper.OrderOperationLogMapper;
+import com.linyi.cropseed.trace.module.order.model.entity.OrderInfo;
+import com.linyi.cropseed.trace.module.order.model.entity.OrderItem;
+import com.linyi.cropseed.trace.module.order.model.entity.OrderOperationLog;
+import com.linyi.cropseed.trace.module.seed.mapper.SeedInfoMapper;
+import com.linyi.cropseed.trace.module.seed.model.entity.SeedInfo;
+import com.linyi.cropseed.trace.module.inventory.service.InventoryService;
+import com.linyi.cropseed.trace.module.order.service.OrderService;
+import com.linyi.cropseed.trace.module.order.model.vo.OrderDetailVO;
+import com.linyi.cropseed.trace.module.order.model.vo.OrderItemVO;
+import com.linyi.cropseed.trace.module.order.model.vo.OrderVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
@@ -36,7 +45,7 @@ import java.util.stream.Collectors;
 
 /**
  * 订单服务实现
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
@@ -130,14 +139,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo> im
             if (seedInfo == null) {
                 throw new BusinessException("商品不存在");
             }
-            
+
             // 检查库存是否充足
             Integer availableStock = inventoryService.getTotalInventoryBySeedId(cartItem.getSeedId());
             if (availableStock == null || availableStock < cartItem.getQuantity()) {
-                throw new BusinessException("商品【" + seedInfo.getSeedName() + "】库存不足，当前库存：" + 
+                throw new BusinessException("商品【" + seedInfo.getSeedName() + "】库存不足，当前库存：" +
                     (availableStock != null ? availableStock : 0) + "件，需要：" + cartItem.getQuantity() + "件");
             }
-            
+
             totalAmount = totalAmount.add(seedInfo.getUnitPrice().multiply(new BigDecimal(cartItem.getQuantity())));
         }
 
@@ -205,14 +214,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo> im
             if (seedInfo == null) {
                 throw new BusinessException("商品不存在");
             }
-            
+
             // 检查库存是否充足
             Integer availableStock = inventoryService.getTotalInventoryBySeedId(goodsItem.getSeedId());
             if (availableStock == null || availableStock < goodsItem.getQuantity()) {
-                throw new BusinessException("商品【" + seedInfo.getSeedName() + "】库存不足，当前库存：" + 
+                throw new BusinessException("商品【" + seedInfo.getSeedName() + "】库存不足，当前库存：" +
                     (availableStock != null ? availableStock : 0) + "件，需要：" + goodsItem.getQuantity() + "件");
             }
-            
+
             // 使用传入的价格，如果没有则使用商品表中的价格
             BigDecimal unitPrice = goodsItem.getUnitPrice() != null
                     && goodsItem.getUnitPrice().compareTo(BigDecimal.ZERO) > 0
@@ -272,7 +281,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo> im
         // 如果订单已支付，需要回滚库存
         if (OrderConstant.ORDER_STATUS_PENDING.equals(order.getOrderStatus()) ||
             OrderConstant.ORDER_STATUS_TO_SHIP.equals(order.getOrderStatus())) {
-            
+
             // 获取订单商品明细
             LambdaQueryWrapper<OrderItem> wrapper = new LambdaQueryWrapper<>();
             wrapper.eq(OrderItem::getOrderId, orderId);
@@ -286,7 +295,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo> im
                         List<Inventory> inventories = inventoryService.getAvailableInventoryBySeedId(item.getSeedId());
                         if (!inventories.isEmpty()) {
                             Inventory inventory = inventories.get(0); // 简化处理，使用第一个仓库
-                            
+
                             // 回滚库存
                             inventoryService.inbound(
                                 item.getSeedId(),
@@ -313,14 +322,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo> im
         // 使用分布式锁防止重复支付和超卖
         String lockKey = "order:pay:" + orderId;
         RLock lock = redissonClient.getLock(lockKey);
-        
+
         try {
             // 尝试获取锁，最多等待5秒，锁定30秒后自动释放
             boolean acquired = lock.tryLock(5, 30, TimeUnit.SECONDS);
             if (!acquired) {
                 throw new BusinessException("订单正在处理中，请稍后重试");
             }
-            
+
             OrderInfo order = this.getById(orderId);
             if (order == null) {
                 throw new BusinessException(ResultCode.ORDER_NOT_EXIST);
@@ -340,14 +349,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo> im
                 // 为每个商品使用独立的库存锁，防止并发扣减
                 String inventoryLockKey = "inventory:deduct:" + item.getSeedId();
                 RLock inventoryLock = redissonClient.getLock(inventoryLockKey);
-                
+
                 try {
                     // 获取库存锁，最多等待3秒
                     boolean inventoryLockAcquired = inventoryLock.tryLock(3, 10, TimeUnit.SECONDS);
                     if (!inventoryLockAcquired) {
                         throw new BusinessException("商品 " + item.getSeedName() + " 库存处理中，请稍后重试");
                     }
-                    
+
                     // 查找该种子的可用库存（按生产日期排序，先进先出）
                     List<Inventory> availableInventories = inventoryService.getAvailableInventoryBySeedId(item.getSeedId());
 
@@ -380,7 +389,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo> im
                     if (remainingQuantity > 0) {
                         throw new BusinessException("商品 " + item.getSeedName() + " 库存不足，缺少 " + remainingQuantity + " 件");
                     }
-                    
+
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     throw new BusinessException("库存扣减处理被中断");
@@ -405,7 +414,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo> im
             // 记录操作日志
             logOrderOperation(orderId, "支付订单", OrderConstant.ORDER_STATUS_UNPAID, OrderConstant.ORDER_STATUS_PENDING,
                     "订单支付成功，库存已扣减");
-                    
+
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new BusinessException("支付处理被中断");
@@ -566,7 +575,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo> im
         // 只查询必要的字段，减少数据库查询负担
         LambdaQueryWrapper<OrderInfo> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(OrderInfo::getId, orderId)
-               .select(OrderInfo::getId, OrderInfo::getOrderNo, OrderInfo::getOrderStatus, 
+               .select(OrderInfo::getId, OrderInfo::getOrderNo, OrderInfo::getOrderStatus,
                       OrderInfo::getPaymentMethod, OrderInfo::getPaymentTime);
         return this.getOne(wrapper);
     }

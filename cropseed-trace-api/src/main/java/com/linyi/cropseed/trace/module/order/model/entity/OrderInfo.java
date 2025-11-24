@@ -1,4 +1,4 @@
-package com.linyi.cropseed.trace.entity;
+package com.linyi.cropseed.trace.module.order.model.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
