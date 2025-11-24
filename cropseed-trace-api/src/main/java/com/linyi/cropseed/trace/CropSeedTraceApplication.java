@@ -13,7 +13,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * @since 2025-10-25
  */
 @SpringBootApplication
-@MapperScan("com.linyi.cropseed.trace.mapper")
+@MapperScan("com.linyi.cropseed.trace.module.**")
 @EnableAsync
 @EnableScheduling
 public class CropSeedTraceApplication {
