@@ -1,12 +1,20 @@
-package com.linyi.cropseed.trace.service.impl;
+package com.linyi.cropseed.trace.module.statistics.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.linyi.cropseed.trace.entity.*;
 import com.linyi.cropseed.trace.mapper.*;
-import com.linyi.cropseed.trace.service.StatisticsService;
-import com.linyi.cropseed.trace.vo.StatisticsChartVO;
-import com.linyi.cropseed.trace.vo.StatisticsOverviewVO;
-import com.linyi.cropseed.trace.vo.StatisticsTableVO;
+import com.linyi.cropseed.trace.module.inventory.mapper.InventoryMapper;
+import com.linyi.cropseed.trace.module.inventory.model.entity.Inventory;
+import com.linyi.cropseed.trace.module.order.mapper.OrderInfoMapper;
+import com.linyi.cropseed.trace.module.order.model.entity.OrderInfo;
+import com.linyi.cropseed.trace.module.recommendation.mapper.RecommendationMapper;
+import com.linyi.cropseed.trace.module.seed.mapper.SeedCategoryMapper;
+import com.linyi.cropseed.trace.module.seed.mapper.SeedInfoMapper;
+import com.linyi.cropseed.trace.module.seed.model.entity.SeedCategory;
+import com.linyi.cropseed.trace.module.seed.model.entity.SeedInfo;
+import com.linyi.cropseed.trace.module.statistics.service.StatisticsService;
+import com.linyi.cropseed.trace.module.statistics.model.vo.StatisticsChartVO;
+import com.linyi.cropseed.trace.module.statistics.model.vo.StatisticsOverviewVO;
+import com.linyi.cropseed.trace.module.statistics.model.vo.StatisticsTableVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -90,7 +98,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
         return vo;
     }
-    
+
     /**
      * 计算趋势数据（对比上期增长率）
      */
@@ -107,7 +115,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
         // 简化实现：计算上期数据（假设时间段相同长度）
         // 实际项目中可以根据实际需求实现更复杂的对比逻辑
-        
+
         // 订单趋势：模拟计算（实际应查询上期数据）
         Long currentOrders = vo.getTotalOrders();
         long previousOrders = Math.max(1, currentOrders - (long)(currentOrders * 0.1)); // 模拟上期数据
@@ -128,7 +136,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         long previousSeeds = Math.max(1, currentSeeds - (long)(currentSeeds * 0.02)); // 模拟上期数据
         vo.setSeedsTrend(calculateGrowthRate(currentSeeds, previousSeeds));
     }
-    
+
     /**
      * 计算增长率
      * @param current 当前值
@@ -258,7 +266,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         try {
             List<Map<String, Object>> data = getTableData(exportType, startDate, endDate).getData();
             String fileName = exportType + "_" + System.currentTimeMillis() + ".csv";
-            
+
             // 简化导出功能，返回文件名
             log.info("导出数据: {} 条记录", data.size());
             return fileName;
@@ -368,7 +376,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             // 查询库存数量小于最低库存预警的记录
             // 使用自定义SQL查询以关联种子信息
             List<Map<String, Object>> lowStockItems = inventoryMapper.selectLowStockItems(limitCount);
-            
+
             if (lowStockItems == null || lowStockItems.isEmpty()) {
                 // 如果自定义查询不可用，使用基础查询
                 LambdaQueryWrapper<Inventory> wrapper = new LambdaQueryWrapper<>();
@@ -379,14 +387,14 @@ public class StatisticsServiceImpl implements StatisticsService {
                        .last("LIMIT " + limitCount);
 
                 List<Inventory> inventories = inventoryMapper.selectList(wrapper);
-                
+
                 if (inventories.isEmpty()) {
                     return new ArrayList<>();
                 }
 
                 return inventories.stream().map(inventory -> {
                     Map<String, Object> itemData = new HashMap<>();
-                    
+
                     // 尝试获取种子名称
                     String seedName = "种子ID-" + inventory.getSeedId();
                     try {
@@ -397,7 +405,7 @@ public class StatisticsServiceImpl implements StatisticsService {
                     } catch (Exception e) {
                         log.warn("获取种子信息失败，seedId: {}", inventory.getSeedId());
                     }
-                    
+
                     itemData.put("seedName", seedName);
                     itemData.put("seed_name", seedName);
                     itemData.put("productName", seedName);
@@ -412,7 +420,7 @@ public class StatisticsServiceImpl implements StatisticsService {
                     return itemData;
                 }).collect(Collectors.toList());
             }
-            
+
             return lowStockItems;
 
         } catch (Exception e) {
@@ -481,32 +489,32 @@ public class StatisticsServiceImpl implements StatisticsService {
             for (SeedCategory category : categories) {
                 // 统计该分类下的总库存
                 Long totalQuantity = 0L;
-                
+
                 try {
                     // 尝试使用优化查询
                     totalQuantity = inventoryMapper.selectInventoryQuantityByCategory(category.getId());
                 } catch (Exception e) {
                     log.debug("优化查询失败，使用基础查询");
                 }
-                
+
                 if (totalQuantity == null || totalQuantity == 0) {
                     // 使用基础查询：先查询该分类下的所有种子ID
                     try {
                         LambdaQueryWrapper<SeedInfo> seedWrapper = new LambdaQueryWrapper<>();
                         seedWrapper.eq(SeedInfo::getCategoryId, category.getId());
                         List<SeedInfo> seeds = seedInfoMapper.selectList(seedWrapper);
-                        
+
                         if (!seeds.isEmpty()) {
                             // 获取种子ID列表
                             List<Long> seedIds = seeds.stream()
                                     .map(SeedInfo::getId)
                                     .collect(Collectors.toList());
-                            
+
                             // 查询这些种子的库存总量
                             LambdaQueryWrapper<Inventory> invWrapper = new LambdaQueryWrapper<>();
                             invWrapper.in(Inventory::getSeedId, seedIds)
                                      .gt(Inventory::getQuantity, 0); // 只统计有库存的
-                            
+
                             List<Inventory> inventories = inventoryMapper.selectList(invWrapper);
                             totalQuantity = inventories.stream()
                                     .mapToLong(inv -> inv.getQuantity() != null ? inv.getQuantity() : 0L)

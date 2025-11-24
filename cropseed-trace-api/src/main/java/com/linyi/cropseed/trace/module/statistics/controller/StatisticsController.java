@@ -1,10 +1,11 @@
-package com.linyi.cropseed.trace.controller;
+package com.linyi.cropseed.trace.module.statistics.controller;
 
 import com.linyi.cropseed.trace.common.result.Result;
-import com.linyi.cropseed.trace.service.StatisticsService;
-import com.linyi.cropseed.trace.vo.StatisticsOverviewVO;
-import com.linyi.cropseed.trace.vo.StatisticsChartVO;
-import com.linyi.cropseed.trace.vo.StatisticsTableVO;
+import com.linyi.cropseed.trace.module.statistics.service.StatisticsService;
+import com.linyi.cropseed.trace.module.statistics.model.vo.StatisticsOverviewVO;
+import com.linyi.cropseed.trace.module.statistics.model.vo.StatisticsChartVO;
+import com.linyi.cropseed.trace.module.statistics.model.vo.StatisticsTableVO;
+import com.linyi.cropseed.trace.module.statistics.service.impl.StatisticsServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -119,7 +120,7 @@ public class StatisticsController {
             @Parameter(description = "限制条数") @RequestParam(required = false) Integer limit) {
         List<Map<String, Object>> result;
         if ("low_stock".equals(type)) {
-            result = ((com.linyi.cropseed.trace.service.impl.StatisticsServiceImpl) statisticsService)
+            result = ((StatisticsServiceImpl) statisticsService)
                     .getInventoryStatistics(type, limit);
         } else {
             result = statisticsService.getInventoryStatistics();

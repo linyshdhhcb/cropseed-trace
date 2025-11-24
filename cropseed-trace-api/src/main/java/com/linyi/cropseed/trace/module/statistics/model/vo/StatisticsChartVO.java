@@ -1,4 +1,4 @@
-package com.linyi.cropseed.trace.vo;
+package com.linyi.cropseed.trace.module.statistics.model.vo;
 
 import lombok.Data;
 import java.util.List;

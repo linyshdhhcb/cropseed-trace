@@ -1,8 +1,8 @@
-package com.linyi.cropseed.trace.service;
+package com.linyi.cropseed.trace.module.statistics.service;
 
-import com.linyi.cropseed.trace.vo.StatisticsOverviewVO;
-import com.linyi.cropseed.trace.vo.StatisticsChartVO;
-import com.linyi.cropseed.trace.vo.StatisticsTableVO;
+import com.linyi.cropseed.trace.module.statistics.model.vo.StatisticsOverviewVO;
+import com.linyi.cropseed.trace.module.statistics.model.vo.StatisticsChartVO;
+import com.linyi.cropseed.trace.module.statistics.model.vo.StatisticsTableVO;
 
 import java.util.List;
 import java.util.Map;

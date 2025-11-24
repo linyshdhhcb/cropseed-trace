@@ -1,4 +1,4 @@
-package com.linyi.cropseed.trace.vo;
+package com.linyi.cropseed.trace.module.statistics.model.vo;
 
 import lombok.Data;
 
@@ -19,7 +19,7 @@ public class StatisticsOverviewVO {
     private Long totalWarehouses;
     private Long totalCategories;
     private Long totalBatches;
-    
+
     // 趋势数据（对比上期的增长率百分比）
     private Double ordersTrend;   // 订单增长趋势
     private Double revenueTrend;  // 销售额增长趋势
