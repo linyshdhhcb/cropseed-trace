@@ -8,7 +8,7 @@ import com.linyi.cropseed.trace.module.inventory.model.dto.InventoryOutboundDTO;
 import com.linyi.cropseed.trace.module.inventory.model.entity.Inventory;
 import com.linyi.cropseed.trace.module.inventory.model.entity.InventoryOutbound;
 import com.linyi.cropseed.trace.module.seed.model.entity.SeedBatch;
-import com.linyi.cropseed.trace.entity.Warehouse;
+import com.linyi.cropseed.trace.module.inventory.model.entity.Warehouse;
 import com.linyi.cropseed.trace.module.inventory.mapper.InventoryMapper;
 import com.linyi.cropseed.trace.module.inventory.mapper.InventoryOutboundMapper;
 import com.linyi.cropseed.trace.module.seed.mapper.SeedBatchMapper;

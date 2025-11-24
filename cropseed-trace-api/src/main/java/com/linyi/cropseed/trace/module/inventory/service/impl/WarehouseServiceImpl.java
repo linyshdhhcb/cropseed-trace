@@ -9,7 +9,7 @@ import com.linyi.cropseed.trace.common.page.PageQuery;
 import com.linyi.cropseed.trace.common.page.PageResult;
 import com.linyi.cropseed.trace.common.result.ResultCode;
 import com.linyi.cropseed.trace.module.inventory.model.entity.Inventory;
-import com.linyi.cropseed.trace.entity.Warehouse;
+import com.linyi.cropseed.trace.module.inventory.model.entity.Warehouse;
 import com.linyi.cropseed.trace.module.inventory.mapper.InventoryMapper;
 import com.linyi.cropseed.trace.module.inventory.mapper.WarehouseMapper;
 import com.linyi.cropseed.trace.module.inventory.service.WarehouseService;

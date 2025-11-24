@@ -3,7 +3,7 @@ package com.linyi.cropseed.trace.module.inventory.controller;
 import com.linyi.cropseed.trace.common.page.PageQuery;
 import com.linyi.cropseed.trace.common.page.PageResult;
 import com.linyi.cropseed.trace.common.result.Result;
-import com.linyi.cropseed.trace.entity.Warehouse;
+import com.linyi.cropseed.trace.module.inventory.model.entity.Warehouse;
 import com.linyi.cropseed.trace.module.inventory.service.WarehouseService;
 import com.linyi.cropseed.trace.module.inventory.model.vo.WarehouseVO;
 import io.swagger.v3.oas.annotations.Operation;
