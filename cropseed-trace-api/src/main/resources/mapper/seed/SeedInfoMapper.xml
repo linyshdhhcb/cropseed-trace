@@ -19,7 +19,7 @@
         <result property="unitPrice" column="unit_price"/>
     </resultMap>
 
-    <resultMap id="WxProductDetailVoMap" type="com.linyi.cropseed.trace.vo.WxProductDetailVO" autoMapping="false">
+    <resultMap id="WxProductDetailVoMap" type="com.linyi.cropseed.trace.module.wx.model.vo.WxProductDetailVO" autoMapping="false">
         <id property="id" column="id"/>
         <result property="seedName" column="seed_name"/>
         <result property="seedCode" column="seed_code"/>
