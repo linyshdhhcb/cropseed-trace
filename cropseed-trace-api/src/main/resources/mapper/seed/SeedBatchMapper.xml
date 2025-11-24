@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.linyi.cropseed.trace.module.seed.mapper.SeedBatchMapper">
+
+    <resultMap id="SeedBatchVoMap" type="com.linyi.cropseed.trace.module.seed.model.vo.SeedBatchVO">
+        <id property="id" column="id"/>
+        <result property="batchNo" column="batch_no"/>
+        <result property="seedId" column="seed_id"/>
+        <result property="seedName" column="seed_name"/>
+        <result property="producerId" column="producer_id"/>
+        <result property="producerName" column="producer_name"/>
+        <result property="productionDate" column="production_date"/>
+        <result property="expiryDate" column="expiry_date"/>
+        <result property="qualityReport" column="quality_report"/>
+        <result property="qualityStatus" column="quality_status"/>
+        <result property="remarks" column="remarks"/>
+        <result property="traceCode" column="trace_code"/>
+        <result property="productionLocation" column="production_location"/>
+        <result property="harvestDate" column="harvest_date"/>
+        <result property="processingDate" column="processing_date"/>
+        <result property="storageCondition" column="storage_condition"/>
+        <result property="certification" column="certification"/>
+        <result property="traceabilityLevel" column="traceability_level"/>
+        <result property="unit" column="unit"/>
+        <result property="initialQualityGrade" column="initial_quality_grade"/>
+        <result property="moistureContent" column="moisture_content"/>
+        <result property="germinationRate" column="germination_rate"/>
+        <result property="purity" column="purity"/>
+        <result property="packagingType" column="packaging_type"/>
+        <result property="packagingSpecification" column="packaging_specification"/>
+        <result property="initialOperatorName" column="initial_operator_name"/>
+        <result property="initialOperatorPhone" column="initial_operator_phone"/>
+        <result property="productionEquipment" column="production_equipment"/>
+        <result property="processingMethod" column="processing_method"/>
+        <result property="seedSource" column="seed_source"/>
+        <result property="parentVariety" column="parent_variety"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="BaseFrom">
+        FROM seed_batch b
+        LEFT JOIN seed_info si ON si.id = b.seed_id
+        WHERE b.deleted_flag = 0
+    </sql>
+
+    <select id="selectPageVo" resultMap="SeedBatchVoMap">
+        SELECT b.id, b.batch_no, b.seed_id, si.seed_name,
+               b.producer_id, b.producer_name, b.production_location,
+               b.production_date, b.harvest_date, b.processing_date, b.expiry_date,
+               b.quality_report, b.quality_status, b.initial_quality_grade,
+               b.moisture_content, b.germination_rate, b.purity,
+               b.unit, b.packaging_type, b.packaging_specification, b.storage_condition,
+               b.certification, b.traceability_level,
+               b.initial_operator_name, b.initial_operator_phone,
+               b.production_equipment, b.processing_method, b.seed_source, b.parent_variety,
+               b.remarks, b.trace_code,
+               b.create_time, b.update_time
+        <include refid="BaseFrom"/>
+        <if test="batchNo != null and batchNo != ''">
+            AND b.batch_no LIKE CONCAT('%', #{batchNo}, '%')
+        </if>
+        <if test="seedId != null">
+            AND b.seed_id = #{seedId}
+        </if>
+        ORDER BY b.create_time DESC
+    </select>
+
+    <select id="selectDetailById" resultMap="SeedBatchVoMap">
+        SELECT b.id, b.batch_no, b.seed_id, si.seed_name,
+               b.producer_id, b.producer_name, b.production_location,
+               b.production_date, b.harvest_date, b.processing_date, b.expiry_date,
+               b.quality_report, b.quality_status, b.initial_quality_grade,
+               b.moisture_content, b.germination_rate, b.purity,
+               b.unit, b.packaging_type, b.packaging_specification, b.storage_condition,
+               b.certification, b.traceability_level,
+               b.initial_operator_name, b.initial_operator_phone,
+               b.production_equipment, b.processing_method, b.seed_source, b.parent_variety,
+               b.remarks, b.trace_code,
+               b.create_time, b.update_time
+        <include refid="BaseFrom"/>
+        AND b.id = #{id}
+        LIMIT 1
+    </select>
+
+    <!-- 供其他场景使用的简单查询 -->
+    <select id="selectBySeedId" resultType="com.linyi.cropseed.trace.module.seed.model.entity.SeedBatch">
+        SELECT * FROM seed_batch WHERE seed_id = #{seedId} AND deleted_flag = 0 ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByBatchNo" resultType="com.linyi.cropseed.trace.module.seed.model.entity.SeedBatch">
+        SELECT * FROM seed_batch WHERE batch_no = #{batchNo} AND deleted_flag = 0 LIMIT 1
+    </select>
+
+</mapper>
+
+
