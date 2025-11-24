@@ -1,4 +1,4 @@
-package com.linyi.cropseed.trace.mapper;
+package com.linyi.cropseed.trace.module.inventory.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.linyi.cropseed.trace.entity.Warehouse;
@@ -9,7 +9,7 @@ import java.util.List;
 
 /**
  * 仓库信息Mapper
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

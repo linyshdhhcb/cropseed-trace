@@ -11,7 +11,7 @@ import com.linyi.cropseed.trace.entity.Warehouse;
 import com.linyi.cropseed.trace.module.inventory.mapper.InventoryInboundMapper;
 import com.linyi.cropseed.trace.module.inventory.mapper.InventoryMapper;
 import com.linyi.cropseed.trace.module.seed.mapper.SeedBatchMapper;
-import com.linyi.cropseed.trace.mapper.WarehouseMapper;
+import com.linyi.cropseed.trace.module.inventory.mapper.WarehouseMapper;
 import com.linyi.cropseed.trace.module.inventory.service.InventoryInboundService;
 import com.linyi.cropseed.trace.module.inventory.model.vo.InventoryInboundVO;
 import lombok.RequiredArgsConstructor;

@@ -1,11 +1,11 @@
-package com.linyi.cropseed.trace.controller;
+package com.linyi.cropseed.trace.module.inventory.controller;
 
 import com.linyi.cropseed.trace.common.page.PageQuery;
 import com.linyi.cropseed.trace.common.page.PageResult;
 import com.linyi.cropseed.trace.common.result.Result;
 import com.linyi.cropseed.trace.entity.Warehouse;
-import com.linyi.cropseed.trace.service.WarehouseService;
-import com.linyi.cropseed.trace.vo.WarehouseVO;
+import com.linyi.cropseed.trace.module.inventory.service.WarehouseService;
+import com.linyi.cropseed.trace.module.inventory.model.vo.WarehouseVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,7 +18,7 @@ import java.util.List;
 
 /**
  * 仓库管理Controller
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

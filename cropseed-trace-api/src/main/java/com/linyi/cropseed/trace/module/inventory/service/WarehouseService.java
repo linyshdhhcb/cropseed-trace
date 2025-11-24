@@ -1,17 +1,17 @@
-package com.linyi.cropseed.trace.service;
+package com.linyi.cropseed.trace.module.inventory.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.linyi.cropseed.trace.common.page.PageQuery;
 import com.linyi.cropseed.trace.common.page.PageResult;
 import com.linyi.cropseed.trace.entity.Warehouse;
-import com.linyi.cropseed.trace.vo.WarehouseVO;
+import com.linyi.cropseed.trace.module.inventory.model.vo.WarehouseVO;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 /**
  * 仓库服务接口
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

@@ -14,6 +14,7 @@ import com.linyi.cropseed.trace.entity.*;
 import com.linyi.cropseed.trace.mapper.*;
 import com.linyi.cropseed.trace.module.inventory.mapper.InboundRecordMapper;
 import com.linyi.cropseed.trace.module.inventory.mapper.InventoryMapper;
+import com.linyi.cropseed.trace.module.inventory.mapper.WarehouseMapper;
 import com.linyi.cropseed.trace.module.inventory.model.entity.InboundRecord;
 import com.linyi.cropseed.trace.module.inventory.model.entity.Inventory;
 import com.linyi.cropseed.trace.module.seed.mapper.SeedBatchMapper;

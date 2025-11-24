@@ -1,4 +1,4 @@
-package com.linyi.cropseed.trace.service.impl;
+package com.linyi.cropseed.trace.module.inventory.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -8,12 +8,12 @@ import com.linyi.cropseed.trace.common.exception.BusinessException;
 import com.linyi.cropseed.trace.common.page.PageQuery;
 import com.linyi.cropseed.trace.common.page.PageResult;
 import com.linyi.cropseed.trace.common.result.ResultCode;
-import com.linyi.cropseed.trace.entity.Inventory;
+import com.linyi.cropseed.trace.module.inventory.model.entity.Inventory;
 import com.linyi.cropseed.trace.entity.Warehouse;
-import com.linyi.cropseed.trace.mapper.InventoryMapper;
-import com.linyi.cropseed.trace.mapper.WarehouseMapper;
-import com.linyi.cropseed.trace.service.WarehouseService;
-import com.linyi.cropseed.trace.vo.WarehouseVO;
+import com.linyi.cropseed.trace.module.inventory.mapper.InventoryMapper;
+import com.linyi.cropseed.trace.module.inventory.mapper.WarehouseMapper;
+import com.linyi.cropseed.trace.module.inventory.service.WarehouseService;
+import com.linyi.cropseed.trace.module.inventory.model.vo.WarehouseVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 
 /**
  * 仓库服务实现
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
