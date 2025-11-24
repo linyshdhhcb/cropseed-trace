@@ -1,14 +1,14 @@
-package com.linyi.cropseed.trace.service;
+package com.linyi.cropseed.trace.module.payment.service;
 
-import com.linyi.cropseed.trace.dto.AlipayDTO;
-import com.linyi.cropseed.trace.vo.AlipayVO;
+import com.linyi.cropseed.trace.module.payment.model.dto.AlipayDTO;
+import com.linyi.cropseed.trace.module.payment.model.vo.AlipayVO;
 
 import java.math.BigDecimal;
 import java.util.Map;
 
 /**
  * 支付宝支付服务接口
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

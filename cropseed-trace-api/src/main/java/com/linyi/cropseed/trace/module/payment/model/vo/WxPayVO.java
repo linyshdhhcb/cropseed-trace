@@ -1,10 +1,10 @@
-package com.linyi.cropseed.trace.vo;
+package com.linyi.cropseed.trace.module.payment.model.vo;
 
 import lombok.Data;
 
 /**
  * 微信支付VO
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

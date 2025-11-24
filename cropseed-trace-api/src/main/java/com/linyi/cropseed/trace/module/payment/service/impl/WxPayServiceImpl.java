@@ -1,19 +1,17 @@
-package com.linyi.cropseed.trace.service.impl;
+package com.linyi.cropseed.trace.module.payment.service.impl;
 
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.MD5;
 import cn.hutool.http.HttpUtil;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.linyi.cropseed.trace.common.exception.BusinessException;
 import com.linyi.cropseed.trace.common.result.ResultCode;
-import com.linyi.cropseed.trace.dto.WxPayDTO;
+import com.linyi.cropseed.trace.module.payment.model.dto.WxPayDTO;
 import com.linyi.cropseed.trace.entity.OrderInfo;
 import com.linyi.cropseed.trace.service.OrderService;
-import com.linyi.cropseed.trace.service.WxPayService;
-import com.linyi.cropseed.trace.vo.WxPayVO;
+import com.linyi.cropseed.trace.module.payment.service.WxPayService;
+import com.linyi.cropseed.trace.module.payment.model.vo.WxPayVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,7 +24,7 @@ import java.util.TreeMap;
 
 /**
  * 微信支付服务实现
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

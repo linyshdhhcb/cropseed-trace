@@ -1,4 +1,4 @@
-package com.linyi.cropseed.trace.dto;
+package com.linyi.cropseed.trace.module.payment.model.dto;
 
 import lombok.Data;
 
@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 
 /**
  * 支付宝支付DTO
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

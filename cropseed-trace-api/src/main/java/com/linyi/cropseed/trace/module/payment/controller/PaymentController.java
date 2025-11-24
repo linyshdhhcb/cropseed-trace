@@ -1,11 +1,11 @@
-package com.linyi.cropseed.trace.controller;
+package com.linyi.cropseed.trace.module.payment.controller;
 
 import com.linyi.cropseed.trace.common.result.Result;
-import com.linyi.cropseed.trace.dto.AlipayDTO;
+import com.linyi.cropseed.trace.module.payment.model.dto.AlipayDTO;
 import com.linyi.cropseed.trace.entity.OrderInfo;
-import com.linyi.cropseed.trace.service.AlipayService;
+import com.linyi.cropseed.trace.module.payment.service.AlipayService;
 import com.linyi.cropseed.trace.service.OrderService;
-import com.linyi.cropseed.trace.vo.AlipayVO;
+import com.linyi.cropseed.trace.module.payment.model.vo.AlipayVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;

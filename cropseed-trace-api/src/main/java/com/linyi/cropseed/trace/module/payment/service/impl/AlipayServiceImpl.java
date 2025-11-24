@@ -1,4 +1,4 @@
-package com.linyi.cropseed.trace.service.impl;
+package com.linyi.cropseed.trace.module.payment.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
@@ -14,11 +14,11 @@ import com.linyi.cropseed.trace.common.exception.BusinessException;
 import com.linyi.cropseed.trace.common.result.ResultCode;
 import com.linyi.cropseed.trace.common.util.QRCodeUtil;
 import com.linyi.cropseed.trace.config.properties.AlipayProperties;
-import com.linyi.cropseed.trace.dto.AlipayDTO;
-import com.linyi.cropseed.trace.service.AlipayService;
+import com.linyi.cropseed.trace.module.payment.model.dto.AlipayDTO;
+import com.linyi.cropseed.trace.module.payment.service.AlipayService;
 import com.linyi.cropseed.trace.service.OrderService;
 import com.linyi.cropseed.trace.entity.OrderInfo;
-import com.linyi.cropseed.trace.vo.AlipayVO;
+import com.linyi.cropseed.trace.module.payment.model.vo.AlipayVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

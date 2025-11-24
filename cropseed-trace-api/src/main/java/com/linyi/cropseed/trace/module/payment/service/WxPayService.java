@@ -1,13 +1,13 @@
-package com.linyi.cropseed.trace.service;
+package com.linyi.cropseed.trace.module.payment.service;
 
-import com.linyi.cropseed.trace.dto.WxPayDTO;
-import com.linyi.cropseed.trace.vo.WxPayVO;
+import com.linyi.cropseed.trace.module.payment.model.dto.WxPayDTO;
+import com.linyi.cropseed.trace.module.payment.model.vo.WxPayVO;
 
 import java.util.Map;
 
 /**
  * 微信支付服务接口
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

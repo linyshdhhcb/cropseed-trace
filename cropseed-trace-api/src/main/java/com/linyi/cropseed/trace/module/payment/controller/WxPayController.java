@@ -1,9 +1,9 @@
-package com.linyi.cropseed.trace.controller;
+package com.linyi.cropseed.trace.module.payment.controller;
 
 import com.linyi.cropseed.trace.common.result.Result;
-import com.linyi.cropseed.trace.dto.WxPayDTO;
-import com.linyi.cropseed.trace.service.WxPayService;
-import com.linyi.cropseed.trace.vo.WxPayVO;
+import com.linyi.cropseed.trace.module.payment.model.dto.WxPayDTO;
+import com.linyi.cropseed.trace.module.payment.service.WxPayService;
+import com.linyi.cropseed.trace.module.payment.model.vo.WxPayVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +15,7 @@ import java.util.Map;
 
 /**
  * 微信支付控制器
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
