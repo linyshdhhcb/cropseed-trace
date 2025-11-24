@@ -1,4 +1,4 @@
-package com.linyi.cropseed.trace.vo;
+package com.linyi.cropseed.trace.module.inventory.model.vo;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;

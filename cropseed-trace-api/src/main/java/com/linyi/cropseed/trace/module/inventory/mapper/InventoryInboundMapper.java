@@ -1,8 +1,8 @@
-package com.linyi.cropseed.trace.mapper;
+package com.linyi.cropseed.trace.module.inventory.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.linyi.cropseed.trace.entity.InventoryInbound;
+import com.linyi.cropseed.trace.module.inventory.model.entity.InventoryInbound;
 import org.apache.ibatis.annotations.Mapper;
 
 /**

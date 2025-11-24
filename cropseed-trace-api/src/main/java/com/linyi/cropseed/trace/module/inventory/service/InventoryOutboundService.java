@@ -1,9 +1,9 @@
-package com.linyi.cropseed.trace.service;
+package com.linyi.cropseed.trace.module.inventory.service;
 
 import com.linyi.cropseed.trace.common.page.PageQuery;
 import com.linyi.cropseed.trace.common.page.PageResult;
-import com.linyi.cropseed.trace.dto.InventoryOutboundDTO;
-import com.linyi.cropseed.trace.vo.InventoryOutboundVO;
+import com.linyi.cropseed.trace.module.inventory.model.dto.InventoryOutboundDTO;
+import com.linyi.cropseed.trace.module.inventory.model.vo.InventoryOutboundVO;
 
 import java.util.List;
 
@@ -48,7 +48,7 @@ public interface InventoryOutboundService {
 
     /**
      * 审批出库单
-     * 
+     *
      * @param id            出库记录ID
      * @param approved      true-审批通过，false-审批不通过
      * @param approveRemark 审批备注

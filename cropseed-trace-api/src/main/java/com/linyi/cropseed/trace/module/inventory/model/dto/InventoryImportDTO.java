@@ -1,4 +1,4 @@
-package com.linyi.cropseed.trace.dto;
+package com.linyi.cropseed.trace.module.inventory.model.dto;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -6,7 +6,7 @@ import lombok.Data;
 
 /**
  * 库存导入DTO
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

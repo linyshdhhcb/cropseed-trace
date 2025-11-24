@@ -1,4 +1,4 @@
-package com.linyi.cropseed.trace.entity;
+package com.linyi.cropseed.trace.module.inventory.model.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;

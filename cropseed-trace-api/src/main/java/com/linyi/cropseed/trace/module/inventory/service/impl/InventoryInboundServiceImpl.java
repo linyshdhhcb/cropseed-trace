@@ -1,26 +1,24 @@
-package com.linyi.cropseed.trace.service.impl;
+package com.linyi.cropseed.trace.module.inventory.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.linyi.cropseed.trace.common.page.PageQuery;
 import com.linyi.cropseed.trace.common.page.PageResult;
-import com.linyi.cropseed.trace.dto.InventoryInboundDTO;
-import com.linyi.cropseed.trace.entity.Inventory;
-import com.linyi.cropseed.trace.entity.InventoryInbound;
-import com.linyi.cropseed.trace.entity.SeedBatch;
+import com.linyi.cropseed.trace.module.inventory.model.dto.InventoryInboundDTO;
+import com.linyi.cropseed.trace.module.inventory.model.entity.Inventory;
+import com.linyi.cropseed.trace.module.inventory.model.entity.InventoryInbound;
+import com.linyi.cropseed.trace.module.seed.model.entity.SeedBatch;
 import com.linyi.cropseed.trace.entity.Warehouse;
-import com.linyi.cropseed.trace.mapper.InventoryInboundMapper;
-import com.linyi.cropseed.trace.mapper.InventoryMapper;
-import com.linyi.cropseed.trace.mapper.SeedBatchMapper;
+import com.linyi.cropseed.trace.module.inventory.mapper.InventoryInboundMapper;
+import com.linyi.cropseed.trace.module.inventory.mapper.InventoryMapper;
+import com.linyi.cropseed.trace.module.seed.mapper.SeedBatchMapper;
 import com.linyi.cropseed.trace.mapper.WarehouseMapper;
-import com.linyi.cropseed.trace.service.InventoryInboundService;
-import com.linyi.cropseed.trace.vo.InventoryInboundVO;
+import com.linyi.cropseed.trace.module.inventory.service.InventoryInboundService;
+import com.linyi.cropseed.trace.module.inventory.model.vo.InventoryInboundVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;

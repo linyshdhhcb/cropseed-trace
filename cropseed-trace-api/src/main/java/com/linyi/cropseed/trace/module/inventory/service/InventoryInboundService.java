@@ -1,9 +1,9 @@
-package com.linyi.cropseed.trace.service;
+package com.linyi.cropseed.trace.module.inventory.service;
 
 import com.linyi.cropseed.trace.common.page.PageQuery;
 import com.linyi.cropseed.trace.common.page.PageResult;
-import com.linyi.cropseed.trace.dto.InventoryInboundDTO;
-import com.linyi.cropseed.trace.vo.InventoryInboundVO;
+import com.linyi.cropseed.trace.module.inventory.model.dto.InventoryInboundDTO;
+import com.linyi.cropseed.trace.module.inventory.model.vo.InventoryInboundVO;
 
 import java.util.List;
 

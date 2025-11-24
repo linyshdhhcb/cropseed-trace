@@ -1,12 +1,8 @@
-package com.linyi.cropseed.trace.mapper;
+package com.linyi.cropseed.trace.module.inventory.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.linyi.cropseed.trace.common.page.PageQuery;
-import com.linyi.cropseed.trace.entity.InboundRecord;
-import com.linyi.cropseed.trace.entity.Inventory;
+import com.linyi.cropseed.trace.module.inventory.model.entity.InboundRecord;
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.List;

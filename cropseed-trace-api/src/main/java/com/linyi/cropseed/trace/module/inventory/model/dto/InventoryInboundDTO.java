@@ -1,4 +1,4 @@
-package com.linyi.cropseed.trace.dto;
+package com.linyi.cropseed.trace.module.inventory.model.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;

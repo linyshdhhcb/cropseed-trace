@@ -1,7 +1,7 @@
-package com.linyi.cropseed.trace.mapper;
+package com.linyi.cropseed.trace.module.inventory.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.linyi.cropseed.trace.entity.Inventory;
+import com.linyi.cropseed.trace.module.inventory.model.entity.Inventory;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -12,7 +12,7 @@ import java.util.Map;
 
 /**
  * 库存台账Mapper
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

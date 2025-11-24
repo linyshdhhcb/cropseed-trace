@@ -1,16 +1,16 @@
-package com.linyi.cropseed.trace.service;
+package com.linyi.cropseed.trace.module.inventory.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.linyi.cropseed.trace.common.page.PageQuery;
 import com.linyi.cropseed.trace.common.page.PageResult;
-import com.linyi.cropseed.trace.entity.Inventory;
-import com.linyi.cropseed.trace.vo.InventoryVO;
+import com.linyi.cropseed.trace.module.inventory.model.entity.Inventory;
+import com.linyi.cropseed.trace.module.inventory.model.vo.InventoryVO;
 
 import java.util.List;
 
 /**
  * 库存服务接口
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

@@ -1,12 +1,11 @@
-package com.linyi.cropseed.trace.controller;
+package com.linyi.cropseed.trace.module.inventory.controller;
 
 import com.linyi.cropseed.trace.common.page.PageQuery;
 import com.linyi.cropseed.trace.common.page.PageResult;
 import com.linyi.cropseed.trace.common.result.Result;
-import com.linyi.cropseed.trace.dto.InventoryOutboundDTO;
-import com.linyi.cropseed.trace.entity.InventoryOutbound;
-import com.linyi.cropseed.trace.service.InventoryOutboundService;
-import com.linyi.cropseed.trace.vo.InventoryOutboundVO;
+import com.linyi.cropseed.trace.module.inventory.model.dto.InventoryOutboundDTO;
+import com.linyi.cropseed.trace.module.inventory.service.InventoryOutboundService;
+import com.linyi.cropseed.trace.module.inventory.model.vo.InventoryOutboundVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;

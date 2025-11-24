@@ -1,4 +1,4 @@
-package com.linyi.cropseed.trace.service.impl;
+package com.linyi.cropseed.trace.module.inventory.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -12,8 +12,16 @@ import com.linyi.cropseed.trace.common.util.IdGenerator;
 import com.linyi.cropseed.trace.common.util.SecurityUtils;
 import com.linyi.cropseed.trace.entity.*;
 import com.linyi.cropseed.trace.mapper.*;
-import com.linyi.cropseed.trace.service.InventoryService;
-import com.linyi.cropseed.trace.vo.InventoryVO;
+import com.linyi.cropseed.trace.module.inventory.mapper.InboundRecordMapper;
+import com.linyi.cropseed.trace.module.inventory.mapper.InventoryMapper;
+import com.linyi.cropseed.trace.module.inventory.model.entity.InboundRecord;
+import com.linyi.cropseed.trace.module.inventory.model.entity.Inventory;
+import com.linyi.cropseed.trace.module.seed.mapper.SeedBatchMapper;
+import com.linyi.cropseed.trace.module.seed.mapper.SeedInfoMapper;
+import com.linyi.cropseed.trace.module.seed.model.entity.SeedBatch;
+import com.linyi.cropseed.trace.module.seed.model.entity.SeedInfo;
+import com.linyi.cropseed.trace.module.inventory.service.InventoryService;
+import com.linyi.cropseed.trace.module.inventory.model.vo.InventoryVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

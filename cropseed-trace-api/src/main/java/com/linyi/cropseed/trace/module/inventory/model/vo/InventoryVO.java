@@ -1,11 +1,11 @@
-package com.linyi.cropseed.trace.vo;
+package com.linyi.cropseed.trace.module.inventory.model.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 /**
  * 库存VO
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
