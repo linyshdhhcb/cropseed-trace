@@ -1,8 +1,6 @@
-package com.linyi.cropseed.trace.service;
+package com.linyi.cropseed.trace.module.system.service;
 
-import com.linyi.cropseed.trace.dto.SeedImportDTO;
-import com.linyi.cropseed.trace.dto.InventoryImportDTO;
-import com.linyi.cropseed.trace.vo.ExcelImportResultVO;
+import com.linyi.cropseed.trace.module.system.model.vo.ExcelImportResultVO;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -10,7 +8,7 @@ import java.util.List;
 
 /**
  * Excel服务接口
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

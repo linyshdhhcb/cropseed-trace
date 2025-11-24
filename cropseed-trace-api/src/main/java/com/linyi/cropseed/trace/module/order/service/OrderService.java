@@ -3,7 +3,7 @@ package com.linyi.cropseed.trace.module.order.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.linyi.cropseed.trace.common.page.PageQuery;
 import com.linyi.cropseed.trace.common.page.PageResult;
-import com.linyi.cropseed.trace.dto.OrderSubmitGoodsDTO;
+import com.linyi.cropseed.trace.module.wx.model.dto.OrderSubmitGoodsDTO;
 import com.linyi.cropseed.trace.module.order.model.entity.OrderInfo;
 import com.linyi.cropseed.trace.module.order.model.vo.OrderDetailVO;
 import com.linyi.cropseed.trace.module.order.model.vo.OrderVO;

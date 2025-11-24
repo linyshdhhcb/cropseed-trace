@@ -1,8 +1,8 @@
-package com.linyi.cropseed.trace.controller;
+package com.linyi.cropseed.trace.module.system.controller;
 
 import com.linyi.cropseed.trace.common.result.Result;
-import com.linyi.cropseed.trace.service.ExcelService;
-import com.linyi.cropseed.trace.vo.ExcelImportResultVO;
+import com.linyi.cropseed.trace.module.system.service.ExcelService;
+import com.linyi.cropseed.trace.module.system.model.vo.ExcelImportResultVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -16,7 +16,7 @@ import java.util.List;
 
 /**
  * Excel管理Controller
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

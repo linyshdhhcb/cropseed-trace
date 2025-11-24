@@ -1,7 +1,6 @@
 package com.linyi.cropseed.trace.module.statistics.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.linyi.cropseed.trace.mapper.*;
 import com.linyi.cropseed.trace.module.inventory.mapper.InventoryMapper;
 import com.linyi.cropseed.trace.module.inventory.model.entity.Inventory;
 import com.linyi.cropseed.trace.module.order.mapper.OrderInfoMapper;
@@ -15,6 +14,7 @@ import com.linyi.cropseed.trace.module.statistics.service.StatisticsService;
 import com.linyi.cropseed.trace.module.statistics.model.vo.StatisticsChartVO;
 import com.linyi.cropseed.trace.module.statistics.model.vo.StatisticsOverviewVO;
 import com.linyi.cropseed.trace.module.statistics.model.vo.StatisticsTableVO;
+import com.linyi.cropseed.trace.module.wx.mapper.WxUserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

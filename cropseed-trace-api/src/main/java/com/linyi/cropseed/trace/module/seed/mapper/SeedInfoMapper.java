@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.linyi.cropseed.trace.module.seed.model.entity.SeedInfo;
 import com.linyi.cropseed.trace.module.seed.model.vo.SeedInfoVO;
-import com.linyi.cropseed.trace.vo.WxProductDetailVO;
+import com.linyi.cropseed.trace.module.wx.model.vo.WxProductDetailVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
