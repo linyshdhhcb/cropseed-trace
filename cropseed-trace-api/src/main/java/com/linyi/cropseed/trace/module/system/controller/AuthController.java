@@ -1,11 +1,11 @@
-package com.linyi.cropseed.trace.controller;
+package com.linyi.cropseed.trace.module.system.controller;
 
 import com.linyi.cropseed.trace.common.result.Result;
-import com.linyi.cropseed.trace.dto.LoginDTO;
-import com.linyi.cropseed.trace.entity.SysUser;
+import com.linyi.cropseed.trace.module.system.model.dto.LoginDTO;
+import com.linyi.cropseed.trace.module.system.model.entity.SysUser;
 import com.linyi.cropseed.trace.security.JwtTokenProvider;
-import com.linyi.cropseed.trace.service.SysUserService;
-import com.linyi.cropseed.trace.vo.LoginVO;
+import com.linyi.cropseed.trace.module.system.service.SysUserService;
+import com.linyi.cropseed.trace.module.system.model.vo.LoginVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;

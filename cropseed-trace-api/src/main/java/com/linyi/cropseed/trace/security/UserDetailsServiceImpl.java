@@ -2,9 +2,9 @@ package com.linyi.cropseed.trace.security;
 
 import com.linyi.cropseed.trace.common.constant.CommonConstant;
 import com.linyi.cropseed.trace.common.result.ResultCode;
-import com.linyi.cropseed.trace.entity.SysUser;
+import com.linyi.cropseed.trace.module.system.model.entity.SysUser;
 import com.linyi.cropseed.trace.entity.WxUser;
-import com.linyi.cropseed.trace.service.SysUserService;
+import com.linyi.cropseed.trace.module.system.service.SysUserService;
 import com.linyi.cropseed.trace.service.WxUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -22,7 +22,7 @@ import java.util.Objects;
 
 /**
  * 用户详情服务实现
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

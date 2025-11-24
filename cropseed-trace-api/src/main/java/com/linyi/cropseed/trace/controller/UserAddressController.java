@@ -2,7 +2,7 @@ package com.linyi.cropseed.trace.controller;
 
 import com.linyi.cropseed.trace.common.result.Result;
 import com.linyi.cropseed.trace.dto.UserAddressDTO;
-import com.linyi.cropseed.trace.entity.SysUser;
+import com.linyi.cropseed.trace.module.system.model.entity.SysUser;
 import com.linyi.cropseed.trace.service.UserAddressService;
 import com.linyi.cropseed.trace.vo.UserAddressVO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,7 +17,7 @@ import java.util.List;
 
 /**
  * 用户地址控制器
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

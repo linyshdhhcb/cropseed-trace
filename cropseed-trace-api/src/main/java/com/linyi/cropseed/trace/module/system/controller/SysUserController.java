@@ -3,7 +3,7 @@ package com.linyi.cropseed.trace.module.system.controller;
 import com.linyi.cropseed.trace.common.page.PageQuery;
 import com.linyi.cropseed.trace.common.page.PageResult;
 import com.linyi.cropseed.trace.common.result.Result;
-import com.linyi.cropseed.trace.dto.ChangePasswordDTO;
+import com.linyi.cropseed.trace.module.system.model.dto.ChangePasswordDTO;
 import com.linyi.cropseed.trace.module.system.model.dto.SysUserAddDTO;
 import com.linyi.cropseed.trace.module.system.model.dto.SysUserUpdateDTO;
 import com.linyi.cropseed.trace.module.system.model.entity.SysUser;

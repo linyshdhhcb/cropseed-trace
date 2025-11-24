@@ -1,10 +1,8 @@
 package com.linyi.cropseed.trace.common.util;
 
-import com.linyi.cropseed.trace.entity.SysMenu;
-import com.linyi.cropseed.trace.entity.SysRole;
-import com.linyi.cropseed.trace.entity.SysUser;
-import com.linyi.cropseed.trace.mapper.SysRoleMapper;
-import com.linyi.cropseed.trace.mapper.SysUserMapper;
+import com.linyi.cropseed.trace.module.system.model.entity.SysRole;
+import com.linyi.cropseed.trace.module.system.model.entity.SysUser;
+import com.linyi.cropseed.trace.module.system.mapper.SysRoleMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

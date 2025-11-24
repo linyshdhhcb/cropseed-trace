@@ -1,8 +1,8 @@
 package com.linyi.cropseed.trace.security;
 
 import com.linyi.cropseed.trace.common.constant.CommonConstant;
-import com.linyi.cropseed.trace.entity.SysUser;
-import com.linyi.cropseed.trace.service.SysUserService;
+import com.linyi.cropseed.trace.module.system.model.entity.SysUser;
+import com.linyi.cropseed.trace.module.system.service.SysUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -19,7 +19,7 @@ import java.util.List;
 
 /**
  * JWT认证提供者
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

@@ -6,7 +6,7 @@ import com.linyi.cropseed.trace.common.page.PageQuery;
 import com.linyi.cropseed.trace.common.page.PageResult;
 import com.linyi.cropseed.trace.common.result.Result;
 import com.linyi.cropseed.trace.dto.WxLoginDTO;
-import com.linyi.cropseed.trace.entity.SysUser;
+import com.linyi.cropseed.trace.module.system.model.entity.SysUser;
 import com.linyi.cropseed.trace.entity.WxUser;
 import com.linyi.cropseed.trace.service.WxUserService;
 import com.linyi.cropseed.trace.vo.WxUserVO;
@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 
 /**
  * 微信用户控制器
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

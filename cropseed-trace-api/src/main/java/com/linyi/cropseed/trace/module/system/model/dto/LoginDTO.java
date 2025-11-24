@@ -1,4 +1,4 @@
-package com.linyi.cropseed.trace.dto;
+package com.linyi.cropseed.trace.module.system.model.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Size;
 
 /**
  * 登录DTO
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
