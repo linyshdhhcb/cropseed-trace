@@ -343,7 +343,7 @@ vim config/application.yml       # 配置MySQL、Redis、MinIO等
 
 5. **微信小程序**
    ```bash
-   cd cropseed-trace-uniapp
+   cd cropseed-trace-miniapp
    npm install
    # 使用微信开发者工具导入项目目录
    ```
@@ -378,29 +378,108 @@ vim config/application.yml       # 配置MySQL、Redis、MinIO等
 
 ```
 cropseed-trace/
-├── cropseed-trace-api/          # 后端Spring Boot项目
-│   ├── src/main/java/          # 后端源码
-│   │   ├── controller/        # REST API控制器
-│   │   ├── service/          # 业务逻辑服务
-│   │   ├── entity/           # 数据库实体
-│   │   ├── mapper/           # MyBatis映射器
-│   │   └── config/           # 配置类
-│   └── src/main/resources/    # 配置文件
+├── cropseed-trace-api/          # 后端Spring Boot项目（DDD架构）
+│   ├── src/main/java/com/linyi/cropseed/trace/
+│   │   ├── CropSeedTraceApplication.java # 启动类
+│   │   ├── module/            # 业务模块（DDD领域模型）
+│   │   │   ├── seed/          # 种子管理模块
+│   │   │   │   ├── controller/  # 种子相关API
+│   │   │   │   ├── service/     # 种子业务逻辑
+│   │   │   │   ├── mapper/      # 种子数据访问
+│   │   │   │   └── model/       # 种子实体、DTO、VO
+│   │   │   ├── order/         # 订单管理模块
+│   │   │   ├── inventory/     # 库存管理模块
+│   │   │   ├── trace/         # 溯源管理模块
+│   │   │   ├── payment/       # 支付管理模块
+│   │   │   ├── recommendation/ # 推荐系统模块
+│   │   │   ├── statistics/    # 统计分析模块
+│   │   │   ├── system/        # 系统管理模块（用户、角色、菜单）
+│   │   │   └── wx/            # 微信管理模块
+│   │   ├── common/            # 公共工具类和常量
+│   │   ├── config/            # 配置类（Redis、MinIO、TBaas等）
+│   │   ├── security/          # 安全认证模块（JWT）
+│   │   └── infrastructure/    # 基础设施层
+│   ├── src/main/resources/    # 配置文件
+│   │   ├── application.yml    # 主配置文件
+│   │   ├── application-dev.yml # 开发环境配置
+│   │   ├── application-test.yml # 测试环境配置
+│   │   ├── application-prod.yml # 生产环境配置
+│   │   └── mapper/            # MyBatis XML映射文件
+│   └── pom.xml                # Maven配置文件
 ├── cropseed-trace-web/         # Vue.js Web管理端
-│   ├── src/views/             # Vue组件
-│   ├── src/api/               # API服务层
-│   └── src/stores/            # Pinia状态管理
-├── cropseed-trace-uniapp/     # 微信小程序
+│   ├── src/
+│   │   ├── views/             # 页面组件
+│   │   │   ├── dashboard/     # 数据统计看板
+│   │   │   ├── seed/          # 种子管理
+│   │   │   ├── order/         # 订单管理
+│   │   │   ├── inventory/     # 库存管理
+│   │   │   ├── trace/         # 溯源管理（记录、码管理、区块链、查询统计）
+│   │   │   ├── recommendation/ # 推荐系统（行为分析、用户画像、结果展示）
+│   │   │   ├── statistics/    # 数据统计
+│   │   │   ├── system/        # 系统管理（用户、角色、菜单）
+│   │   │   ├── payment/       # 支付管理
+│   │   │   ├── wechat/        # 微信管理
+│   │   │   ├── excel/         # Excel导入导出
+│   │   │   └── error/         # 错误页面
+│   │   ├── layout/            # 布局组件（侧边栏、面包屑）
+│   │   ├── components/        # 公共组件（图片上传、文件上传等）
+│   │   ├── api/               # API接口封装
+│   │   ├── stores/            # Pinia状态管理
+│   │   ├── router/            # 路由配置
+│   │   ├── utils/             # 工具函数
+│   │   └── styles/            # 全局样式
+│   ├── package.json           # npm依赖配置
+│   └── vite.config.js         # Vite构建配置
+├── cropseed-trace-miniapp/     # 微信小程序（uni-app）
 │   ├── pages/                 # 小程序页面
-│   ├── components/            # 可复用组件
-│   └── api/                   # API服务
-├── script/linux/              # Docker部署方案
-│   ├── docker-compose.yml    # Docker编排文件
-│   ├── config/               # 部署配置
-│   ├── start.sh              # 启动脚本
-│   └── README.md             # 部署文档
+│   │   ├── index/             # 引导页
+│   │   ├── home/              # 首页
+│   │   ├── category/          # 分类页面
+│   │   ├── product/           # 商品详情页
+│   │   ├── cart/              # 购物车
+│   │   ├── order/             # 订单管理（列表、详情、确认）
+│   │   ├── payment/           # 支付页面（支付宝等）
+│   │   ├── trace/             # 溯源查询
+│   │   ├── address/           # 地址管理
+│   │   ├── afterSale/         # 售后服务
+│   │   ├── auth/              # 授权登录
+│   │   └── user/              # 用户中心（个人信息、设置）
+│   ├── api/                   # API接口封装
+│   ├── stores/                # Pinia状态管理
+│   ├── common/                # 公共工具和样式
+│   ├── static/                # 静态资源（图片等）
+│   ├── App.vue                # 应用入口
+│   ├── main.js                # 主入口文件
+│   ├── manifest.json          # 应用配置
+│   ├── pages.json             # 页面路由配置
+│   └── uni.scss               # uni-app全局样式
+├── script/                    # 部署脚本
+│   └── linux/                 # Linux Docker部署方案
+│       ├── docker-compose.yml # Docker编排文件
+│       ├── Dockerfile.backend # 后端镜像构建文件
+│       ├── Dockerfile.web     # 前端镜像构建文件
+│       ├── nginx.conf         # Nginx配置
+│       ├── config/            # 配置文件目录
+│       │   └── application.yml # 生产环境配置
+│       ├── start.sh           # 启动脚本
+│       ├── stop.sh            # 停止脚本
+│       ├── restart.sh         # 重启脚本
+│       └── README.md          # 部署文档
 ├── sql/                       # 数据库脚本
-└── doc/                       # 项目文档
+│   ├── cropseed_trace.sql     # 完整数据库（含数据）
+│   └── cropseed_trace_nodata.sql # 仅表结构
+├── doc/                       # 项目文档
+│   ├── img/                   # 文档图片
+│   │   ├── web/               # Web端截图
+│   │   └── uniapp/            # 小程序端截图
+│   ├── 溯源模块实现说明.md    # 溯源功能文档
+│   ├── 推荐系统实现文档.md    # 推荐系统文档
+│   ├── 对象存储模块.md        # MinIO存储文档
+│   └── TBaas_Java开发指导文档.md # 区块链开发文档
+├── logs/                      # 日志文件目录
+├── .gitignore                 # Git忽略配置
+├── LICENSE                    # 开源协议
+└── README.md                  # 项目说明文档
 ```
 
 ## 部署说明
