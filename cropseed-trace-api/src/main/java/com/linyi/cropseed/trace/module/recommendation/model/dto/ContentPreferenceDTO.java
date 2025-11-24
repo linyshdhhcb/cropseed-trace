@@ -1,4 +1,4 @@
-package com.linyi.cropseed.trace.dto.Recommend;
+package com.linyi.cropseed.trace.module.recommendation.model.dto;
 
 import java.util.List;
 

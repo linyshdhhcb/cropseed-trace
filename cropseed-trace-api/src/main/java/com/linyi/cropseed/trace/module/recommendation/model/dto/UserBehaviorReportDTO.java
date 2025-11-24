@@ -1,4 +1,4 @@
-package com.linyi.cropseed.trace.dto;
+package com.linyi.cropseed.trace.module.recommendation.model.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;

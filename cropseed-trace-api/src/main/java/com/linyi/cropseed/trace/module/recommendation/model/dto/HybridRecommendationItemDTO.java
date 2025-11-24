@@ -1,6 +1,6 @@
-package com.linyi.cropseed.trace.dto.Recommend;
+package com.linyi.cropseed.trace.module.recommendation.model.dto;
 
-import com.linyi.cropseed.trace.vo.RecommendationVO;
+import com.linyi.cropseed.trace.module.recommendation.model.vo.RecommendationVO;
 
 import java.util.ArrayList;
 import java.util.List;

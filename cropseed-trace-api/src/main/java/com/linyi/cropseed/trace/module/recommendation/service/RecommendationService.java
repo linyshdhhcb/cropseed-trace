@@ -1,12 +1,12 @@
-package com.linyi.cropseed.trace.service;
+package com.linyi.cropseed.trace.module.recommendation.service;
 
-import com.linyi.cropseed.trace.vo.RecommendationVO;
+import com.linyi.cropseed.trace.module.recommendation.model.vo.RecommendationVO;
 
 import java.util.List;
 
 /**
  * 推荐系统服务接口
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

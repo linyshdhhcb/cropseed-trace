@@ -1,4 +1,4 @@
-package com.linyi.cropseed.trace.vo;
+package com.linyi.cropseed.trace.module.recommendation.model.vo;
 
 import lombok.Data;
 
@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 /**
  * 推荐结果VO
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

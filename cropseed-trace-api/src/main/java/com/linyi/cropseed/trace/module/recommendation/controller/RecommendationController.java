@@ -1,18 +1,18 @@
-package com.linyi.cropseed.trace.controller;
+package com.linyi.cropseed.trace.module.recommendation.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.linyi.cropseed.trace.common.page.PageQuery;
 import com.linyi.cropseed.trace.common.page.PageResult;
 import com.linyi.cropseed.trace.common.result.Result;
-import com.linyi.cropseed.trace.entity.Recommendation;
-import com.linyi.cropseed.trace.entity.UserBehavior;
-import com.linyi.cropseed.trace.entity.UserProfile;
-import com.linyi.cropseed.trace.mapper.RecommendationMapper;
-import com.linyi.cropseed.trace.mapper.UserBehaviorMapper;
-import com.linyi.cropseed.trace.mapper.UserProfileMapper;
-import com.linyi.cropseed.trace.service.RecommendationService;
-import com.linyi.cropseed.trace.vo.RecommendationVO;
+import com.linyi.cropseed.trace.module.recommendation.model.entity.Recommendation;
+import com.linyi.cropseed.trace.module.recommendation.model.entity.UserBehavior;
+import com.linyi.cropseed.trace.module.recommendation.model.entity.UserProfile;
+import com.linyi.cropseed.trace.module.recommendation.mapper.RecommendationMapper;
+import com.linyi.cropseed.trace.module.recommendation.mapper.UserBehaviorMapper;
+import com.linyi.cropseed.trace.module.recommendation.mapper.UserProfileMapper;
+import com.linyi.cropseed.trace.module.recommendation.service.RecommendationService;
+import com.linyi.cropseed.trace.module.recommendation.model.vo.RecommendationVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ import java.util.List;
 
 /**
  * 推荐系统控制器
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */

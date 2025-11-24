@@ -1,4 +1,4 @@
-package com.linyi.cropseed.trace.entity;
+package com.linyi.cropseed.trace.module.recommendation.model.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.fasterxml.jackson.annotation.JsonFormat;

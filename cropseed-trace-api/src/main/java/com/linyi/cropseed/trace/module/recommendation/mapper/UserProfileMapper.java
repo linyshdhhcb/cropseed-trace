@@ -1,7 +1,7 @@
-package com.linyi.cropseed.trace.mapper;
+package com.linyi.cropseed.trace.module.recommendation.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.linyi.cropseed.trace.entity.UserProfile;
+import com.linyi.cropseed.trace.module.recommendation.model.entity.UserProfile;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Param;
@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * 用户画像Mapper
- * 
+ *
  * @author LinYi
  * @since 2025-10-25
  */
