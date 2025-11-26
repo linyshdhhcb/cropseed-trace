@@ -77,6 +77,13 @@ public class CacheConstants {
      * 过期时间: 1小时
      */
     public static final String CACHE_MENU_TREE = "menu:tree";
+    
+    /**
+     * 用户路由菜单缓存
+     * key: user:routes:{userId}
+     * 过期时间: 30分钟
+     */
+    public static final String CACHE_USER_ROUTES = "user:routes";
 
     // ==================== 缓存过期时间（秒） ====================
     

@@ -108,4 +108,11 @@ public class SysMenuController {
         sysMenuService.batchDeleteMenus(ids);
         return Result.success("批量删除成功");
     }
+
+    @Operation(summary = "获取用户路由菜单")
+    @GetMapping("/getUserRouters")
+    public Result<List<SysMenuVO>> getUserRouters() {
+        List<SysMenuVO> routers = sysMenuService.getUserRouterMenu();
+        return Result.success(routers);
+    }
 }

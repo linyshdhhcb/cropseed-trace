@@ -47,4 +47,9 @@ public interface SysMenuService {
      * 批量删除菜单
      */
     void batchDeleteMenus(List<Long> ids);
+
+    /**
+     * 获取用户路由菜单
+     */
+    List<SysMenuVO> getUserRouterMenu();
 }

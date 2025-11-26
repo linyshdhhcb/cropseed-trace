@@ -3,9 +3,12 @@ package com.linyi.cropseed.trace.module.system.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.linyi.cropseed.trace.common.constant.CacheConstants;
 import com.linyi.cropseed.trace.module.system.model.entity.SysMenu;
+import com.linyi.cropseed.trace.module.system.model.entity.SysRole;
 import com.linyi.cropseed.trace.module.system.mapper.SysMenuMapper;
+import com.linyi.cropseed.trace.module.system.mapper.SysRoleMapper;
 import com.linyi.cropseed.trace.module.system.service.SysMenuService;
 import com.linyi.cropseed.trace.module.system.model.vo.SysMenuVO;
+import com.linyi.cropseed.trace.common.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -31,6 +34,7 @@ import java.util.stream.Collectors;
 public class SysMenuServiceImpl implements SysMenuService {
 
     private final SysMenuMapper sysMenuMapper;
+    private final SysRoleMapper sysRoleMapper;
 
     @Override
     public List<SysMenuVO> getMenuList(String menuName, Integer status) {
@@ -119,6 +123,45 @@ public class SysMenuServiceImpl implements SysMenuService {
         // 手动映射permission字段到perms
         vo.setPerms(menu.getPermission());
         return vo;
+    }
+
+    @Override
+    @Cacheable(value = CacheConstants.CACHE_USER_ROUTES, 
+               key = "T(com.linyi.cropseed.trace.common.util.SecurityUtils).getCurrentUserId()", 
+               unless = "#result == null || #result.isEmpty()")
+    public List<SysMenuVO> getUserRouterMenu() {
+        // 获取当前登录用户ID
+        Long userId = SecurityUtils.getCurrentUserId();
+        
+        // 查询用户的角色列表
+        List<SysRole> userRoles = sysRoleMapper.selectRolesByUserId(userId);
+        
+        // 判断是否是超级管理员（role_id=1 或 role_code='SUPER_ADMIN'）
+        boolean isSuperAdmin = userRoles.stream()
+                .anyMatch(role -> role.getId().equals(1L) || "SUPER_ADMIN".equals(role.getRoleCode()));
+        
+        List<SysMenu> userMenus;
+        if (isSuperAdmin) {
+            // 超级管理员：查询所有菜单
+            log.info("用户{}是超级管理员，返回所有菜单", userId);
+            LambdaQueryWrapper<SysMenu> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(SysMenu::getDeletedFlag, 0)
+                    .eq(SysMenu::getStatus, 1)
+                    .orderByAsc(SysMenu::getSort);
+            userMenus = sysMenuMapper.selectList(queryWrapper);
+        } else {
+            // 普通用户：根据角色关联查询菜单
+            userMenus = sysMenuMapper.selectMenusByUserId(userId);
+        }
+        
+        // 过滤菜单：只保留目录(1)和菜单(2)类型，排除按钮(3)
+        List<SysMenu> routerMenus = userMenus.stream()
+                .filter(menu -> menu.getMenuType() == 1 || menu.getMenuType() == 2)
+                .filter(menu -> menu.getStatus() == 1) // 只保留启用的菜单
+                .collect(Collectors.toList());
+        
+        // 构建树形结构
+        return buildMenuTree(routerMenus, 0L);
     }
 
     // 构建菜单树
