@@ -3,10 +3,14 @@ package com.linyi.cropseed.trace.module.system.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.linyi.cropseed.trace.common.constant.CacheConstants;
 import com.linyi.cropseed.trace.common.exception.BusinessException;
 import com.linyi.cropseed.trace.common.page.PageQuery;
 import com.linyi.cropseed.trace.common.page.PageResult;
 import com.linyi.cropseed.trace.common.result.ResultCode;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import com.linyi.cropseed.trace.module.system.model.entity.SysRole;
 import com.linyi.cropseed.trace.module.system.model.entity.SysRoleMenu;
 import com.linyi.cropseed.trace.module.system.mapper.SysRoleMapper;
@@ -57,6 +61,7 @@ public class SysRoleServiceImpl implements SysRoleService {
     }
 
     @Override
+    @Cacheable(value = CacheConstants.CACHE_ROLE, key = "#id", unless = "#result == null")
     public SysRoleVO getRoleById(Long id) {
         SysRole role = sysRoleMapper.selectById(id);
         return role != null ? convertToVO(role) : null;
@@ -64,6 +69,7 @@ public class SysRoleServiceImpl implements SysRoleService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CacheConstants.CACHE_ROLE_ALL, allEntries = true)
     public void addRole(SysRole role, List<Long> menuIds) {
         sysRoleMapper.insert(role);
         // 分配菜单权限
@@ -75,6 +81,12 @@ public class SysRoleServiceImpl implements SysRoleService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConstants.CACHE_ROLE, key = "#role.id"),
+            @CacheEvict(value = CacheConstants.CACHE_ROLE_ALL, allEntries = true),
+            @CacheEvict(value = CacheConstants.CACHE_USER_ROLES, allEntries = true),
+            @CacheEvict(value = CacheConstants.CACHE_USER_PERMISSIONS, allEntries = true)
+    })
     public void updateRole(SysRole role, List<Long> menuIds) {
         sysRoleMapper.updateById(role);
         // 更新菜单权限
@@ -86,6 +98,13 @@ public class SysRoleServiceImpl implements SysRoleService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConstants.CACHE_ROLE, key = "#id"),
+            @CacheEvict(value = CacheConstants.CACHE_ROLE_ALL, allEntries = true),
+            @CacheEvict(value = CacheConstants.CACHE_ROLE_MENUS, key = "#id"),
+            @CacheEvict(value = CacheConstants.CACHE_USER_ROLES, allEntries = true),
+            @CacheEvict(value = CacheConstants.CACHE_USER_PERMISSIONS, allEntries = true)
+    })
     public void deleteRole(Long id) {
         // 检查是否为超级管理员角色，不允许删除
         SysRole role = sysRoleMapper.selectById(id);
@@ -103,6 +122,13 @@ public class SysRoleServiceImpl implements SysRoleService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConstants.CACHE_ROLE, allEntries = true),
+            @CacheEvict(value = CacheConstants.CACHE_ROLE_ALL, allEntries = true),
+            @CacheEvict(value = CacheConstants.CACHE_ROLE_MENUS, allEntries = true),
+            @CacheEvict(value = CacheConstants.CACHE_USER_ROLES, allEntries = true),
+            @CacheEvict(value = CacheConstants.CACHE_USER_PERMISSIONS, allEntries = true)
+    })
     public void batchDeleteRoles(List<Long> ids) {
         // 检查是否包含超级管理员角色，不允许删除
         List<SysRole> roles = sysRoleMapper.selectBatchIds(ids);
@@ -122,6 +148,10 @@ public class SysRoleServiceImpl implements SysRoleService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConstants.CACHE_ROLE_MENUS, key = "#roleId"),
+            @CacheEvict(value = CacheConstants.CACHE_USER_PERMISSIONS, allEntries = true)
+    })
     public void assignMenus(Long roleId, List<Long> menuIds) {
         // 先删除原有权限
         LambdaQueryWrapper<SysRoleMenu> deleteWrapper = new LambdaQueryWrapper<>();
@@ -146,6 +176,7 @@ public class SysRoleServiceImpl implements SysRoleService {
     }
 
     @Override
+    @Cacheable(value = CacheConstants.CACHE_ROLE_MENUS, key = "#roleId", unless = "#result == null || #result.isEmpty()")
     public List<Long> getRoleMenus(Long roleId) {
         // 获取角色菜单权限
         LambdaQueryWrapper<SysRoleMenu> wrapper = new LambdaQueryWrapper<>();
@@ -157,6 +188,7 @@ public class SysRoleServiceImpl implements SysRoleService {
     }
 
     @Override
+    @Cacheable(value = CacheConstants.CACHE_ROLE_ALL, unless = "#result == null || #result.isEmpty()")
     public List<SysRoleVO> getAllRoles() {
         LambdaQueryWrapper<SysRole> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysRole::getStatus, 1) // 只查询启用状态的角色

@@ -1,6 +1,7 @@
 package com.linyi.cropseed.trace.module.system.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.linyi.cropseed.trace.common.constant.CacheConstants;
 import com.linyi.cropseed.trace.module.system.model.entity.SysMenu;
 import com.linyi.cropseed.trace.module.system.mapper.SysMenuMapper;
 import com.linyi.cropseed.trace.module.system.service.SysMenuService;
@@ -8,6 +9,9 @@ import com.linyi.cropseed.trace.module.system.model.vo.SysMenuVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -42,6 +46,7 @@ public class SysMenuServiceImpl implements SysMenuService {
     }
 
     @Override
+    @Cacheable(value = CacheConstants.CACHE_MENU_TREE, unless = "#result == null || #result.isEmpty()")
     public List<SysMenuVO> getMenuTree() {
         // 实现菜单树形结构
         List<SysMenu> allMenus = sysMenuMapper.selectList(null);
@@ -49,6 +54,7 @@ public class SysMenuServiceImpl implements SysMenuService {
     }
 
     @Override
+    @Cacheable(value = CacheConstants.CACHE_MENU, key = "#id", unless = "#result == null")
     public SysMenuVO getMenuById(Long id) {
         SysMenu menu = sysMenuMapper.selectById(id);
         return menu != null ? convertToVO(menu) : null;
@@ -56,6 +62,11 @@ public class SysMenuServiceImpl implements SysMenuService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConstants.CACHE_MENU_TREE, allEntries = true),
+            @CacheEvict(value = CacheConstants.CACHE_MENU_LIST, allEntries = true),
+            @CacheEvict(value = CacheConstants.CACHE_USER_PERMISSIONS, allEntries = true)
+    })
     public void addMenu(SysMenu menu) {
         sysMenuMapper.insert(menu);
         log.info("新增菜单成功: {}", menu.getMenuName());
@@ -63,6 +74,12 @@ public class SysMenuServiceImpl implements SysMenuService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConstants.CACHE_MENU, key = "#menu.id"),
+            @CacheEvict(value = CacheConstants.CACHE_MENU_TREE, allEntries = true),
+            @CacheEvict(value = CacheConstants.CACHE_MENU_LIST, allEntries = true),
+            @CacheEvict(value = CacheConstants.CACHE_USER_PERMISSIONS, allEntries = true)
+    })
     public void updateMenu(SysMenu menu) {
         sysMenuMapper.updateById(menu);
         log.info("修改菜单成功: {}", menu.getMenuName());
@@ -70,6 +87,13 @@ public class SysMenuServiceImpl implements SysMenuService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConstants.CACHE_MENU, key = "#id"),
+            @CacheEvict(value = CacheConstants.CACHE_MENU_TREE, allEntries = true),
+            @CacheEvict(value = CacheConstants.CACHE_MENU_LIST, allEntries = true),
+            @CacheEvict(value = CacheConstants.CACHE_ROLE_MENUS, allEntries = true),
+            @CacheEvict(value = CacheConstants.CACHE_USER_PERMISSIONS, allEntries = true)
+    })
     public void deleteMenu(Long id) {
         sysMenuMapper.deleteById(id);
         log.info("删除菜单成功: {}", id);
@@ -77,6 +101,13 @@ public class SysMenuServiceImpl implements SysMenuService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConstants.CACHE_MENU, allEntries = true),
+            @CacheEvict(value = CacheConstants.CACHE_MENU_TREE, allEntries = true),
+            @CacheEvict(value = CacheConstants.CACHE_MENU_LIST, allEntries = true),
+            @CacheEvict(value = CacheConstants.CACHE_ROLE_MENUS, allEntries = true),
+            @CacheEvict(value = CacheConstants.CACHE_USER_PERMISSIONS, allEntries = true)
+    })
     public void batchDeleteMenus(List<Long> ids) {
         sysMenuMapper.deleteBatchIds(ids);
         log.info("批量删除菜单成功: {}", ids);

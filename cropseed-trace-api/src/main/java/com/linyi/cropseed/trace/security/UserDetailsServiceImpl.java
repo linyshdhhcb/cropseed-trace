@@ -64,7 +64,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             boolean disabled = !Objects.equals(wxUser.getStatus(), CommonConstant.STATUS_ENABLE);
             return User.builder()
                     .username(username)
-                    .password("")
+                    .password("N/A") // 微信用户不需要密码，设置占位符
                     .authorities(Collections.singletonList(new SimpleGrantedAuthority("ROLE_WX_USER")))
                     .accountExpired(false)
                     .accountLocked(disabled)

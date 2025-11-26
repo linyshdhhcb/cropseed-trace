@@ -6,11 +6,15 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.linyi.cropseed.trace.common.constant.CacheConstants;
 import com.linyi.cropseed.trace.common.page.PageQuery;
 import com.linyi.cropseed.trace.common.page.PageResult;
 import com.linyi.cropseed.trace.common.exception.BusinessException;
 import com.linyi.cropseed.trace.common.result.ResultCode;
 import com.linyi.cropseed.trace.common.util.SecurityUtils;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import com.linyi.cropseed.trace.module.system.model.entity.SysMenu;
 import com.linyi.cropseed.trace.module.system.model.entity.SysRole;
 import com.linyi.cropseed.trace.module.system.model.entity.SysUser;
@@ -64,6 +68,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     @Override
+    @Cacheable(value = CacheConstants.CACHE_USER, key = "#id", unless = "#result == null")
     public SysUserVO getUserById(Long id) {
         SysUser user = this.getById(id);
         if (user == null) {
@@ -74,6 +79,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = CacheConstants.CACHE_USER, key = "'username:' + #user.username")
     public void addUser(SysUser user, List<Long> roleIds) {
         // 检查用户名是否已存在
         if (getUserByUsername(user.getUsername()) != null) {
@@ -94,6 +100,12 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @Caching(evict = {
+            @CacheEvict(value = CacheConstants.CACHE_USER, key = "#user.id"),
+            @CacheEvict(value = CacheConstants.CACHE_USER, key = "'username:' + #user.username"),
+            @CacheEvict(value = CacheConstants.CACHE_USER_ROLES, key = "#user.id"),
+            @CacheEvict(value = CacheConstants.CACHE_USER_PERMISSIONS, key = "#user.id")
+    })
     public void updateUser(SysUser user, List<Long> roleIds) {
         SysUser existUser = this.getById(user.getId());
         if (existUser == null) {
@@ -132,6 +144,11 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @Caching(evict = {
+            @CacheEvict(value = CacheConstants.CACHE_USER, key = "#id"),
+            @CacheEvict(value = CacheConstants.CACHE_USER_ROLES, key = "#id"),
+            @CacheEvict(value = CacheConstants.CACHE_USER_PERMISSIONS, key = "#id")
+    })
     public void deleteUser(Long id) {
         SysUser user = this.getById(id);
         if (user == null) {
@@ -147,6 +164,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     @Override
+    @CacheEvict(value = CacheConstants.CACHE_USER, key = "#id")
     public void resetPassword(Long id, String newPassword) {
         SysUser user = this.getById(id);
         if (user == null) {
@@ -158,6 +176,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     @Override
+    @CacheEvict(value = CacheConstants.CACHE_USER, key = "#id")
     public void changePassword(Long id, String oldPassword, String newPassword) {
         SysUser user = this.getById(id);
         if (user == null) {
@@ -174,12 +193,14 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     @Override
+    // 暂时移除缓存，因为@JsonIgnore导致密码字段缓存丢失
+    // @Cacheable(value = CacheConstants.CACHE_USER, key = "'username:' + #username", unless = "#result == null")
     public SysUser getUserByUsername(String username) {
-        return this.getOne(new LambdaQueryWrapper<SysUser>()
-                .eq(SysUser::getUsername, username));
+        return baseMapper.getUserByUsername(username);
     }
 
     @Override
+    @Cacheable(value = CacheConstants.CACHE_USER_ROLES, key = "#userId", unless = "#result == null || #result.isEmpty()")
     public List<String> getUserRoles(Long userId) {
         List<SysRole> roles = sysRoleMapper.selectRolesByUserId(userId);
         return roles.stream()
@@ -188,6 +209,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     @Override
+    @Cacheable(value = CacheConstants.CACHE_USER_PERMISSIONS, key = "#userId", unless = "#result == null || #result.isEmpty()")
     public List<String> getUserPermissions(Long userId) {
         // 实现权限查询逻辑
         // 先查询用户角色
@@ -218,6 +240,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @Caching(evict = {
+            @CacheEvict(value = CacheConstants.CACHE_USER_ROLES, key = "#userId"),
+            @CacheEvict(value = CacheConstants.CACHE_USER_PERMISSIONS, key = "#userId")
+    })
     public void assignRoles(Long userId, List<Long> roleIds) {
         // 删除原有角色
         sysUserRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>()
@@ -242,6 +268,11 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConstants.CACHE_USER, allEntries = true),
+            @CacheEvict(value = CacheConstants.CACHE_USER_ROLES, allEntries = true),
+            @CacheEvict(value = CacheConstants.CACHE_USER_PERMISSIONS, allEntries = true)
+    })
     public void batchDeleteUsers(List<Long> ids) {
         if (CollUtil.isEmpty(ids)) {
             return;
