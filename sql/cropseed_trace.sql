@@ -11,7 +11,7 @@
  Target Server Version : 80035 (8.0.35)
  File Encoding         : 65001
 
- Date: 22/11/2025 15:20:01
+ Date: 27/11/2025 12:06:28
 */
 
 SET NAMES utf8mb4;
@@ -160,7 +160,7 @@ CREATE TABLE `inventory_inbound`  (
   `update_by` bigint NULL DEFAULT NULL COMMENT '修改用户ID',
   `deleted_flag` tinyint NOT NULL DEFAULT 0 COMMENT '删除标记',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '入库记录表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '入库记录表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of inventory_inbound
@@ -188,7 +188,7 @@ CREATE TABLE `inventory_outbound`  (
   `update_by` bigint NULL DEFAULT NULL COMMENT '修改用户ID',
   `deleted_flag` tinyint NOT NULL DEFAULT 0 COMMENT '删除标记',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '出库记录表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '出库记录表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of inventory_outbound
@@ -641,53 +641,53 @@ CREATE TABLE `sys_menu`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_parent_id`(`parent_id` ASC) USING BTREE,
   INDEX `idx_sort`(`sort` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 128 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '菜单权限表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 241 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '菜单权限表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of sys_menu
 -- ----------------------------
 INSERT INTO `sys_menu` VALUES (1, 0, '系统管理', 1, NULL, '/system', NULL, 'system', 10, 1, '2025-10-27 10:48:38', 1, NULL, NULL, 0);
-INSERT INTO `sys_menu` VALUES (2, 1, '用户管理', 2, NULL, 'user', 'system/user/index', 'user', 1, 1, '2025-10-27 10:48:38', 1, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (2, 1, '用户管理', 2, NULL, 'user', '@/views/system/user/index.vue', 'user', 1, 1, '2025-10-27 10:48:38', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (3, 2, '用户查询', 3, 'system:user:list', NULL, NULL, NULL, 1, 1, '2025-10-27 10:48:38', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (4, 2, '用户详情', 3, 'system:user:query', NULL, NULL, NULL, 2, 1, '2025-10-27 10:48:38', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (5, 2, '新增用户', 3, 'system:user:add', NULL, NULL, NULL, 3, 1, '2025-10-27 10:48:38', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (6, 2, '编辑用户', 3, 'system:user:edit', NULL, NULL, NULL, 4, 1, '2025-10-27 10:48:38', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (7, 2, '删除用户', 3, 'system:user:remove', NULL, NULL, NULL, 5, 1, '2025-10-27 10:48:38', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (8, 2, '重置密码', 3, 'system:user:resetPwd', NULL, NULL, NULL, 6, 1, '2025-10-27 10:48:38', 1, NULL, NULL, 0);
-INSERT INTO `sys_menu` VALUES (9, 1, '角色管理', 2, NULL, 'role', 'system/role/index', 'role', 2, 1, '2025-10-27 10:48:38', 1, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (9, 1, '角色管理', 2, NULL, 'role', '@/views/system/role/index.vue', 'role', 2, 1, '2025-10-27 10:48:38', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (10, 9, '角色查询', 3, 'system:role:list', NULL, NULL, NULL, 1, 1, '2025-10-27 10:48:38', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (11, 9, '角色详情', 3, 'system:role:query', NULL, NULL, NULL, 2, 1, '2025-10-27 10:48:38', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (12, 9, '新增角色', 3, 'system:role:add', NULL, NULL, NULL, 3, 1, '2025-10-27 10:48:38', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (13, 9, '编辑角色', 3, 'system:role:edit', NULL, NULL, NULL, 4, 1, '2025-10-27 10:48:38', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (14, 9, '删除角色', 3, 'system:role:remove', NULL, NULL, NULL, 5, 1, '2025-10-27 10:48:38', 1, NULL, NULL, 0);
-INSERT INTO `sys_menu` VALUES (15, 1, '菜单管理', 2, NULL, 'menu', 'system/menu/index', 'menu', 3, 1, '2025-10-27 10:48:38', 1, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (15, 1, '菜单管理', 2, NULL, 'menu', '@/views/system/menu/index.vue', 'menu', 3, 1, '2025-10-27 10:48:38', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (16, 15, '菜单查询', 3, 'system:menu:list', NULL, NULL, NULL, 1, 1, '2025-10-27 10:48:38', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (17, 15, '菜单详情', 3, 'system:menu:query', NULL, NULL, NULL, 2, 1, '2025-10-27 10:48:38', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (18, 15, '新增菜单', 3, 'system:menu:add', NULL, NULL, NULL, 3, 1, '2025-10-27 10:48:38', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (19, 15, '编辑菜单', 3, 'system:menu:edit', NULL, NULL, NULL, 4, 1, '2025-10-27 10:48:38', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (20, 15, '删除菜单', 3, 'system:menu:remove', NULL, NULL, NULL, 5, 1, '2025-10-27 10:48:38', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (21, 0, '种子管理', 1, NULL, '/seed', NULL, 'tree-table', 20, 1, '2025-10-27 14:26:25', 1, NULL, NULL, 0);
-INSERT INTO `sys_menu` VALUES (22, 21, '种子批次', 2, NULL, 'batch', 'seed/batch/index', 'document', 1, 1, '2025-10-27 14:26:25', 1, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (22, 21, '种子批次', 2, NULL, 'batch', '@/views/seed/batch/index.vue', 'document', 1, 1, '2025-10-27 14:26:25', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (23, 22, '批次查询', 3, 'seed:batch:list', NULL, NULL, NULL, 1, 1, '2025-10-27 14:26:25', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (24, 22, '批次详情', 3, 'seed:batch:query', NULL, NULL, NULL, 2, 1, '2025-10-27 14:26:25', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (25, 22, '新增批次', 3, 'seed:batch:add', NULL, NULL, NULL, 3, 1, '2025-10-27 14:26:25', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (26, 22, '编辑批次', 3, 'seed:batch:edit', NULL, NULL, NULL, 4, 1, '2025-10-27 14:26:25', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (27, 22, '删除批次', 3, 'seed:batch:remove', NULL, NULL, NULL, 5, 1, '2025-10-27 14:26:25', 1, NULL, NULL, 0);
-INSERT INTO `sys_menu` VALUES (28, 21, '种子品类', 2, NULL, 'category', 'seed/category/index', 'category', 2, 1, '2025-10-27 14:26:25', 1, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (28, 21, '种子品类', 2, NULL, 'category', '@/views/seed/category/index.vue', 'category', 2, 1, '2025-10-27 14:26:25', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (29, 28, '品类查询', 3, 'seed:category:list', NULL, NULL, NULL, 1, 1, '2025-10-27 14:26:25', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (30, 28, '品类详情', 3, 'seed:category:query', NULL, NULL, NULL, 2, 1, '2025-10-27 14:26:25', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (31, 28, '新增品类', 3, 'seed:category:add', NULL, NULL, NULL, 3, 1, '2025-10-27 14:26:25', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (32, 28, '编辑品类', 3, 'seed:category:edit', NULL, NULL, NULL, 4, 1, '2025-10-27 14:26:25', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (33, 28, '删除品类', 3, 'seed:category:remove', NULL, NULL, NULL, 5, 1, '2025-10-27 14:26:25', 1, NULL, NULL, 0);
-INSERT INTO `sys_menu` VALUES (34, 21, '种子信息', 2, NULL, 'info', 'seed/info/index', 'info-card', 3, 1, '2025-10-27 14:26:25', 1, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (34, 21, '种子信息', 2, NULL, 'info', '@/views/seed/info/index.vue', 'info-card', 3, 1, '2025-10-27 14:26:25', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (35, 34, '信息查询', 3, 'seed:info:list', NULL, NULL, NULL, 1, 1, '2025-10-27 14:26:25', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (36, 34, '信息详情', 3, 'seed:info:query', NULL, NULL, NULL, 2, 1, '2025-10-27 14:26:25', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (37, 34, '新增信息', 3, 'seed:info:add', NULL, NULL, NULL, 3, 1, '2025-10-27 14:26:25', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (38, 34, '编辑信息', 3, 'seed:info:edit', NULL, NULL, NULL, 4, 1, '2025-10-27 14:26:25', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (39, 34, '删除信息', 3, 'seed:info:remove', NULL, NULL, NULL, 5, 1, '2025-10-27 14:26:25', 1, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (40, 0, '订单管理', 1, NULL, '/order', NULL, 'icon-order', 10, 1, '2025-11-06 10:44:41', NULL, NULL, NULL, 0);
-INSERT INTO `sys_menu` VALUES (41, 40, '订单列表', 2, NULL, 'list', 'views/order/list/index.vue', 'icon-list', 1, 1, '2025-11-06 10:44:41', NULL, NULL, NULL, 0);
-INSERT INTO `sys_menu` VALUES (42, 41, '订单详情', 2, NULL, 'detail', 'views/order/detail/index.vue', 'icon-detail', 2, 1, '2025-11-06 10:44:41', NULL, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (41, 40, '订单列表', 2, NULL, 'list', '@/views/order/list/index.vue', 'icon-list', 1, 1, '2025-11-06 10:44:41', NULL, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (42, 41, '订单详情', 2, NULL, 'detail', '@/views/order/detail/index.vue', 'icon-detail', 2, 1, '2025-11-06 10:44:41', NULL, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (43, 41, '查看订单', 3, 'order:list', NULL, NULL, NULL, 1, 1, '2025-11-06 10:44:41', NULL, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (44, 41, '创建订单', 3, 'order:create', NULL, NULL, NULL, 2, 1, '2025-11-06 10:44:41', NULL, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (45, 41, '取消订单', 3, 'order:cancel', NULL, NULL, NULL, 3, 1, '2025-11-06 10:44:41', NULL, NULL, NULL, 0);
@@ -699,19 +699,19 @@ INSERT INTO `sys_menu` VALUES (50, 42, '订单完成', 3, 'order:complete', NULL
 INSERT INTO `sys_menu` VALUES (51, 42, '申请退款', 3, 'order:refund', NULL, NULL, NULL, 9, 1, '2025-11-06 10:44:41', NULL, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (52, 42, '处理退款', 3, 'order:process-refund', NULL, NULL, NULL, 10, 1, '2025-11-06 10:44:41', NULL, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (53, 0, '微信管理', 1, NULL, '/wechat', NULL, 'icon-wechat', 20, 1, '2025-11-06 14:32:41', NULL, NULL, NULL, 0);
-INSERT INTO `sys_menu` VALUES (54, 53, '微信用户管理', 2, NULL, 'user', 'views/wechat/user/index.vue', 'icon-user', 1, 1, '2025-11-06 14:32:41', NULL, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (54, 53, '微信用户管理', 2, NULL, 'user', '@/views/wechat/user/index.vue', 'icon-user', 1, 1, '2025-11-06 14:32:41', NULL, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (55, 54, '查看用户列表', 3, 'wechat:user:list', NULL, NULL, NULL, 1, 1, '2025-11-06 14:32:41', NULL, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (56, 54, '查询用户', 3, 'wechat:user:query', NULL, NULL, NULL, 2, 1, '2025-11-06 14:32:41', NULL, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (57, 54, '编辑用户', 3, 'wechat:user:edit', NULL, NULL, NULL, 3, 1, '2025-11-06 14:32:41', NULL, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (58, 54, '删除用户', 3, 'wechat:user:remove', '', '', '', 4, 1, '2025-11-06 14:32:41', NULL, '2025-11-18 12:30:30', 1, 0);
 INSERT INTO `sys_menu` VALUES (59, 0, '统计分析', 1, NULL, '/statistics', 'Layout', 'el-icon-s-data', 10, 1, '2025-11-20 19:36:20', 1, '2025-11-20 19:36:20', 1, 0);
-INSERT INTO `sys_menu` VALUES (60, 59, '统计查看', 2, 'statistics:view', 'list', 'statistics/index', 'el-icon-s-data', 1, 1, '2025-11-20 19:36:20', 1, '2025-11-20 19:36:20', 1, 0);
+INSERT INTO `sys_menu` VALUES (60, 59, '统计查看', 2, 'statistics:view', 'list', '@/views/statistics/index.vue', 'el-icon-s-data', 1, 1, '2025-11-20 19:36:20', 1, '2025-11-20 19:36:20', 1, 0);
 INSERT INTO `sys_menu` VALUES (61, 60, '导出', 3, 'statistics:export', NULL, NULL, NULL, 2, 1, '2025-11-20 19:36:20', 1, '2025-11-20 19:36:20', 1, 0);
 INSERT INTO `sys_menu` VALUES (100, 0, '库存管理', 1, NULL, '/inventory', NULL, 'ri:stack-line', 5, 1, '2025-10-29 14:43:04', NULL, NULL, NULL, 0);
-INSERT INTO `sys_menu` VALUES (101, 100, '库存管理', 2, NULL, 'stock', 'inventory/stock/index', NULL, 1, 1, '2025-10-29 14:43:04', NULL, NULL, NULL, 0);
-INSERT INTO `sys_menu` VALUES (102, 100, '入库管理', 2, NULL, 'inbound', 'inventory/inbound/index', NULL, 2, 1, '2025-10-29 14:43:04', NULL, NULL, NULL, 0);
-INSERT INTO `sys_menu` VALUES (103, 100, '出库管理', 2, NULL, 'outbound', 'inventory/outbound/index', NULL, 3, 1, '2025-10-29 14:43:04', NULL, NULL, NULL, 0);
-INSERT INTO `sys_menu` VALUES (104, 100, '仓库管理', 2, NULL, 'warehouse', 'inventory/warehouse/index', NULL, 4, 1, '2025-10-29 14:43:04', NULL, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (101, 100, '库存管理', 2, NULL, 'stock', '@/views/inventory/stock/index.vue', NULL, 1, 1, '2025-10-29 14:43:04', NULL, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (102, 100, '入库管理', 2, NULL, 'inbound', '@/views/inventory/inbound/index.vue', NULL, 2, 1, '2025-10-29 14:43:04', NULL, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (103, 100, '出库管理', 2, NULL, 'outbound', '@/views/inventory/outbound/index.vue', NULL, 3, 1, '2025-10-29 14:43:04', NULL, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (104, 100, '仓库管理', 2, NULL, 'warehouse', '@/views/inventory/warehouse/index.vue', NULL, 4, 1, '2025-10-29 14:43:04', NULL, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (105, 101, '查询库存', 3, 'inventory:list', NULL, NULL, NULL, 1, 1, '2025-10-29 14:43:04', NULL, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (106, 101, '入库', 3, 'inventory:inbound', NULL, NULL, NULL, 2, 1, '2025-10-29 14:43:04', NULL, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (107, 101, '出库', 3, 'inventory:outbound', NULL, NULL, NULL, 3, 1, '2025-10-29 14:43:04', NULL, NULL, NULL, 0);
@@ -735,6 +735,24 @@ INSERT INTO `sys_menu` VALUES (124, 104, '编辑仓库', 3, 'warehouse:edit', NU
 INSERT INTO `sys_menu` VALUES (125, 104, '删除仓库', 3, 'warehouse:remove', NULL, NULL, NULL, 5, 1, '2025-10-29 14:43:04', NULL, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (126, 102, '修改入库', 3, 'inventory:inbound:edit', NULL, NULL, NULL, 4, 1, NULL, NULL, NULL, NULL, 0);
 INSERT INTO `sys_menu` VALUES (127, 102, '删除入库', 3, 'inventory:inbound:remove', NULL, NULL, NULL, 5, 1, NULL, NULL, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (201, 0, '数据统计', 2, NULL, 'statistics', '@/views/statistics/index.vue', 'TrendCharts', 2, 1, '2025-11-26 18:47:00', 1, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (210, 0, '推荐系统', 1, NULL, '/recommendation', NULL, 'DataAnalysis', 30, 1, '2025-11-26 18:47:00', 1, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (211, 210, '用户画像', 2, NULL, 'profile', '@/views/recommendation/profile/index.vue', 'User', 1, 1, '2025-11-26 18:47:00', 1, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (212, 210, '行为分析', 2, NULL, 'behavior', '@/views/recommendation/behavior/index.vue', 'Monitor', 2, 1, '2025-11-26 18:47:00', 1, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (213, 210, '推荐结果', 2, NULL, 'result', '@/views/recommendation/result/index.vue', 'Trophy', 3, 1, '2025-11-26 18:47:00', 1, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (214, 210, '推荐展示', 2, NULL, 'display', '@/views/recommendation/display/index.vue', 'Present', 4, 1, '2025-11-26 18:47:00', 1, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (220, 0, '溯源管理', 1, NULL, '/trace', NULL, 'Link', 40, 1, '2025-11-26 18:47:00', 1, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (221, 220, '溯源总览', 2, NULL, 'index', '@/views/trace/index.vue', 'Menu', 1, 1, '2025-11-26 18:47:00', 1, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (222, 220, '溯源记录', 2, NULL, 'records', '@/views/trace/records.vue', 'Document', 2, 1, '2025-11-26 18:47:00', 1, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (223, 220, '溯源码管理', 2, NULL, 'codes', '@/views/trace/codes.vue', 'Postcard', 3, 1, '2025-11-26 18:47:00', 1, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (224, 220, '溯源实体', 2, NULL, 'entities', '@/views/trace/entities.vue', 'OfficeBuilding', 4, 1, '2025-11-26 18:47:00', 1, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (225, 220, '溯源查询', 2, NULL, 'query', '@/views/trace/query.vue', 'Search', 5, 1, '2025-11-26 18:47:00', 1, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (226, 220, '区块链管理', 2, NULL, 'blockchain', '@/views/trace/blockchain.vue', 'Connection', 6, 1, '2025-11-26 18:47:00', 1, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (227, 220, '数据验证', 2, NULL, 'verify', '@/views/trace/verify.vue', 'Select', 7, 1, '2025-11-26 18:47:00', 1, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (230, 0, 'Excel处理', 1, NULL, '/excel', NULL, 'Files', 50, 1, '2025-11-26 18:47:00', 1, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (231, 230, '数据导入', 2, NULL, 'import', '@/views/excel/import/index.vue', 'Upload', 1, 1, '2025-11-26 18:47:00', 1, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (232, 230, '数据导出', 2, NULL, 'export', '@/views/excel/export/index.vue', 'Download', 2, 1, '2025-11-26 18:47:00', 1, NULL, NULL, 0);
+INSERT INTO `sys_menu` VALUES (240, 53, '支付管理', 2, NULL, 'pay', '@/views/wechat/pay/index.vue', 'CreditCard', 2, 1, '2025-11-26 18:47:00', 1, NULL, NULL, 0);
 
 -- ----------------------------
 -- Table structure for sys_operation_log
@@ -1219,6 +1237,14 @@ INSERT INTO `user_behavior` VALUES (1991797288047362048, 1986823631491473408, 1,
 INSERT INTO `user_behavior` VALUES (1991797327608037376, 1986823631491473408, 1, 1, 0, '首页浏览', 5, '2025-11-21 17:14:23', '94130db932824c2fbf4a2caaa7c0b173', NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-21 17:14:23', '2025-11-21 17:14:23', '1986823631491473408', '1986823631491473408', 0);
 INSERT INTO `user_behavior` VALUES (1991805565825073152, 1986823631491473408, 1, 1, 0, '首页浏览', 5, '2025-11-21 17:47:08', '432ae4d16bc44bb487ae8fd55494b474', NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-21 17:47:08', '2025-11-21 17:47:08', '1986823631491473408', '1986823631491473408', 0);
 INSERT INTO `user_behavior` VALUES (1991805635706372096, 1986823631491473408, 1, 1, 0, '购物车页面', 3, '2025-11-21 17:47:24', '61c72c05f8dd4924be437d2bb44e1ce7', NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-21 17:47:24', '2025-11-21 17:47:24', '1986823631491473408', '1986823631491473408', 0);
+INSERT INTO `user_behavior` VALUES (1992143004255051776, 1986823631491473408, 1, 1, 0, '首页浏览', 5, '2025-11-22 16:07:59', '7d732ad854be4b228d6a1c3fcb547d31', NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-22 16:07:59', '2025-11-22 16:07:59', '1986823631491473408', '1986823631491473408', 0);
+INSERT INTO `user_behavior` VALUES (1992147602986426368, 1986823631491473408, 1, 1, 2, '首页推荐', 1, '2025-11-22 16:26:16', 'e319fcb788e54a939833bcf0e791cd37', NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-22 16:26:16', '2025-11-22 16:26:16', '1986823631491473408', '1986823631491473408', 0);
+INSERT INTO `user_behavior` VALUES (1992147613883228160, 1986823631491473408, 1, 1, 2, '商品详情页-浏览', 2, '2025-11-22 16:26:18', '52035b0d552a48219854277fdbfe0d33', NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-22 16:26:18', '2025-11-22 16:26:18', '1986823631491473408', '1986823631491473408', 0);
+INSERT INTO `user_behavior` VALUES (1992147627678294016, 1986823631491473408, 1, 1, 2, '商品详情页-离开', 5, '2025-11-22 16:26:21', 'a63d49efd3164df382780624a005d96d', NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-22 16:26:21', '2025-11-22 16:26:21', '1986823631491473408', '1986823631491473408', 0);
+INSERT INTO `user_behavior` VALUES (1992147631172149248, 1986823631491473408, 1, 1, 3, '首页推荐', 1, '2025-11-22 16:26:22', 'e929441bd24645b3963f8a247763ce4c', NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-22 16:26:22', '2025-11-22 16:26:22', '1986823631491473408', '1986823631491473408', 0);
+INSERT INTO `user_behavior` VALUES (1992147641968287744, 1986823631491473408, 1, 1, 3, '商品详情页-浏览', 2, '2025-11-22 16:26:25', 'caef5da49af64476916ba4fb7cddc7ee', NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-22 16:26:25', '2025-11-22 16:26:25', '1986823631491473408', '1986823631491473408', 0);
+INSERT INTO `user_behavior` VALUES (1992147691503017984, 1986823631491473408, 1, 1, 3, '商品详情页-离开', 13, '2025-11-22 16:26:37', 'e9a181befc594fd39de2aa9695d90f59', NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-22 16:26:37', '2025-11-22 16:26:37', '1986823631491473408', '1986823631491473408', 0);
+INSERT INTO `user_behavior` VALUES (1992147848885886976, 1986823631491473408, 1, 1, 0, '购物车页面', 3, '2025-11-22 16:27:14', '8a5223aaca4b46d5a1ff19ac78586327', NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-22 16:27:14', '2025-11-22 16:27:14', '1986823631491473408', '1986823631491473408', 0);
 
 -- ----------------------------
 -- Table structure for user_profile
@@ -1328,6 +1354,6 @@ CREATE TABLE `wx_user`  (
 -- ----------------------------
 INSERT INTO `wx_user` VALUES (1, 'test_openid_001', NULL, '测试用户1', 'https://example.com/avatar1.jpg', 1, NULL, NULL, NULL, NULL, 1, '2025-10-25 17:30:03', '2025-10-25 17:30:03', '2025-10-25 17:30:03', NULL, NULL, 0);
 INSERT INTO `wx_user` VALUES (2, 'test_openid_002', NULL, '测试用户2', 'https://example.com/avatar2.jpg', 2, NULL, NULL, NULL, NULL, 1, '2025-10-25 17:30:03', '2025-10-25 17:30:03', '2025-10-25 17:30:03', NULL, NULL, 0);
-INSERT INTO `wx_user` VALUES (1986823631491473408, 'oWKkl7VWjko_73U90jDtwjvpYbFI', NULL, '林一', 'http://117.72.101.170:9000/cropseed-trace/7d26886dd20843f6985b87a7726ed5c8.jpg', 1, '中国', '广东省', '广州市', '13112665250', 1, '2025-11-16 17:23:26', '2025-11-07 23:50:42', '2025-11-07 23:50:42', NULL, '1986823631491473408', 0);
+INSERT INTO `wx_user` VALUES (1986823631491473408, 'oWKkl7VWjko_73U90jDtwjvpYbFI', NULL, '林一', 'http://117.72.101.170:9000/cropseed-trace/7d26886dd20843f6985b87a7726ed5c8.jpg', 1, '中国', '广东省', '广州市', '13112665250', 1, '2025-11-22 16:30:03', '2025-11-07 23:50:42', '2025-11-07 23:50:42', NULL, '1986823631491473408', 0);
 
 SET FOREIGN_KEY_CHECKS = 1;
