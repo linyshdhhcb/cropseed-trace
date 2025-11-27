@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import { login, getUserInfo, logout } from "@/api/user";
 import { getToken, setToken, removeToken } from "@/utils/auth";
+import { usePermissionStore } from "./permission";
 
 export const useUserStore = defineStore("user", () => {
   const token = ref(getToken());
@@ -22,6 +23,11 @@ export const useUserStore = defineStore("user", () => {
       const { token: accessToken } = response.data;
       token.value = accessToken;
       setToken(accessToken);
+      
+      // 清除之前的动态路由，确保重新加载
+      const permissionStore = usePermissionStore();
+      permissionStore.resetRoutes();
+      
       return response;
     } catch (error) {
       throw error;
@@ -61,6 +67,10 @@ export const useUserStore = defineStore("user", () => {
       roles.value = [];
       permissions.value = [];
       removeToken();
+      
+      // 清空动态路由
+      const permissionStore = usePermissionStore();
+      permissionStore.resetRoutes();
     } catch (error) {
       throw error;
     }
@@ -79,6 +89,10 @@ export const useUserStore = defineStore("user", () => {
     roles.value = [];
     permissions.value = [];
     removeToken();
+    
+    // 清空动态路由
+    const permissionStore = usePermissionStore();
+    permissionStore.resetRoutes();
   };
 
   return {
