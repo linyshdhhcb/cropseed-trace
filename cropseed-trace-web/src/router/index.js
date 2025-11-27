@@ -1,12 +1,17 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useUserStore } from "@/stores/user";
+import { usePermissionStore } from "@/stores/permission";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 
 // 配置NProgress
 NProgress.configure({ showSpinner: false });
 
-const routes = [
+// 白名单路由（不需要权限）
+const whiteList = ["/login"];
+
+// 静态路由（不需要权限的基础路由）
+const constantRoutes = [
   {
     path: "/login",
     name: "Login",
@@ -15,189 +20,17 @@ const routes = [
   },
   {
     path: "/",
+    name: "Layout",
     component: () => import("@/layout/index.vue"),
     redirect: "/dashboard",
     children: [
+      // 首页默认路由，所有人都可以访问
       {
         path: "dashboard",
         name: "Dashboard",
         component: () => import("@/views/dashboard/index.vue"),
         meta: { title: "首页", icon: "Odometer", requiresAuth: true },
-      },
-      {
-        path: "statistics",
-        name: "Statistics",
-        component: () => import("@/views/statistics/index.vue"),
-        meta: { title: "数据统计", icon: "TrendCharts", requiresAuth: true },
-      },
-      {
-        path: "system/user",
-        name: "SystemUser",
-        component: () => import("@/views/system/user/index.vue"),
-        meta: { title: "用户管理", requiresAuth: true },
-      },
-      {
-        path: "system/role",
-        name: "SystemRole",
-        component: () => import("@/views/system/role/index.vue"),
-        meta: { title: "角色管理", requiresAuth: true },
-      },
-      {
-        path: "system/menu",
-        name: "SystemMenu",
-        component: () => import("@/views/system/menu/index.vue"),
-        meta: { title: "菜单管理", requiresAuth: true },
-      },
-      {
-        path: "seed/category",
-        name: "SeedCategory",
-        component: () => import("@/views/seed/category/index.vue"),
-        meta: { title: "品类管理", requiresAuth: true },
-      },
-      {
-        path: "seed/info",
-        name: "SeedInfo",
-        component: () => import("@/views/seed/info/index.vue"),
-        meta: { title: "种子档案", requiresAuth: true },
-      },
-      {
-        path: "seed/batch",
-        name: "SeedBatch",
-        component: () => import("@/views/seed/batch/index.vue"),
-        meta: { title: "批次管理", requiresAuth: true },
-      },
-      {
-        path: "inventory/warehouse",
-        name: "Warehouse",
-        component: () => import("@/views/inventory/warehouse/index.vue"),
-        meta: { title: "仓库管理", requiresAuth: true },
-      },
-      {
-        path: "inventory/stock",
-        name: "Inventory",
-        component: () => import("@/views/inventory/stock/index.vue"),
-        meta: { title: "库存管理", requiresAuth: true },
-      },
-      {
-        path: "inventory/inbound",
-        name: "Inbound",
-        component: () => import("@/views/inventory/inbound/index.vue"),
-        meta: { title: "入库管理", requiresAuth: true },
-      },
-      {
-        path: "inventory/outbound",
-        name: "Outbound",
-        component: () => import("@/views/inventory/outbound/index.vue"),
-        meta: { title: "出库管理", requiresAuth: true },
-      },
-      {
-        path: "order/list",
-        name: "OrderList",
-        component: () => import("@/views/order/list/index.vue"),
-        meta: { title: "订单列表", requiresAuth: true },
-      },
-      {
-        path: "order/detail/:id",
-        name: "OrderDetail",
-        component: () => import("@/views/order/detail/index.vue"),
-        meta: { title: "订单详情", requiresAuth: true },
-      },
-      {
-        path: "wechat/user",
-        name: "WechatUser",
-        component: () => import("@/views/wechat/user/index.vue"),
-        meta: { title: "微信用户", requiresAuth: true },
-      },
-      {
-        path: "wechat/pay",
-        name: "WechatPay",
-        component: () => import("@/views/wechat/pay/index.vue"),
-        meta: { title: "支付管理", requiresAuth: true },
-      },
-      {
-        path: "recommendation/profile",
-        name: "UserProfile",
-        component: () => import("@/views/recommendation/profile/index.vue"),
-        meta: { title: "用户画像", requiresAuth: true },
-      },
-      {
-        path: "recommendation/behavior",
-        name: "UserBehavior",
-        component: () => import("@/views/recommendation/behavior/index.vue"),
-        meta: { title: "行为分析", requiresAuth: true },
-      },
-      {
-        path: "recommendation/result",
-        name: "RecommendationResult",
-        component: () => import("@/views/recommendation/result/index.vue"),
-        meta: { title: "推荐结果", requiresAuth: true },
-      },
-      {
-        path: "recommendation/display",
-        name: "RecommendationDisplay",
-        component: () => import("@/views/recommendation/display/index.vue"),
-        meta: { title: "推荐展示", requiresAuth: true },
-      },
-      {
-        path: "trace",
-        name: "TraceIndex",
-        component: () => import("@/views/trace/index.vue"),
-        meta: { title: "溯源管理", requiresAuth: true },
-      },
-      {
-        path: "trace/records",
-        name: "TraceRecords",
-        component: () => import("@/views/trace/records.vue"),
-        meta: { title: "溯源记录", requiresAuth: true },
-      },
-      {
-        path: "trace/records/:id",
-        name: "TraceRecordDetail",
-        component: () => import("@/views/trace/records.vue"),
-        meta: { title: "溯源记录详情", requiresAuth: true },
-      },
-      {
-        path: "trace/codes",
-        name: "TraceCodes",
-        component: () => import("@/views/trace/codes.vue"),
-        meta: { title: "溯源码管理", requiresAuth: true },
-      },
-      {
-        path: "trace/entities",
-        name: "TraceEntities",
-        component: () => import("@/views/trace/entities.vue"),
-        meta: { title: "溯源实体", requiresAuth: true },
-      },
-      {
-        path: "trace/query",
-        name: "TraceQuery",
-        component: () => import("@/views/trace/query.vue"),
-        meta: { title: "溯源查询", requiresAuth: true },
-      },
-      {
-        path: "trace/blockchain",
-        name: "TraceBlockchain",
-        component: () => import("@/views/trace/blockchain.vue"),
-        meta: { title: "区块链管理", requiresAuth: true },
-      },
-      {
-        path: "trace/verify",
-        name: "TraceVerify",
-        component: () => import("@/views/trace/verify.vue"),
-        meta: { title: "数据验证", requiresAuth: true },
-      },
-      {
-        path: "excel/import",
-        name: "ExcelImport",
-        component: () => import("@/views/excel/import/index.vue"),
-        meta: { title: "数据导入", requiresAuth: true },
-      },
-      {
-        path: "excel/export",
-        name: "ExcelExport",
-        component: () => import("@/views/excel/export/index.vue"),
-        meta: { title: "数据导出", requiresAuth: true },
-      },
+      }
     ],
   },
   {
@@ -210,7 +43,7 @@ const routes = [
 
 const router = createRouter({
   history: createWebHistory(),
-  routes,
+  routes: constantRoutes,
 });
 
 // 路由守卫
@@ -218,19 +51,60 @@ router.beforeEach(async (to, from, next) => {
   NProgress.start();
 
   const userStore = useUserStore();
+  const permissionStore = usePermissionStore();
   const token = userStore.token;
 
-  if (to.meta.requiresAuth && !token) {
-    next("/login");
-    return;
+  if (token) {
+    if (to.path === "/login") {
+      // 已登录用户访问登录页，重定向到首页
+      next({ path: "/dashboard", replace: true });
+      NProgress.done();
+      return;
+    }
+    
+    // 判断是否已经生成过路由
+    const hasLoadedRoutes = permissionStore.routes.length > 0;
+    
+    if (!hasLoadedRoutes) {
+      try {
+        // 获取用户信息
+        await userStore.getUserInfoAction();
+        
+        // 生成动态路由
+        const accessRoutes = await permissionStore.generateRoutes();
+        
+        // 动态添加路由到Layout下
+        if (accessRoutes && accessRoutes.length > 0) {
+          accessRoutes.forEach((route) => {
+            // 添加到Layout路由作为子路由
+            router.addRoute("Layout", route);
+          });
+          
+          // 确保addRoute已完成，重新导航
+          next({ ...to, replace: true });
+        } else {
+          // 没有任何路由权限，直接放行
+          next();
+        }
+      } catch (error) {
+        console.error("路由生成失败:", error);
+        // 清除token并跳转登录
+        await userStore.resetState();
+        next(`/login?redirect=${to.path}`);
+        NProgress.done();
+      }
+    } else {
+      next();
+    }
+  } else {
+    // 未登录
+    if (whiteList.indexOf(to.path) !== -1) {
+      next();
+    } else {
+      next(`/login?redirect=${to.path}`);
+      NProgress.done();
+    }
   }
-
-  if (to.path === "/login" && token) {
-    next("/");
-    return;
-  }
-
-  next();
 });
 
 router.afterEach(() => {

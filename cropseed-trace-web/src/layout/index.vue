@@ -60,6 +60,7 @@
 import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { usePermissionStore } from '@/stores/permission'
 import { useAppStore } from '@/stores/app'
 import SidebarItem from './components/SidebarItem.vue'
 import Breadcrumb from './components/Breadcrumb.vue'
@@ -67,6 +68,7 @@ import Breadcrumb from './components/Breadcrumb.vue'
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const permissionStore = usePermissionStore()
 const appStore = useAppStore()
 
 // 侧边栏宽度
@@ -75,100 +77,19 @@ const sidebarWidth = computed(() => appStore.sidebarCollapsed ? '64px' : '200px'
 // 当前激活的菜单
 const activeMenu = computed(() => route.path)
 
-// 路由配置
-const routes = [
-  {
-    path: '/dashboard',
-    name: 'Dashboard',
-    meta: { title: '首页', icon: 'Odometer' }
-  },
-  {
-    path: '/statistics',
-    name: 'Statistics',
-    meta: { title: '数据统计', icon: 'TrendCharts' }
-  },
-  {
-    path: '/system',
-    name: 'System',
-    meta: { title: '系统管理', icon: 'Setting' },
-    children: [
-      { path: 'user', name: 'SystemUser', meta: { title: '用户管理' } },
-      { path: 'role', name: 'SystemRole', meta: { title: '角色管理' } },
-      { path: 'menu', name: 'SystemMenu', meta: { title: '菜单管理' } }
-    ]
-  },
-  {
-    path: '/seed',
-    name: 'Seed',
-    meta: { title: '种子管理', icon: 'Grape' },
-    children: [
-      { path: 'category', name: 'SeedCategory', meta: { title: '品类管理' } },
-      { path: 'info', name: 'SeedInfo', meta: { title: '种子档案' } },
-      { path: 'batch', name: 'SeedBatch', meta: { title: '批次管理' } }
-    ]
-  },
-  {
-    path: '/inventory',
-    name: 'Inventory',
-    meta: { title: '库存管理', icon: 'Box' },
-    children: [
-      { path: 'warehouse', name: 'Warehouse', meta: { title: '仓库管理' } },
-      { path: 'stock', name: 'Inventory', meta: { title: '库存管理' } },
-      { path: 'inbound', name: 'Inbound', meta: { title: '入库管理' } },
-      { path: 'outbound', name: 'Outbound', meta: { title: '出库管理' } }
-    ]
-  },
-  {
-    path: '/order',
-    name: 'Order',
-    meta: { title: '订单管理', icon: 'Document' },
-    children: [
-      { path: 'list', name: 'OrderList', meta: { title: '订单列表' } }
-    ]
-  },
-  {
-    path: '/wechat',
-    name: 'Wechat',
-    meta: { title: '微信管理', icon: 'ChatDotRound' },
-    children: [
-      { path: 'user', name: 'WechatUser', meta: { title: '微信用户' } },
-      { path: 'pay', name: 'WechatPay', meta: { title: '支付管理' } }
-    ]
-  },
-  {
-    path: '/recommendation',
-    name: 'Recommendation',
-    meta: { title: '推荐系统', icon: 'TrendCharts' },
-    children: [
-      { path: 'profile', name: 'UserProfile', meta: { title: '用户画像' } },
-      { path: 'behavior', name: 'UserBehavior', meta: { title: '行为分析' } },
-      { path: 'result', name: 'RecommendationResult', meta: { title: '推荐结果' } }
-    ]
-  },
-  {
-    path: '/trace',
-    name: 'Trace',
-    meta: { title: '溯源管理', icon: 'Connection' },
-    children: [
-      { path: '', name: 'TraceIndex', meta: { title: '溯源总览' } },
-       { path: 'codes', name: 'TraceCodes', meta: { title: '溯源码管理' } },
-      { path: 'entities', name: 'TraceEntities', meta: { title: '溯源实体' } },
-      { path: 'verify', name: 'TraceVerify', meta: { title: '数据验证' } },
-      { path: 'query', name: 'TraceQuery', meta: { title: '溯源查询' } },
-      { path: 'records', name: 'TraceRecords', meta: { title: '溯源记录' } },
-      { path: 'blockchain', name: 'TraceBlockchain', meta: { title: '区块链管理' } }
-    ]
-  },
-  {
-    path: '/excel',
-    name: 'Excel',
-    meta: { title: '数据管理', icon: 'Document' },
-    children: [
-      { path: 'import', name: 'ExcelImport', meta: { title: '数据导入' } },
-      { path: 'export', name: 'ExcelExport', meta: { title: '数据导出' } }
-    ]
-  }
-]
+// 动态路由配置（从permission store获取）
+const routes = computed(() => {
+  return [
+    // 首页固定显示
+    {
+      path: '/dashboard',
+      name: 'Dashboard',
+      meta: { title: '首页', icon: 'Odometer' }
+    },
+    // 动态菜单从permission store获取
+    ...permissionStore.routes
+  ]
+})
 
 // 处理下拉菜单命令
 const handleCommand = (command) => {

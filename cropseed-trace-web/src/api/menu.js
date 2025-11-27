@@ -59,3 +59,11 @@ export function batchDeleteMenu(ids) {
     data: { ids },
   });
 }
+
+// 获取用户路由菜单
+export function getUserRouters() {
+  return request({
+    url: "/sys/menu/getUserRouters",
+    method: "get",
+  });
+}
