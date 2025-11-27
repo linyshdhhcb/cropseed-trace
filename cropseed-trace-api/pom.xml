@@ -34,14 +34,24 @@
         <redisson.version>3.24.3</redisson.version>
         <tencentcloud-sdk-java.version>3.0.1</tencentcloud-sdk-java.version>
         <com.aliyun.oss.version>3.18.3</com.aliyun.oss.version>
+        <ip2region.version>2.7.0</ip2region.version>
     </properties>
 
     <dependencies>
+        <!--ip2region-->
+        <dependency>
+            <groupId>org.lionsoul</groupId>
+            <artifactId>ip2region</artifactId>
+            <version>${ip2region.version}</version>
+        </dependency>
+
+        <!--阿里云OSS-->
         <dependency>
             <groupId>com.aliyun.oss</groupId>
             <artifactId>aliyun-sdk-oss</artifactId>
             <version>${com.aliyun.oss.version}</version>
         </dependency>
+
         <!-- 腾讯云TBaas-->
         <dependency>
             <groupId>com.tencentcloudapi</groupId>
