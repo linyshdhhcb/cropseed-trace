@@ -498,28 +498,30 @@ CREATE TABLE `sys_menu`  (
 -- Table structure for sys_operation_log
 -- ----------------------------
 DROP TABLE IF EXISTS `sys_operation_log`;
-CREATE TABLE `sys_operation_log`  (
-  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-  `user_id` bigint NOT NULL COMMENT '操作人ID',
-  `username` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '操作人用户名',
-  `operation` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '操作描述',
-  `method` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '请求方法',
-  `params` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT '请求参数',
-  `ip` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT 'IP地址',
-  `user_agent` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '用户代理',
-  `execute_time` bigint NULL DEFAULT NULL COMMENT '执行时间(毫秒)',
-  `status` tinyint NOT NULL DEFAULT 1 COMMENT '操作状态：0-失败，1-成功',
-  `error_message` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT '错误信息',
-  `create_time` datetime NULL DEFAULT NULL COMMENT '创建时间',
-  `create_by` bigint NULL DEFAULT NULL COMMENT '创建用户ID',
-  `update_time` datetime NULL DEFAULT NULL COMMENT '修改时间',
-  `update_by` bigint NULL DEFAULT NULL COMMENT '修改用户ID',
-  `deleted_flag` tinyint NOT NULL DEFAULT 0 COMMENT '删除标记',
-  PRIMARY KEY (`id`) USING BTREE,
-  INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
-  INDEX `idx_operation`(`operation` ASC) USING BTREE,
-  INDEX `idx_create_time`(`create_time` ASC) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '操作日志表' ROW_FORMAT = DYNAMIC;
+CREATE TABLE `sys_operation_log` (
+                                     `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+                                     `user_id` bigint NOT NULL COMMENT '操作人ID',
+                                     `username` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '操作人用户名',
+                                     `module` varchar(2500) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '操作模块',
+                                     `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT '操作内容',
+                                     `url` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT '请求路径',
+                                     `method` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT '请求方法',
+                                     `param` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT '请求参数',
+                                     `ip` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'IP地址',
+                                     `ip_region` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '请求ip地区',
+                                     `user_agent` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '用户代理',
+                                     `execute_time` bigint DEFAULT NULL COMMENT '执行时间(毫秒)',
+                                     `status` tinyint NOT NULL DEFAULT '1' COMMENT '操作状态：0-失败，1-成功',
+                                     `error_message` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT '错误信息',
+                                     `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+                                     `create_by` bigint DEFAULT NULL COMMENT '创建用户ID',
+                                     `update_time` datetime DEFAULT NULL COMMENT '修改时间',
+                                     `update_by` bigint DEFAULT NULL COMMENT '修改用户ID',
+                                     `deleted_flag` tinyint NOT NULL DEFAULT '0' COMMENT '删除标记',
+                                     PRIMARY KEY (`id`) USING BTREE,
+                                     KEY `idx_user_id` (`user_id`) USING BTREE,
+                                     KEY `idx_create_time` (`create_time`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC COMMENT='操作日志表';
 
 -- ----------------------------
 -- Table structure for sys_role
