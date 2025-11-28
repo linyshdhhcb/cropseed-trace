@@ -1,22 +1,23 @@
-package com.linyi.cropseed.trace.module.system.model.entity;
+package com.linyi.cropseed.trace.module.system.model.vo;
 
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.linyi.cropseed.trace.infrastructure.persistence.entity.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+
+import java.time.LocalDateTime;
 
 /**
- * 系统操作日志实体
+ * 操作日志VO
  *
  * @author LinYi
- * @since 2025-10-25
+ * @since 2025-11-28
  */
 @Data
-@EqualsAndHashCode(callSuper = true)
-@TableName("sys_operation_log")
-@Schema(description = "系统操作日志")
-public class SysOperationLog extends BaseEntity {
+@Schema(description = "操作日志VO")
+public class SysOperationLogVO {
+
+    @Schema(description = "主键ID")
+    private Long id;
 
     @Schema(description = "操作人ID")
     private Long userId;
@@ -56,4 +57,8 @@ public class SysOperationLog extends BaseEntity {
 
     @Schema(description = "错误信息")
     private String errorMessage;
+
+    @Schema(description = "创建时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime createTime;
 }
