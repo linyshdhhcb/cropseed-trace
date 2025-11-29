@@ -30,6 +30,13 @@ const constantRoutes = [
         name: "Dashboard",
         component: () => import("@/views/dashboard/index.vue"),
         meta: { title: "首页", icon: "Odometer", requiresAuth: true },
+      },
+      // 个人中心，所有登录用户都可以访问
+      {
+        path: "profile",
+        name: "Profile",
+        component: () => import("@/views/profile/index.vue"),
+        meta: { title: "个人中心", icon: "User", requiresAuth: true, hidden: true },
       }
     ],
   },

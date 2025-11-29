@@ -85,3 +85,31 @@ export function batchDeleteUser(ids) {
     data: { ids },
   });
 }
+
+// ==================== 个人中心相关接口 ====================
+
+// 获取当前用户个人信息
+export function getProfile() {
+  return request({
+    url: "/sys/user/profile",
+    method: "get",
+  });
+}
+
+// 更新个人信息
+export function updateProfile(data) {
+  return request({
+    url: "/sys/user/profile",
+    method: "put",
+    data,
+  });
+}
+
+// 更新头像
+export function updateAvatar(avatar) {
+  return request({
+    url: "/sys/user/avatar",
+    method: "put",
+    params: { avatar },
+  });
+}

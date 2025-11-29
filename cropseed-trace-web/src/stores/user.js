@@ -38,14 +38,26 @@ export const useUserStore = defineStore("user", () => {
   const getUserInfoAction = async () => {
     try {
       const response = await getUserInfo();
-      const {
-        userInfo: info,
-        roles: userRoles,
-        permissions: userPermissions,
-      } = response.data;
-      userInfo.value = info;
-      roles.value = userRoles;
-      permissions.value = userPermissions;
+      const data = response.data;
+      
+      // 后端直接返回用户信息对象
+      userInfo.value = {
+        userId: data.userId,
+        username: data.username,
+        realName: data.realName,
+        avatar: data.avatar,
+        email: data.email || '',
+        phone: data.phone || ''
+      };
+      
+      // roles 和 permissions 如果后端有返回则使用，否则保持空数组
+      if (data.roles) {
+        roles.value = data.roles;
+      }
+      if (data.permissions) {
+        permissions.value = data.permissions;
+      }
+      
       return response;
     } catch (error) {
       throw error;

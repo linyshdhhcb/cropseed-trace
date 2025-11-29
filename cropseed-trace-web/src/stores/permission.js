@@ -35,7 +35,7 @@ export const usePermissionStore = defineStore("permission", () => {
       tmp.name = generateRouteName(fullPath, route.menuName);
       
       // 处理组件路径
-      if (route.component) {
+      if (route.component && route.component !== 'Layout') {
         // 清理组件路径：移除@/、views/前缀，移除.vue后缀
         let componentPath = route.component
           .replace('@/', '')           // 移除@/
@@ -43,7 +43,7 @@ export const usePermissionStore = defineStore("permission", () => {
           .replace('.vue', '');         // 移除.vue后缀
         
         tmp.component = loadView(componentPath);
-      } else if (route.menuType === 1) {
+      } else if (route.menuType === 1 || route.component === 'Layout') {
         // 目录类型没有component，使用空组件或默认组件
         // tmp.component = () => import("@/layout/components/ParentView.vue");
         // 目录通常不需要component，因为它只是菜单分组
