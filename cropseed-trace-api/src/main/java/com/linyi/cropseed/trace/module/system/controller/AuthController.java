@@ -15,7 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -93,25 +92,23 @@ public class AuthController {
     @Operation(summary = "获取当前用户信息")
     @GetMapping("/userinfo")
     public Result<LoginVO> getUserInfo() {
-        SecurityContext securityContext = SecurityContextHolder.getContext();
-        Authentication authentication = securityContext.getAuthentication();
-
-        LoginVO loginVO = new LoginVO();
-
-        // 从 Authentication 中获取用户信息
-        Object principal = authentication.getPrincipal();
-        if (principal instanceof SysUser) {
-            SysUser user = (SysUser) principal;
-            // 从用户对象中获取ID
-            loginVO.setUserId(user.getId());
-            loginVO.setUsername(user.getUsername());
-            loginVO.setRealName(user.getRealName());
-        } else {
-            loginVO.setUsername(authentication.getName());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        // authentication.getName() 返回的是用户ID的字符串形式
+        Long userId = Long.parseLong(authentication.getName());
+        
+        // 从数据库查询完整的用户信息
+        SysUser user = sysUserService.getById(userId);
+        if (user == null) {
+            return Result.fail("用户不存在");
         }
-
-        loginVO.setAvatar(authentication.getName());
-        loginVO.setToken((String) authentication.getCredentials());
+        
+        // 构建返回结果
+        LoginVO loginVO = new LoginVO();
+        loginVO.setUserId(user.getId());
+        loginVO.setUsername(user.getUsername());
+        loginVO.setRealName(user.getRealName());
+        loginVO.setAvatar(user.getAvatar());
 
         return Result.success(loginVO);
     }

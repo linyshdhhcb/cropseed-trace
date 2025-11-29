@@ -75,4 +75,19 @@ public interface SysUserService extends IService<SysUser> {
      * 批量删除用户
      */
     void batchDeleteUsers(List<Long> ids);
+
+    /**
+     * 获取当前用户完整信息
+     */
+    SysUserVO getCurrentUserProfile(Long userId);
+
+    /**
+     * 更新个人信息
+     */
+    void updateProfile(Long userId, String realName, String phone, String email, String avatar);
+
+    /**
+     * 更新头像
+     */
+    void updateAvatar(Long userId, String avatar);
 }

@@ -4,6 +4,7 @@ import com.linyi.cropseed.trace.common.page.PageQuery;
 import com.linyi.cropseed.trace.common.page.PageResult;
 import com.linyi.cropseed.trace.common.result.Result;
 import com.linyi.cropseed.trace.module.system.model.dto.ChangePasswordDTO;
+import com.linyi.cropseed.trace.module.system.model.dto.ProfileUpdateDTO;
 import com.linyi.cropseed.trace.module.system.model.dto.SysUserAddDTO;
 import com.linyi.cropseed.trace.module.system.model.dto.SysUserUpdateDTO;
 import com.linyi.cropseed.trace.module.system.model.entity.SysUser;
@@ -147,6 +148,38 @@ public class SysUserController {
     public Result<Void> batchDeleteUsers(@Parameter(description = "用户ID列表") @RequestBody List<Long> ids) {
         sysUserService.batchDeleteUsers(ids);
         return Result.success("批量删除成功");
+    }
+
+    // ==================== 个人中心相关接口 ====================
+
+    @Operation(summary = "获取当前用户个人信息")
+    @GetMapping("/profile")
+    public Result<SysUserVO> getProfile() {
+        Long currentUserId = getCurrentUserId();
+        SysUserVO profile = sysUserService.getCurrentUserProfile(currentUserId);
+        return Result.success(profile);
+    }
+
+    @Operation(summary = "更新个人信息")
+    @PutMapping("/profile")
+    public Result<Void> updateProfile(@Valid @RequestBody ProfileUpdateDTO profileUpdateDTO) {
+        Long currentUserId = getCurrentUserId();
+        sysUserService.updateProfile(
+                currentUserId,
+                profileUpdateDTO.getRealName(),
+                profileUpdateDTO.getPhone(),
+                profileUpdateDTO.getEmail(),
+                profileUpdateDTO.getAvatar()
+        );
+        return Result.success("个人信息更新成功");
+    }
+
+    @Operation(summary = "更新头像")
+    @PutMapping("/avatar")
+    public Result<Void> updateAvatar(@Parameter(description = "头像URL") @RequestParam String avatar) {
+        Long currentUserId = getCurrentUserId();
+        sysUserService.updateAvatar(currentUserId, avatar);
+        return Result.success("头像更新成功");
     }
 
     /**

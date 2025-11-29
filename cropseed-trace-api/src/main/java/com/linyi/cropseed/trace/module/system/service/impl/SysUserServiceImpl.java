@@ -299,4 +299,51 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
         return userVO;
     }
+
+    @Override
+    @Cacheable(value = CacheConstants.CACHE_USER, key = "'profile:' + #userId", unless = "#result == null")
+    public SysUserVO getCurrentUserProfile(Long userId) {
+        SysUser user = this.getById(userId);
+        if (user == null) {
+            throw new BusinessException(ResultCode.USER_NOT_EXIST);
+        }
+        return convertToVO(user);
+    }
+
+    @Override
+    @CacheEvict(value = CacheConstants.CACHE_USER, key = "'profile:' + #userId")
+    public void updateProfile(Long userId, String realName, String phone, String email, String avatar) {
+        SysUser user = this.getById(userId);
+        if (user == null) {
+            throw new BusinessException(ResultCode.USER_NOT_EXIST);
+        }
+
+        // 只更新非空字段
+        if (StrUtil.isNotBlank(realName)) {
+            user.setRealName(realName);
+        }
+        if (StrUtil.isNotBlank(phone)) {
+            user.setPhone(phone);
+        }
+        if (StrUtil.isNotBlank(email)) {
+            user.setEmail(email);
+        }
+        if (StrUtil.isNotBlank(avatar)) {
+            user.setAvatar(avatar);
+        }
+
+        this.updateById(user);
+    }
+
+    @Override
+    @CacheEvict(value = CacheConstants.CACHE_USER, key = "'profile:' + #userId")
+    public void updateAvatar(Long userId, String avatar) {
+        SysUser user = this.getById(userId);
+        if (user == null) {
+            throw new BusinessException(ResultCode.USER_NOT_EXIST);
+        }
+
+        user.setAvatar(avatar);
+        this.updateById(user);
+    }
 }
