@@ -2,6 +2,27 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.linyi.cropseed.trace.module.system.mapper.SysConfigMapper">
 
+    <!-- 结果映射 -->
+    <resultMap id="SysConfigResultMap" type="com.linyi.cropseed.trace.module.system.model.entity.SysConfig">
+        <id property="id" column="id"/>
+        <result property="configKey" column="config_key"/>
+        <result property="configValue" column="config_value"/>
+        <result property="configName" column="config_name"/>
+        <result property="configType" column="config_type"/>
+        <result property="description" column="description"/>
+        <result property="createTime" column="create_time"/>
+        <result property="createBy" column="create_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="deletedFlag" column="deleted_flag"/>
+    </resultMap>
+
+    <!-- 通用查询列 -->
+    <sql id="Base_Column_List">
+        id, config_key, config_value, config_name, config_type, description,
+        create_time, create_by, update_time, update_by, deleted_flag
+    </sql>
+
 </mapper>
 
 
