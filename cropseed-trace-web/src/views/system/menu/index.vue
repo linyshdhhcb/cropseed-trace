@@ -180,21 +180,72 @@
         </el-dialog>
 
         <!-- 图标选择对话框 -->
-        <el-dialog v-model="showIconDialog" title="选择图标" width="600px">
-            <div class="icon-list">
-                <div v-for="icon in iconList" :key="icon" class="icon-item" @click="selectIcon(icon)">
-                    <el-icon>
-                        <component :is="icon" />
-                    </el-icon>
+        <el-dialog v-model="showIconDialog" title="选择图标" width="800px">
+            <!-- 图标源切换和搜索栏 -->
+            <div class="icon-selector-header">
+                <el-radio-group v-model="iconSource" class="icon-source-tabs">
+                    <el-radio-button label="element">Element Plus</el-radio-button>
+                    <el-radio-button label="iconpark">IconPark</el-radio-button>
+                </el-radio-group>
+                <el-input
+                    v-model="iconSearchKeyword"
+                    placeholder="搜索图标名称..."
+                    clearable
+                    style="width: 200px"
+                    :prefix-icon="Search"
+                />
+            </div>
+
+            <!-- Element Plus 图标 -->
+            <div v-if="iconSource === 'element'" class="icon-list">
+                <div
+                    v-for="icon in filteredElementIcons"
+                    :key="`element-${icon}`"
+                    class="icon-item"
+                    :class="{ active: formData.icon === icon }"
+                    @click="selectIcon(icon, 'element')"
+                >
+                    <el-icon><component :is="icon" /></el-icon>
                     <span>{{ icon }}</span>
                 </div>
+                <div v-if="filteredElementIcons.length === 0" class="no-icon-tip">
+                    未找到匹配的图标
+                </div>
             </div>
+
+            <!-- IconPark 图标 -->
+            <div v-else class="icon-list">
+                <div
+                    v-for="icon in filteredIconParkIcons"
+                    :key="`iconpark-${icon}`"
+                    class="icon-item"
+                    :class="{ active: formData.icon === icon }"
+                    @click="selectIcon(icon, 'iconpark')"
+                >
+                    <span class="iconpark-icon">{{ icon.charAt(0) }}</span>
+                    <span>{{ icon }}</span>
+                </div>
+                <div v-if="filteredIconParkIcons.length === 0" class="no-icon-tip">
+                    未找到匹配的图标（需安装 @icon-park/vue-next）
+                </div>
+            </div>
+
+            <!-- 底部操作 -->
+            <template #footer>
+                <div class="icon-dialog-footer">
+                    <span class="icon-count">共 {{ iconSource === 'element' ? filteredElementIcons.length : filteredIconParkIcons.length }} 个图标</span>
+                    <div>
+                        <el-button @click="clearIcon">清除图标</el-button>
+                        <el-button @click="showIconDialog = false">关闭</el-button>
+                    </div>
+                </div>
+            </template>
         </el-dialog>
     </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
     Search,
@@ -202,6 +253,7 @@ import {
     Plus,
     Delete,
 } from "@element-plus/icons-vue";
+import * as ElementPlusIconsVue from "@element-plus/icons-vue";
 import {
     getMenuList,
     addMenu,
@@ -275,22 +327,48 @@ const menuTreeProps = {
 
 // 图标选择
 const showIconDialog = ref(false);
-const iconList = ref([
-    "House", "User", "Setting", "Document", "Folder", "Files", "FolderOpened",
-    "Edit", "Delete", "View", "Hide", "Show", "Refresh", "Search", "Plus",
-    "Minus", "Check", "Close", "Warning", "Info", "Success", "Error",
-    "Question", "Star", "StarFilled", "Location", "Phone", "Message",
-    "ChatDotRound", "ChatLineRound", "ChatSquare", "ChatLineSquare",
-    "Bell", "BellFilled", "Notification", "NotificationFilled",
-    "Lock", "Unlock", "Key", "Shield", "ShieldCheck", "ShieldClose",
-    "CircleCheck", "CircleClose", "CircleCheckFilled", "CircleCloseFilled",
-    "WarningFilled", "InfoFilled", "SuccessFilled", "ErrorFilled",
-    "QuestionFilled", "StarFilled", "LocationFilled", "PhoneFilled",
-    "MessageFilled", "ChatDotRoundFilled", "ChatLineRoundFilled",
-    "ChatSquareFilled", "ChatLineSquareFilled", "BellFilled",
-    "NotificationFilled", "LockFilled", "UnlockFilled", "KeyFilled",
-    "ShieldFilled", "ShieldCheckFilled", "ShieldCloseFilled"
-]);
+const iconSource = ref("element"); // 图标源：element / iconpark
+const iconSearchKeyword = ref(""); // 图标搜索关键词
+
+// 动态获取所有 Element Plus 图标
+const elementIconList = Object.keys(ElementPlusIconsVue);
+
+// IconPark 图标列表（示例，实际使用需安装 @icon-park/vue-next）
+const iconParkList = [
+    "Home", "User", "Setting", "Config", "Data", "Analysis",
+    "ChartGraph", "ChartHistogram", "ChartLine", "ChartPie",
+    "Document", "Folder", "FolderOpen", "File", "FileText",
+    "Search", "Edit", "Delete", "Add", "Reduce",
+    "Lock", "Unlock", "Shield", "Key", "Safe",
+    "Message", "Mail", "Phone", "Chat", "Comment",
+    "Bell", "Alarm", "Time", "Calendar", "Clock",
+    "Location", "Map", "Navigation", "Send", "Share",
+    "Download", "Upload", "Cloud", "CloudDownload", "CloudUpload",
+    "Link", "Unlink", "QRCode", "Scan", "Print",
+    "Camera", "Image", "Video", "Music", "Mic",
+    "Star", "Heart", "Like", "Bookmark", "Flag",
+    "Success", "Error", "Warning", "Info", "Help",
+    "Close", "Check", "Minus", "Plus", "More",
+    "Menu", "Apps", "Grid", "List", "Table",
+    "Eye", "EyeOff", "Refresh", "Sync", "Loading",
+    "Power", "Switch", "Terminal", "Code", "Bug",
+    "Shop", "Shopping", "Cart", "Coupon", "Wallet",
+    "Bank", "Money", "Finance", "Bill", "Invoice"
+];
+
+// 过滤后的 Element Plus 图标
+const filteredElementIcons = computed(() => {
+    if (!iconSearchKeyword.value) return elementIconList;
+    const keyword = iconSearchKeyword.value.toLowerCase();
+    return elementIconList.filter(icon => icon.toLowerCase().includes(keyword));
+});
+
+// 过滤后的 IconPark 图标
+const filteredIconParkIcons = computed(() => {
+    if (!iconSearchKeyword.value) return iconParkList;
+    const keyword = iconSearchKeyword.value.toLowerCase();
+    return iconParkList.filter(icon => icon.toLowerCase().includes(keyword));
+});
 
 // 获取菜单列表
 const loadMenuList = async () => {
@@ -442,8 +520,15 @@ const handleMenuTypeChange = (value) => {
 };
 
 // 选择图标
-const selectIcon = (icon) => {
-    formData.icon = icon;
+const selectIcon = (icon, source) => {
+    // 如果是 IconPark 图标，可以加前缀区分
+    formData.icon = source === 'iconpark' ? `iconpark:${icon}` : icon;
+    showIconDialog.value = false;
+};
+
+// 清除图标
+const clearIcon = () => {
+    formData.icon = "";
     showIconDialog.value = false;
 };
 
@@ -631,37 +716,102 @@ onMounted(() => {
     }
 }
 
+.icon-selector-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #ebeef5;
+
+    .icon-source-tabs {
+        flex-shrink: 0;
+    }
+}
+
 .icon-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 8px;
     max-height: 400px;
     overflow-y: auto;
+    padding: 4px;
 
     .icon-item {
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 10px;
+        padding: 12px 8px;
         border: 1px solid #e4e7ed;
         border-radius: 4px;
         cursor: pointer;
-        transition: all 0.3s;
+        transition: all 0.2s;
 
         &:hover {
-            background-color: #f5f7fa;
+            background-color: #ecf5ff;
             border-color: #409eff;
+            transform: translateY(-2px);
+        }
+
+        &.active {
+            background-color: #409eff;
+            border-color: #409eff;
+            color: #fff;
+
+            .el-icon {
+                color: #fff;
+            }
+
+            span {
+                color: #fff;
+            }
         }
 
         .el-icon {
-            font-size: 20px;
-            margin-bottom: 5px;
+            font-size: 24px;
+            margin-bottom: 6px;
+            color: #606266;
+        }
+
+        .iconpark-icon {
+            width: 24px;
+            height: 24px;
+            line-height: 24px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            background: #409eff;
+            color: #fff;
+            border-radius: 4px;
+            margin-bottom: 6px;
         }
 
         span {
-            font-size: 12px;
-            color: #606266;
+            font-size: 11px;
+            color: #909399;
+            text-align: center;
+            word-break: break-all;
+            line-height: 1.2;
         }
+    }
+
+    .no-icon-tip {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 40px;
+        color: #909399;
+        font-size: 14px;
+    }
+}
+
+.icon-dialog-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .icon-count {
+        color: #909399;
+        font-size: 13px;
     }
 }
 </style>
