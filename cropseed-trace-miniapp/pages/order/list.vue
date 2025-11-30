@@ -23,6 +23,13 @@
                     <view class="order-info">
                         <text class="order-no">订单号：{{ item.orderNo }}</text>
                         <text class="order-time">{{ formatTime(item.createTime) }}</text>
+                        <!-- 待支付订单显示倒计时 -->
+                        <view class="countdown-row" v-if="item.orderStatus === 0">
+                            <text class="countdown-label">剩余支付时间：</text>
+                            <text class="countdown-time" :class="{ 'countdown-urgent': getRemaining(item.createTime) < 300 }">
+                                {{ formatCountdown(getRemaining(item.createTime)) }}
+                            </text>
+                        </view>
                     </view>
                     <view class="status-badge" :class="'status-' + item.orderStatus">
                         <text class="status-text">{{ statusText(item.orderStatus) }}</text>
@@ -74,12 +81,17 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { onShow, onReachBottom, onPullDownRefresh } from '@dcloudio/uni-app'
 import { useOrderStore } from '@/stores/order.js'
 import { payOrder as payOrderApi, confirmReceipt as confirmReceiptApi, deleteOrder as deleteOrderApi } from '@/api/order.js'
 
 const orderStore = useOrderStore()
+
+// 倒计时相关
+const ORDER_TIMEOUT_MINUTES = 30 // 订单超时时间（分钟）
+const currentTime = ref(Date.now()) // 当前时间戳，用于响应式更新
+let countdownTimer = null
 
 const statusTabs = [
     { label: '全部', value: '' },
@@ -101,7 +113,68 @@ const refreshing = ref(false)
 
 onShow(() => {
     loadOrders(true)
+    startCountdownTimer()
 })
+
+onMounted(() => {
+    startCountdownTimer()
+})
+
+onUnmounted(() => {
+    stopCountdownTimer()
+})
+
+// 启动倒计时定时器
+function startCountdownTimer() {
+    stopCountdownTimer()
+    // 每秒更新当前时间，触发倒计时重新计算
+    countdownTimer = setInterval(() => {
+        currentTime.value = Date.now()
+        // 检查是否有订单超时，如果有则刷新列表
+        checkTimeoutOrders()
+    }, 1000)
+}
+
+// 停止倒计时定时器
+function stopCountdownTimer() {
+    if (countdownTimer) {
+        clearInterval(countdownTimer)
+        countdownTimer = null
+    }
+}
+
+// 检查是否有订单超时
+function checkTimeoutOrders() {
+    const hasTimeout = orders.value.some(item => {
+        if (item.orderStatus === 0) {
+            const remaining = getRemaining(item.createTime)
+            return remaining <= 0
+        }
+        return false
+    })
+    if (hasTimeout) {
+        // 有订单超时，刷新列表
+        loadOrders(true)
+    }
+}
+
+// 计算剩余时间（秒）
+function getRemaining(createTime) {
+    if (!createTime) return 0
+    const createDate = new Date(createTime)
+    const now = currentTime.value
+    const elapsed = Math.floor((now - createDate.getTime()) / 1000)
+    const timeout = ORDER_TIMEOUT_MINUTES * 60
+    return Math.max(0, timeout - elapsed)
+}
+
+// 格式化倒计时显示
+function formatCountdown(seconds) {
+    if (seconds <= 0) return '已超时'
+    const minutes = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+}
 
 onReachBottom(() => {
     loadMore()
@@ -418,6 +491,40 @@ async function payOrder(item) {
 .order-time {
     font-size: 24rpx;
     color: #999;
+}
+
+/* 倒计时样式 */
+.countdown-row {
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
+    margin-top: 8rpx;
+}
+
+.countdown-label {
+    font-size: 24rpx;
+    color: #f57c00;
+}
+
+.countdown-time {
+    font-size: 26rpx;
+    font-weight: 700;
+    color: #f57c00;
+    background: #fff3e0;
+    padding: 4rpx 12rpx;
+    border-radius: 6rpx;
+    font-family: 'Courier New', monospace;
+}
+
+.countdown-time.countdown-urgent {
+    color: #d32f2f;
+    background: #ffebee;
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
 }
 
 .status-badge {

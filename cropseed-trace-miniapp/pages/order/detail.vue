@@ -7,7 +7,14 @@
             </view>
             <view class="status-info">
                 <text class="status-text">{{ statusText(order.orderStatus) }}</text>
-                <text class="status-desc">{{ statusDesc(order.orderStatus) }}</text>
+                <text class="status-desc" v-if="order.orderStatus !== 0">{{ statusDesc(order.orderStatus) }}</text>
+                <!-- 待支付订单显示倒计时 -->
+                <view class="countdown-wrapper" v-if="order.orderStatus === 0">
+                    <text class="countdown-label">剩余支付时间：</text>
+                    <text class="countdown-time" :class="{ 'countdown-urgent': remainingSeconds < 300 }">
+                        {{ formatCountdown(remainingSeconds) }}
+                    </text>
+                </view>
             </view>
         </view>
 
@@ -173,7 +180,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { useOrderStore } from '@/stores/order.js'
 import { cancelOrder, payOrder, confirmReceipt as confirmReceiptApi, deleteOrder as deleteOrderApi } from '@/api/order.js'
@@ -188,6 +195,11 @@ const operationLogs = ref([])
 const showPayment = ref(false)
 const selectedPaymentMethod = ref(1) // 1: 微信支付, 2: 支付宝支付
 let orderId = null
+
+// 倒计时相关
+const ORDER_TIMEOUT_MINUTES = 30 // 订单超时时间（分钟）
+const remainingSeconds = ref(0)
+let countdownTimer = null
 
 onLoad(async (options) => {
     orderId = Number(options?.id)
@@ -213,7 +225,18 @@ onMounted(() => {
 
 onUnmounted(() => {
     uni.$off('orderStatusChanged', handleOrderStatusChanged)
+    // 清理倒计时定时器
+    stopCountdown()
 })
+
+// 监听订单变化，启动或停止倒计时
+watch(() => order.value, (newOrder) => {
+    if (newOrder && newOrder.orderStatus === 0) {
+        startCountdown(newOrder.createTime)
+    } else {
+        stopCountdown()
+    }
+}, { immediate: true })
 
 // 处理订单状态变化
 function handleOrderStatusChanged(data) {
@@ -241,10 +264,59 @@ async function loadDetail() {
         }
         operationLogs.value = data?.logs || data?.operationLogs || []
         console.log('订单状态已更新为:', order.value.orderStatus)
+        
+        // 如果是待支付订单，启动倒计时
+        if (order.value.orderStatus === 0) {
+            startCountdown(order.value.createTime)
+        }
     } catch (error) {
         console.error('获取订单详情失败', error)
         uni.showToast({ title: '获取订单详情失败', icon: 'none' })
     }
+}
+
+// 启动倒计时
+function startCountdown(createTime) {
+    stopCountdown() // 先停止之前的倒计时
+    
+    if (!createTime) return
+    
+    const updateRemaining = () => {
+        const createDate = new Date(createTime)
+        const now = new Date()
+        const elapsed = Math.floor((now - createDate) / 1000) // 已过去的秒数
+        const timeout = ORDER_TIMEOUT_MINUTES * 60 // 超时秒数
+        const remaining = timeout - elapsed
+        
+        if (remaining <= 0) {
+            remainingSeconds.value = 0
+            stopCountdown()
+            // 订单已超时，刷新页面获取最新状态
+            uni.showToast({ title: '订单已超时', icon: 'none' })
+            setTimeout(() => loadDetail(), 1500)
+        } else {
+            remainingSeconds.value = remaining
+        }
+    }
+    
+    updateRemaining() // 立即执行一次
+    countdownTimer = setInterval(updateRemaining, 1000) // 每秒更新
+}
+
+// 停止倒计时
+function stopCountdown() {
+    if (countdownTimer) {
+        clearInterval(countdownTimer)
+        countdownTimer = null
+    }
+}
+
+// 格式化倒计时显示
+function formatCountdown(seconds) {
+    if (seconds <= 0) return '00:00'
+    const minutes = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
 }
 
 function formatTime(time) {
@@ -284,7 +356,7 @@ function statusText(status) {
 
 function statusDesc(status) {
     const map = {
-        0: '请在30分钟内完成支付',
+        0: '请尽快完成支付', // 待支付状态使用倒计时显示
         1: '订单审核中，请耐心等待',
         2: '商品准备中，请耐心等待',
         3: '商品已发出，请注意查收',
@@ -502,6 +574,39 @@ async function deleteOrder() {
     display: flex;
     flex-direction: column;
     gap: 12rpx;
+}
+
+/* 倒计时样式 */
+.countdown-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
+    margin-top: 8rpx;
+}
+
+.countdown-label {
+    font-size: 26rpx;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.countdown-time {
+    font-size: 32rpx;
+    font-weight: 700;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 6rpx 16rpx;
+    border-radius: 8rpx;
+    font-family: 'Courier New', monospace;
+}
+
+.countdown-time.countdown-urgent {
+    background: rgba(255, 0, 0, 0.3);
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
 }
 
 .loading-state {
