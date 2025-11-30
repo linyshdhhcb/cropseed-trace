@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -68,7 +69,6 @@ public class WxOrderController {
         } else {
             return Result.fail(ResultCode.ORDER_CREATE_FAIL.getCode(), "请选择商品");
         }
-
         OrderDetailVO detailVO = orderService.getOrderDetail(orderId);
         return Result.success(detailVO);
     }
